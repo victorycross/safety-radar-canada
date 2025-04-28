@@ -1,0 +1,130 @@
+
+import React from 'react';
+import { useSecurity } from '@/context/SecurityContext';
+import { AlertLevel, IncidentSource, VerificationStatus } from '@/types';
+import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Info, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
+
+const IncidentsList = () => {
+  const { incidents, provinces } = useSecurity();
+  
+  // Sort incidents by timestamp, most recent first
+  const sortedIncidents = [...incidents].sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+  
+  const getAlertLevelBadge = (alertLevel: AlertLevel) => {
+    switch (alertLevel) {
+      case AlertLevel.SEVERE:
+        return (
+          <Badge className="bg-danger hover:bg-danger/90">
+            <AlertCircle className="mr-1 h-3 w-3" />
+            Severe
+          </Badge>
+        );
+      case AlertLevel.WARNING:
+        return (
+          <Badge className="bg-warning hover:bg-warning/90">
+            <AlertTriangle className="mr-1 h-3 w-3" />
+            Warning
+          </Badge>
+        );
+      case AlertLevel.NORMAL:
+        return (
+          <Badge className="bg-success hover:bg-success/90">
+            <Info className="mr-1 h-3 w-3" />
+            Normal
+          </Badge>
+        );
+    }
+  };
+  
+  const getVerificationBadge = (status: VerificationStatus) => {
+    switch (status) {
+      case VerificationStatus.VERIFIED:
+        return (
+          <Badge variant="outline" className="text-success border-success">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            Verified
+          </Badge>
+        );
+      case VerificationStatus.UNVERIFIED:
+        return (
+          <Badge variant="outline" className="text-muted-foreground">
+            Unverified
+          </Badge>
+        );
+    }
+  };
+  
+  const getSourceBadge = (source: IncidentSource) => {
+    return (
+      <Badge variant="secondary" className="bg-secondary/50">
+        {source}
+      </Badge>
+    );
+  };
+  
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleString('en-CA', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
+  const getProvinceName = (provinceId: string) => {
+    const province = provinces.find(p => p.id === provinceId);
+    return province ? province.name : provinceId;
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-xl font-bold">Recent Incidents</h2>
+        <p className="text-sm text-muted-foreground">
+          Showing {sortedIncidents.length} incidents across all provinces
+        </p>
+      </div>
+      
+      {sortedIncidents.map((incident) => (
+        <Card key={incident.id}>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between">
+              <div>
+                <CardTitle className="text-lg">{incident.title}</CardTitle>
+                <CardDescription>
+                  {formatDate(incident.timestamp)} • {getProvinceName(incident.provinceId)}
+                </CardDescription>
+              </div>
+              <div className="flex space-x-2">
+                {getAlertLevelBadge(incident.alertLevel)}
+                {getVerificationBadge(incident.verificationStatus)}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm mb-3">{incident.description}</p>
+            
+            <div className="flex justify-between items-center">
+              <div>
+                {getSourceBadge(incident.source)}
+              </div>
+              
+              {incident.recommendedAction && (
+                <div className="text-sm">
+                  <span className="font-medium">Recommended action:</span> {incident.recommendedAction}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+export default IncidentsList;
