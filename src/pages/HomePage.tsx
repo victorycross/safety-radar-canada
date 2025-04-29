@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import StatusWidget from '@/components/dashboard/StatusWidget';
 import { useSecurity } from '@/context/SecurityContext';
 import { AlertLevel } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { CheckCircle } from 'lucide-react';
 
 const HomePage = () => {
   const { provinces } = useSecurity();
@@ -35,6 +38,14 @@ const HomePage = () => {
               {alertProvinces.map((province) => (
                 <StatusWidget key={province.id} provinceId={province.id} />
               ))}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Link to="/widget">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Employee Check-In Widget</span>
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

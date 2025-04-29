@@ -17,7 +17,7 @@ const WidgetPage = () => {
         <Card>
           <CardHeader>
             <CardTitle>Widget Preview</CardTitle>
-            <CardDescription>Preview of the desktop security status widget</CardDescription>
+            <CardDescription>Preview of the desktop security status widget with check-in capability</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center py-6 bg-slate-100 rounded-md">
             <DailyWidget />
@@ -59,7 +59,8 @@ const WidgetPage = () => {
             
             <div className="bg-muted p-3 rounded-md text-sm mt-4">
               <p><strong>Note:</strong> The Security Barometer widget automatically updates in real-time 
-              when new security alerts are published for your region. No manual updates are required.</p>
+              when new security alerts are published for your region. Daily check-ins are required
+              to confirm your safety status during high-alert situations.</p>
             </div>
           </CardContent>
         </Card>
