@@ -7,81 +7,50 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 210 100% 50%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
-
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --warning: 45 100% 50%;
+    --success: 120 100% 32%;
+    --danger: 0 100% 50%;
+    --warning-light: 45 100% 96%;
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --ring: 224.3 76.3% 48%;
   }
 }
 
@@ -89,62 +58,36 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
   }
 }
 
-.map-container {
-  position: relative;
-  width: 100%;
-  min-height: 400px;
+/* Globe styles */
+.globe {
+  transform-style: preserve-3d;
+  background: radial-gradient(circle at center, #a3c5ff, #3373df);
+  border-radius: 50%;
+  box-shadow: 
+    inset 0 0 20px rgba(0, 0, 0, 0.3),
+    0 0 30px rgba(0, 100, 255, 0.2);
+  background-image: url("data:image/svg+xml,%3Csvg width='800' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Cpath stroke='%23FFFFFF' stroke-width='0.5' fill='none' d='M 0,200 h 800'/%3E%3Cpath stroke='%23FFFFFF' stroke-width='0.5' fill='none' d='M 0,100 h 800'/%3E%3Cpath stroke='%23FFFFFF' stroke-width='0.5' fill='none' d='M 0,300 h 800'/%3E%3Cpath stroke='%23FFFFFF' stroke-width='0.5' fill='none' d='M 200,0 v 400'/%3E%3Cpath stroke='%23FFFFFF' stroke-width='0.5' fill='none' d='M 400,0 v 400'/%3E%3Cpath stroke='%23FFFFFF' stroke-width='0.5' fill='none' d='M 600,0 v 400'/%3E%3Cpath stroke='%232C547D' stroke-width='1' fill='%23195C9C' opacity='0.4' d='M 125,125 C 150,90 200,120 250,115 S 350,90 400,135 C 450,170 520,145 560,140 C 600,135 650,130 670,145 L 700,170 V 250 H 100 V 180 Z'/%3E%3C/g%3E%3C/svg%3E");
+  transition: transform 0.05s;
 }
 
-.province-shape {
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  transition: all 0.3s ease;
-  background-color: #f9fafb;
+.globe-container:active {
+  cursor: grabbing;
 }
 
-.province-shape:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-.province-shape.severe {
-  background-color: #fecdd3;
-  border-color: #e11d48;
-}
-
-.province-shape.warning {
-  background-color: #fef3c7;
-  border-color: #f59e0b;
-}
-
-.province-shape.normal {
-  background-color: #d1fae5;
-  border-color: #10b981;
+/* Pulsating dot animation for alert markers */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .pulse-dot {
   animation: pulse 2s infinite;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7);
-  }
-  
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 10px rgba(229, 62, 62, 0);
-  }
-  
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(229, 62, 62, 0);
-  }
-}
