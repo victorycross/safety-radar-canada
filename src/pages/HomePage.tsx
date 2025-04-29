@@ -1,6 +1,6 @@
 
 import React from 'react';
-import CanadaMap from '@/components/map/CanadaMap';
+import GlobeMap from '@/components/map/GlobeMap';
 import IncidentsList from '@/components/incidents/IncidentsList';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusWidget from '@/components/dashboard/StatusWidget';
@@ -41,7 +41,7 @@ const HomePage = () => {
       )}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <CanadaMap />
+        <GlobeMap />
         
         <div className="space-y-6">
           <IncidentsList />
