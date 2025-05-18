@@ -2,7 +2,7 @@
 import React from 'react';
 import { AlertLevel } from '@/types';
 import { NavLink } from 'react-router-dom';
-import { useSecurity } from '@/context/SecurityContext';
+import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { cn } from '@/lib/utils';
 import { 
   AlertTriangle,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 const Sidebar = () => {
-  const { provinces } = useSecurity();
+  const { provinces } = useSupabaseDataContext();
   
   // Count provinces by alert level
   const severeCount = provinces.filter(p => p.alertLevel === AlertLevel.SEVERE).length;

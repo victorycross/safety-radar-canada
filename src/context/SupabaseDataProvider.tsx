@@ -12,9 +12,9 @@ interface SupabaseDataContextType {
   refreshData: () => Promise<void>;
   getProvinceById: (provinceId: string) => ReturnType<typeof useSupabaseData>["getProvinceById"] extends (id: string) => infer R ? R : never;
   getIncidentsByProvince: (provinceId: string) => Incident[];
-  addIncident: (incidentData: Omit<Incident, 'id' | 'timestamp'>) => ReturnType<typeof useSupabaseData>["addIncident"];
-  reportIncident: (incidentData: Omit<Incident, 'id' | 'timestamp'>) => ReturnType<typeof useSupabaseData>["reportIncident"];
-  updateProvinceAlertLevel: (provinceId: string, alertLevel: AlertLevel) => ReturnType<typeof useSupabaseData>["updateProvinceAlertLevel"];
+  addIncident: ReturnType<typeof useSupabaseData>["addIncident"];
+  reportIncident: ReturnType<typeof useSupabaseData>["reportIncident"];
+  updateProvinceAlertLevel: ReturnType<typeof useSupabaseData>["updateProvinceAlertLevel"];
 }
 
 const SupabaseDataContext = createContext<SupabaseDataContextType | undefined>(undefined);

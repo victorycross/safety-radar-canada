@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { AlertLevel, Incident, Province } from '@/types';
+import { AlertLevel, Incident, Province, IncidentSource, VerificationStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -60,8 +60,8 @@ export function useSupabaseData() {
           provinceId: incident.province_id,
           timestamp: new Date(incident.timestamp),
           alertLevel: incident.alert_level as AlertLevel,
-          source: incident.source,
-          verificationStatus: incident.verification_status,
+          source: incident.source as IncidentSource, // Cast to ensure type compatibility
+          verificationStatus: incident.verification_status as VerificationStatus,
           recommendedAction: incident.recommended_action || undefined
         }));
         
