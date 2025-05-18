@@ -51,7 +51,7 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId }) => {
     }
   };
   
-  // Get most recent incident
+  // Get most recent incident if exists
   const recentIncident = incidents.length > 0 
     ? incidents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] 
     : null;

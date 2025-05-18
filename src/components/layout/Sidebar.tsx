@@ -38,13 +38,13 @@ const Sidebar = () => {
           {severeCount > 0 && (
             <div className="flex items-center">
               <div className="h-2 w-2 rounded-full bg-danger mr-2"></div>
-              <span>{severeCount} {severeCount === 1 ? 'Severe' : 'Severe'}</span>
+              <span>{severeCount} {severeCount === 1 ? 'Severe Alert' : 'Severe Alerts'}</span>
             </div>
           )}
           {warningCount > 0 && (
             <div className="flex items-center">
               <div className="h-2 w-2 rounded-full bg-warning mr-2"></div>
-              <span>{warningCount} {warningCount === 1 ? 'Warning' : 'Warning'}</span>
+              <span>{warningCount} {warningCount === 1 ? 'Warning Alert' : 'Warning Alerts'}</span>
             </div>
           )}
           {severeCount === 0 && warningCount === 0 && (
