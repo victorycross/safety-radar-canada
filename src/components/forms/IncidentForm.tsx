@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useSecurity } from '@/context/SecurityContext';
 import { AlertLevel, IncidentSource, VerificationStatus } from '@/types';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
@@ -8,13 +7,14 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 
 interface IncidentFormProps {
   isAuthorized?: boolean;
 }
 
 const IncidentForm: React.FC<IncidentFormProps> = ({ isAuthorized = false }) => {
-  const { provinces, addIncident, reportIncident } = useSecurity();
+  const { provinces, addIncident, reportIncident } = useSupabaseDataContext();
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

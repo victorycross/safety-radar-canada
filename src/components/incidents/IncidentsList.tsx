@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { useSecurity } from '@/context/SecurityContext';
 import { AlertLevel, IncidentSource, VerificationStatus } from '@/types';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Info, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Info, CheckCircle, AlertTriangle, AlertCircle, Loader2 } from 'lucide-react';
+import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 
 const IncidentsList = () => {
-  const { incidents, provinces } = useSecurity();
+  const { incidents, provinces, loading } = useSupabaseDataContext();
   
   // Sort incidents by timestamp, most recent first
   const sortedIncidents = [...incidents].sort((a, b) => 
@@ -80,6 +80,23 @@ const IncidentsList = () => {
     const province = provinces.find(p => p.id === provinceId);
     return province ? province.name : provinceId;
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-bold">Recent Incidents</h2>
+          <p className="text-sm text-muted-foreground">
+            Loading incidents...
+          </p>
+        </div>
+        
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   if (sortedIncidents.length === 0) {
     return (

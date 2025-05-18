@@ -2,15 +2,20 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { AlertLevel } from "@/types";
-import { useSecurity } from "@/context/SecurityContext";
 import { Badge } from "../ui/badge";
+import { useSupabaseDataContext } from "@/context/SupabaseDataProvider";
+import { Skeleton } from "../ui/skeleton";
 
 interface StatusWidgetProps {
   provinceId: string;
 }
 
 const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId }) => {
-  const { getProvinceById, getIncidentsByProvince } = useSecurity();
+  const { getProvinceById, getIncidentsByProvince, loading } = useSupabaseDataContext();
+  
+  if (loading) {
+    return <StatusWidgetSkeleton />;
+  }
   
   const province = getProvinceById(provinceId);
   const incidents = getIncidentsByProvince(provinceId);
@@ -108,5 +113,26 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId }) => {
     </Card>
   );
 };
+
+const StatusWidgetSkeleton = () => (
+  <Card>
+    <CardHeader className="bg-muted">
+      <div className="flex justify-between items-center">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-5 w-24" />
+      </div>
+      <Skeleton className="h-4 w-28 mt-1" />
+    </CardHeader>
+    <CardContent className="pt-6">
+      <Skeleton className="h-4 w-full mb-4" />
+      <Skeleton className="h-4 w-5/6" />
+      <Skeleton className="h-4 w-4/6 mt-2" />
+    </CardContent>
+    <CardFooter className="flex justify-between border-t pt-4">
+      <Skeleton className="h-3 w-32" />
+      <Skeleton className="h-3 w-24" />
+    </CardFooter>
+  </Card>
+);
 
 export default StatusWidget;

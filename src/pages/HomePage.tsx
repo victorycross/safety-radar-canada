@@ -4,21 +4,30 @@ import SimpleGlobeMap from '@/components/map/SimpleGlobeMap';
 import IncidentsList from '@/components/incidents/IncidentsList';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusWidget from '@/components/dashboard/StatusWidget';
-import { useSecurity } from '@/context/SecurityContext';
 import { AlertLevel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Bell } from 'lucide-react';
+import { CheckCircle, Bell, Loader2 } from 'lucide-react';
 import RecentAlerts from '@/components/dashboard/RecentAlerts';
 import EmployeeDistributionChart from '@/components/dashboard/EmployeeDistributionChart';
+import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 
 const HomePage = () => {
-  const { provinces } = useSecurity();
+  const { provinces, loading } = useSupabaseDataContext();
   
   // Get provinces with severe or warning statuses
   const alertProvinces = provinces.filter(province => 
     province.alertLevel === AlertLevel.SEVERE || province.alertLevel === AlertLevel.WARNING
   );
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">Loading security dashboard data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

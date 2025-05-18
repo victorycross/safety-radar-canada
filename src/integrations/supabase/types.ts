@@ -30,6 +30,86 @@ export type Database = {
         }
         Relationships: []
       }
+      incidents: {
+        Row: {
+          alert_level: string
+          created_at: string
+          description: string
+          id: string
+          province_id: string
+          recommended_action: string | null
+          source: string
+          timestamp: string
+          title: string
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          alert_level?: string
+          created_at?: string
+          description: string
+          id?: string
+          province_id: string
+          recommended_action?: string | null
+          source: string
+          timestamp?: string
+          title: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          alert_level?: string
+          created_at?: string
+          description?: string
+          id?: string
+          province_id?: string
+          recommended_action?: string | null
+          source?: string
+          timestamp?: string
+          title?: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provinces: {
+        Row: {
+          alert_level: string
+          code: string
+          created_at: string
+          employee_count: number
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          alert_level?: string
+          code: string
+          created_at?: string
+          employee_count?: number
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          alert_level?: string
+          code?: string
+          created_at?: string
+          employee_count?: number
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       toronto_police_incidents: {
         Row: {
           category: string | null
