@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { CheckCircle, Bell } from 'lucide-react';
 import RecentAlerts from '@/components/dashboard/RecentAlerts';
+import EmployeeDistributionChart from '@/components/dashboard/EmployeeDistributionChart';
 
 const HomePage = () => {
   const { provinces } = useSecurity();
@@ -82,6 +83,7 @@ const HomePage = () => {
         
         <div className="space-y-6">
           <IncidentsList />
+          <EmployeeDistributionChart />
         </div>
       </div>
     </div>
