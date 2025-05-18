@@ -1,121 +1,51 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { AlertLevel } from '@/types';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Circle, Globe, Map } from 'lucide-react';
+import { Circle, Map, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const SimpleGlobeMap = () => {
-  const { provinces } = useSupabaseDataContext();
-  const globeRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [rotation, setRotation] = useState({ x: 20, y: -10 });
-  const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
+  const { provinces, incidents } = useSupabaseDataContext();
+  const [activeProvinceId, setActiveProvinceId] = useState<string | null>(null);
 
-  // Add event listeners for dragging and rotating the globe
-  useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      setIsDragging(true);
-      setStartPosition({ x: e.clientX, y: e.clientY });
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      // Calculate rotation change based on mouse movement
-      const deltaX = e.clientX - startPosition.x;
-      const deltaY = e.clientY - startPosition.y;
-      
-      setRotation(prev => ({
-        x: prev.x + deltaY * 0.5,
-        y: prev.y + deltaX * 0.5
-      }));
-      
-      setStartPosition({ x: e.clientX, y: e.clientY });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    const globe = globeRef.current;
-    if (globe) {
-      globe.addEventListener('mousedown', handleMouseDown);
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      if (globe) {
-        globe.removeEventListener('mousedown', handleMouseDown);
-      }
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, startPosition]);
-
-  // Auto-rotation effect
-  useEffect(() => {
-    const autoRotate = !isDragging;
-    
-    if (autoRotate) {
-      const interval = setInterval(() => {
-        setRotation(prev => ({
-          x: prev.x,
-          y: prev.y + 0.2
-        }));
-      }, 50);
-      
-      return () => clearInterval(interval);
-    }
-  }, [isDragging]);
+  // Get all incidents for a specific province
+  const getIncidentsForProvince = (provinceId: string) => {
+    return incidents.filter(incident => incident.provinceId === provinceId);
+  };
 
   const getAlertLevelBadge = (alertLevel: AlertLevel) => {
     switch (alertLevel) {
       case AlertLevel.SEVERE:
-        return (
-          <Badge className="bg-danger hover:bg-danger/90">Severe</Badge>
-        );
+        return <Badge className="bg-danger hover:bg-danger/90">Severe</Badge>;
       case AlertLevel.WARNING:
-        return (
-          <Badge className="bg-warning hover:bg-warning/90">Warning</Badge>
-        );
+        return <Badge className="bg-warning hover:bg-warning/90">Warning</Badge>;
       case AlertLevel.NORMAL:
-        return (
-          <Badge className="bg-success hover:bg-success/90">Normal</Badge>
-        );
+        return <Badge className="bg-success hover:bg-success/90">Normal</Badge>;
     }
   };
 
-  // Function to get approximate marker positions for Canadian provinces
-  const getProvincePosition = (provinceId: string): { top: string, left: string } => {
-    // Position percentages for approximate province locations on the globe
-    const positions: Record<string, { top: string, left: string }> = {
-      bc: { top: '38%', left: '18%' }, // British Columbia
-      ab: { top: '38%', left: '23%' }, // Alberta
-      sk: { top: '38%', left: '28%' }, // Saskatchewan
-      mb: { top: '38%', left: '33%' }, // Manitoba
-      on: { top: '39%', left: '38%' }, // Ontario
-      qc: { top: '36%', left: '43%' }, // Quebec
-      nb: { top: '36%', left: '48%' }, // New Brunswick
-      ns: { top: '39%', left: '50%' }, // Nova Scotia
-      pe: { top: '35%', left: '49%' }, // Prince Edward Island
-      nl: { top: '32%', left: '52%' }, // Newfoundland and Labrador
-      yt: { top: '28%', left: '16%' }, // Yukon
-      nt: { top: '28%', left: '22%' }, // Northwest Territories
-      nu: { top: '25%', left: '35%' }, // Nunavut
-    };
-    
-    return positions[provinceId] || { top: '50%', left: '50%' };
+  // Get province fill color based on alert level
+  const getProvinceColor = (alertLevel: AlertLevel) => {
+    switch (alertLevel) {
+      case AlertLevel.SEVERE:
+        return "fill-danger/70 stroke-danger";
+      case AlertLevel.WARNING:
+        return "fill-warning/70 stroke-warning";
+      case AlertLevel.NORMAL:
+        return "fill-success/70 stroke-success";
+      default:
+        return "fill-slate-200 stroke-slate-400";
+    }
   };
 
-  // Filter provinces with alerts
-  const provincesWithAlerts = provinces.filter(
-    province => province.alertLevel !== AlertLevel.NORMAL
-  );
+  // Show province information on hover
+  const handleProvinceHover = (provinceId: string | null) => {
+    setActiveProvinceId(provinceId);
+  };
 
   return (
     <Card className="bg-white rounded-lg shadow-sm">
@@ -126,56 +56,230 @@ const SimpleGlobeMap = () => {
             <p className="text-sm text-muted-foreground">Provincial security status overview</p>
           </div>
           <div className="flex items-center">
-            <Globe className="h-5 w-5 text-muted-foreground mr-1" />
-            <span className="text-sm text-muted-foreground">Interactive Globe</span>
+            <Map className="h-5 w-5 text-muted-foreground mr-1" />
+            <span className="text-sm text-muted-foreground">Interactive Map</span>
           </div>
         </div>
       </div>
       
-      <div className="relative h-[400px] w-full overflow-hidden">
-        {/* The globe container with rotation applied */}
-        <div 
-          ref={globeRef}
-          className="globe-container absolute inset-0 flex items-center justify-center cursor-grab"
-          style={{ perspective: '1000px' }}
-        >
-          <div 
-            className="globe relative rounded-full"
-            style={{ 
-              transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-              width: '350px',
-              height: '350px',
-            }}
+      <div className="relative h-[400px] w-full overflow-hidden p-4">
+        <div className="canada-map-container h-full w-full relative">
+          {/* SVG Map of Canada */}
+          <svg 
+            viewBox="0 0 1000 850" 
+            className="h-full w-full"
+            aria-label="Map of Canada showing security incidents by province"
           >
-            {/* North America highlight - approximating Canada's position */}
-            <div className="canada-highlight absolute" style={{
-              top: '25%',
-              left: '20%',
-              width: '35%',
-              height: '25%',
-              borderRadius: '50%',
-              background: 'rgba(148, 163, 184, 0.3)',
-              pointerEvents: 'none',
-              zIndex: 2
-            }}></div>
+            {/* British Columbia */}
+            <path 
+              d="M100,240 L160,240 L180,300 L140,380 L100,400 L80,350 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "bc")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("bc")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
             
-            {/* Alert markers */}
-            {provincesWithAlerts.map(province => {
-              const position = getProvincePosition(province.id);
-              const markerColor = province.alertLevel === AlertLevel.SEVERE ? 'bg-danger' : 'bg-warning';
+            {/* Alberta */}
+            <path 
+              d="M180,300 L240,300 L240,400 L140,400 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "ab")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("ab")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Saskatchewan */}
+            <path 
+              d="M240,300 L300,300 L300,400 L240,400 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "sk")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("sk")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Manitoba */}
+            <path 
+              d="M300,300 L360,300 L370,350 L360,400 L300,400 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "mb")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("mb")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Ontario */}
+            <path 
+              d="M370,350 L440,330 L500,370 L480,450 L360,400 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "on")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("on")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Quebec */}
+            <path 
+              d="M500,370 L580,320 L600,400 L500,480 L480,450 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "qc")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("qc")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* New Brunswick */}
+            <circle 
+              cx="600" cy="430" r="20"
+              className={`${getProvinceColor(provinces.find(p => p.id === "nb")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("nb")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Nova Scotia */}
+            <circle 
+              cx="630" cy="450" r="25"
+              className={`${getProvinceColor(provinces.find(p => p.id === "ns")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("ns")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Prince Edward Island */}
+            <circle 
+              cx="615" cy="420" r="10"
+              className={`${getProvinceColor(provinces.find(p => p.id === "pe")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("pe")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Newfoundland and Labrador */}
+            <path 
+              d="M650,370 L680,370 L690,390 L670,420 L650,410 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "nl")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("nl")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Yukon */}
+            <path 
+              d="M120,180 L170,180 L170,240 L120,240 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "yt")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("yt")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Northwest Territories */}
+            <path 
+              d="M170,180 L270,180 L270,240 L170,240 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "nt")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("nt")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Nunavut */}
+            <path 
+              d="M270,180 L370,180 L370,240 L270,240 Z" 
+              className={`${getProvinceColor(provinces.find(p => p.id === "nu")?.alertLevel || AlertLevel.NORMAL)} transition-colors hover:fill-opacity-80 cursor-pointer`}
+              onMouseEnter={() => handleProvinceHover("nu")}
+              onMouseLeave={() => handleProvinceHover(null)}
+            />
+            
+            {/* Incident count circles */}
+            {provinces.map(province => {
+              const provinceIncidents = getIncidentsForProvince(province.id);
+              if (provinceIncidents.length === 0) return null;
+              
+              // Position coordinates for incident counters
+              const positionMap: Record<string, { x: number, y: number }> = {
+                bc: { x: 120, y: 320 },
+                ab: { x: 210, y: 350 },
+                sk: { x: 270, y: 350 },
+                mb: { x: 330, y: 350 },
+                on: { x: 420, y: 380 },
+                qc: { x: 540, y: 380 },
+                nb: { x: 600, y: 430 },
+                ns: { x: 630, y: 450 },
+                pe: { x: 615, y: 420 },
+                nl: { x: 670, y: 390 },
+                yt: { x: 145, y: 210 },
+                nt: { x: 220, y: 210 },
+                nu: { x: 320, y: 210 }
+              };
+              
+              const position = positionMap[province.id];
+              if (!position) return null;
               
               return (
-                <div 
-                  key={province.id}
-                  className={`absolute w-3 h-3 rounded-full ${markerColor} pulse-dot z-10`}
-                  style={{
-                    top: position.top,
-                    left: position.left
-                  }}
-                  title={`${province.name}: ${province.alertLevel === AlertLevel.SEVERE ? 'Severe Alert' : 'Warning'}`}
-                ></div>
+                <g key={province.id}>
+                  <circle 
+                    cx={position.x} 
+                    cy={position.y} 
+                    r={16} 
+                    className="fill-white stroke-slate-700 stroke-2" 
+                  />
+                  <text 
+                    x={position.x} 
+                    y={position.y} 
+                    textAnchor="middle" 
+                    dominantBaseline="central" 
+                    className="text-xs font-bold fill-slate-700"
+                  >
+                    {provinceIncidents.length}
+                  </text>
+                </g>
               );
             })}
+            
+            {/* Province labels */}
+            <text x="130" y="320" className="fill-slate-900 text-xs font-medium">BC</text>
+            <text x="210" y="350" className="fill-slate-900 text-xs font-medium">AB</text>
+            <text x="270" y="350" className="fill-slate-900 text-xs font-medium">SK</text>
+            <text x="330" y="350" className="fill-slate-900 text-xs font-medium">MB</text>
+            <text x="420" y="400" className="fill-slate-900 text-xs font-medium">ON</text>
+            <text x="540" y="400" className="fill-slate-900 text-xs font-medium">QC</text>
+            <text x="600" y="450" className="fill-slate-900 text-xs font-medium">NB</text>
+            <text x="630" y="470" className="fill-slate-900 text-xs font-medium">NS</text>
+            <text x="615" y="440" className="fill-slate-900 text-xs font-medium">PE</text>
+            <text x="670" y="410" className="fill-slate-900 text-xs font-medium">NL</text>
+            <text x="145" y="230" className="fill-slate-900 text-xs font-medium">YT</text>
+            <text x="220" y="230" className="fill-slate-900 text-xs font-medium">NT</text>
+            <text x="320" y="230" className="fill-slate-900 text-xs font-medium">NU</text>
+          </svg>
+          
+          {/* Province Info Popup when hovering */}
+          {activeProvinceId && (
+            <div className="absolute top-0 right-0 w-64 bg-white border rounded-lg shadow-lg p-4">
+              {provinces.find(p => p.id === activeProvinceId) && (
+                <>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium">
+                      {provinces.find(p => p.id === activeProvinceId)?.name}
+                    </h3>
+                    {getAlertLevelBadge(provinces.find(p => p.id === activeProvinceId)?.alertLevel || AlertLevel.NORMAL)}
+                  </div>
+                  <p className="text-sm mb-2">
+                    {getIncidentsForProvince(activeProvinceId).length} incidents reported
+                  </p>
+                  <Link to={`/province/${activeProvinceId}`}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      <MapPin className="mr-1 h-4 w-4" />
+                      View Details
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {/* Map legend */}
+        <div className="absolute bottom-2 right-2 p-2 bg-white/90 rounded-md shadow-sm text-xs">
+          <div className="font-medium mb-1">Alert Level</div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-danger"></div>
+            <span>Severe</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-warning"></div>
+            <span>Warning</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-success"></div>
+            <span>Normal</span>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="w-4 h-4 rounded-full bg-white border border-slate-700 flex items-center justify-center text-[10px]">5</div>
+            <span>Incident Count</span>
           </div>
         </div>
       </div>
