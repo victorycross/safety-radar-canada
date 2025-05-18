@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 import * as xml2js from "https://esm.sh/xml2js@0.6.2";
 
 const ALERT_READY_URL = "https://rss.naad-adna.pelmorex.com/";
@@ -54,15 +53,8 @@ async function fetchAlertReadyData() {
 
     const xmlText = await response.text();
     
-    // Parse the XML to get structured data
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-    
-    if (!xmlDoc) {
-      throw new Error("Failed to parse XML document");
-    }
-
-    // Convert XML to JSON for easier processing
+    // Skip DOMParser and directly use xml2js for parsing
+    // Parse the XML to JSON using xml2js
     const result = await xml2js.parseStringPromise(xmlText);
     
     // Extract entries from the feed
@@ -111,6 +103,7 @@ async function fetchAlertReadyData() {
       };
     });
     
+    console.log(`Processed ${processedAlerts.length} alerts successfully`);
     return processedAlerts;
   } catch (error) {
     console.error("Error fetching Alert Ready data:", error);
