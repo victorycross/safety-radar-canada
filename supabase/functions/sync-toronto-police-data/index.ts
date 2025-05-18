@@ -75,7 +75,8 @@ async function processData(data: any) {
       neighborhood: attributes.Hood_ID || attributes.neighbourhood,
       longitude: geometry?.x || attributes.longitude,
       latitude: geometry?.y || attributes.latitude,
-      location: geometry ? `POINT(${geometry.x} ${geometry.y})` : null,
+      // Fix: Don't create a PostGIS point directly, just store coordinates separately
+      // location: geometry ? `POINT(${geometry.x} ${geometry.y})` : null,
       raw_data: attributes
     };
   });
