@@ -81,6 +81,27 @@ const IncidentsList = () => {
     return province ? province.name : provinceId;
   };
 
+  if (sortedIncidents.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-bold">Recent Incidents</h2>
+          <p className="text-sm text-muted-foreground">
+            No incidents to display
+          </p>
+        </div>
+        
+        <Card className="text-center py-8 border-2 border-dashed rounded-lg">
+          <Info className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+          <p className="text-lg font-medium">No incidents found</p>
+          <p className="text-muted-foreground">
+            There are currently no incidents in the system
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div>
