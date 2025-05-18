@@ -9,78 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      data_sync_status: {
-        Row: {
-          last_sync_time: string | null
-          message: string | null
-          source: string
-          status: string | null
-        }
-        Insert: {
-          last_sync_time?: string | null
-          message?: string | null
-          source: string
-          status?: string | null
-        }
-        Update: {
-          last_sync_time?: string | null
-          message?: string | null
-          source?: string
-          status?: string | null
-        }
-        Relationships: []
-      }
-      toronto_police_incidents: {
-        Row: {
-          category: string | null
-          created_at: string | null
-          division: string | null
-          event_id: string | null
-          id: string
-          latitude: number | null
-          location: unknown | null
-          longitude: number | null
-          neighborhood: string | null
-          occurrence_date: string | null
-          premises_type: string | null
-          raw_data: Json | null
-          report_date: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string | null
-          division?: string | null
-          event_id?: string | null
-          id?: string
-          latitude?: number | null
-          location?: unknown | null
-          longitude?: number | null
-          neighborhood?: string | null
-          occurrence_date?: string | null
-          premises_type?: string | null
-          raw_data?: Json | null
-          report_date?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string | null
-          division?: string | null
-          event_id?: string | null
-          id?: string
-          latitude?: number | null
-          location?: unknown | null
-          longitude?: number | null
-          neighborhood?: string | null
-          occurrence_date?: string | null
-          premises_type?: string | null
-          raw_data?: Json | null
-          report_date?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
