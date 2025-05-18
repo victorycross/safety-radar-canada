@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,7 +10,7 @@ import { SearchIcon, Filter, Download, ExternalLink, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchDatasets, fetchDatasetDetails, Dataset, DatasetDetail } from "@/services/openDataService";
 import DatasetCard from "@/components/opendata/DatasetCard";
-import DatasetDetail from "@/components/opendata/DatasetDetail";
+import DatasetDetailPanel from "@/components/opendata/DatasetDetail";
 
 const OpenDataPage = () => {
   const { toast } = useToast();
@@ -160,7 +159,7 @@ const OpenDataPage = () => {
       </Tabs>
       
       {selectedDataset && (
-        <DatasetDetail 
+        <DatasetDetailPanel 
           dataset={selectedDataset} 
           details={datasetDetails} 
           isLoading={isLoadingDetails}
