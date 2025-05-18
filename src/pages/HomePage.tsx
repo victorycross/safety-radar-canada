@@ -8,7 +8,7 @@ import { useSecurity } from '@/context/SecurityContext';
 import { AlertLevel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Search } from 'lucide-react';
 import DataSourceUpdates from '@/components/sources/DataSourceUpdates';
 
 const HomePage = () => {
@@ -59,6 +59,28 @@ const HomePage = () => {
         <SimpleGlobeMap />
         
         <div className="space-y-6">
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Toronto Police Data</CardTitle>
+              <CardDescription>
+                Explore detailed reports from Toronto Police Service
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm">
+                Access our detailed database of Toronto Police incidents with filtering, mapping, and analysis tools.
+              </p>
+              <div className="flex justify-end">
+                <Link to="/toronto-data">
+                  <Button size="sm" className="flex items-center gap-2">
+                    <Search className="h-4 w-4" />
+                    <span>Explore Toronto Data</span>
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          
           <IncidentsList />
         </div>
       </div>

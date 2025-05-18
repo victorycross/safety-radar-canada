@@ -1,11 +1,11 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Info } from "lucide-react";
+import { Bell, Info, Search } from "lucide-react";
 import { IncidentSource, VerificationStatus } from "@/types";
 import TorontoPoliceSource from "@/components/sources/TorontoPoliceSource";
+import { Link } from "react-router-dom";
 
 const SourcesPage = () => {
   const sources = [
@@ -70,6 +70,29 @@ const SourcesPage = () => {
         <h2 className="text-xl font-semibold mb-4">Active Integrations</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <TorontoPoliceSource />
+          
+          <Card className="border-success/40">
+            <CardHeader>
+              <CardTitle className="text-lg">Explore Toronto Police Data</CardTitle>
+              <CardDescription>
+                View and analyze data imported from Toronto Police Service
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-2">
+              <p className="text-sm text-muted-foreground">
+                Access a detailed view of all imported incidents with filtering options, map visualization, 
+                and analysis tools.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button asChild>
+                <Link to="/toronto-data">
+                  <Search className="mr-2 h-4 w-4" />
+                  Explore Data
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       </div>
       
