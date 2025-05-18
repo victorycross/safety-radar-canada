@@ -37,12 +37,15 @@ const TorontoPoliceSource = () => {
   const triggerSync = async () => {
     setLoading(true);
     try {
-      // Direct HTTP request to the edge function instead of using supabase.functions.invoke
+      // Get the session using getSession() instead of the deprecated session() method
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      // Direct HTTP request to the edge function
       const response = await fetch('https://hablzabjqwdusajkoevb.supabase.co/functions/v1/sync-toronto-police-data', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.auth.session()?.access_token || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhYmx6YWJqcXdkdXNhamtvZXZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1MjkxOTYsImV4cCI6MjA2MzEwNTE5Nn0.Vt8DYuqfEu_7FHj8-xi_0CbNFfWqAUbyTTVzoY_yz0Q'}`
+          'Authorization': `Bearer ${sessionData?.session?.access_token || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhYmx6YWJqcXdkdXNhamtvZXZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1MjkxOTYsImV4cCI6MjA2MzEwNTE5Nn0.Vt8DYuqfEu_7FHj8-xi_0CbNFfWqAUbyTTVzoY_yz0Q'}`
         }
       });
       
