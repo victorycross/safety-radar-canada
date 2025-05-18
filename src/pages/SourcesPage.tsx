@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Bell, Info } from "lucide-react";
 import { IncidentSource, VerificationStatus } from "@/types";
+import TorontoPoliceSource from "@/components/sources/TorontoPoliceSource";
 
 const SourcesPage = () => {
   const sources = [
@@ -65,34 +66,44 @@ const SourcesPage = () => {
         <p className="text-muted-foreground">Connected information sources feeding the security dashboard</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sources.map((source) => (
-          <Card key={source.id}>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between">
-                <CardTitle>{source.name}</CardTitle>
-                {source.verificationStatus === VerificationStatus.VERIFIED ? (
-                  <Badge className="bg-success hover:bg-success/90">Verified</Badge>
-                ) : (
-                  <Badge variant="outline">Unverified</Badge>
-                )}
-              </div>
-              <CardDescription>{source.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="pb-2">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Bell className="h-3 w-3 mr-1" />
-                <span>Last update: {source.lastUpdate}</span>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" size="sm" className="w-full">
-                <Info className="mr-2 h-4 w-4" />
-                Configure Source
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Active Integrations</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <TorontoPoliceSource />
+        </div>
+      </div>
+      
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Available Sources</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sources.map((source) => (
+            <Card key={source.id}>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between">
+                  <CardTitle>{source.name}</CardTitle>
+                  {source.verificationStatus === VerificationStatus.VERIFIED ? (
+                    <Badge className="bg-success hover:bg-success/90">Verified</Badge>
+                  ) : (
+                    <Badge variant="outline">Unverified</Badge>
+                  )}
+                </div>
+                <CardDescription>{source.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Bell className="h-3 w-3 mr-1" />
+                  <span>Last update: {source.lastUpdate}</span>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button variant="outline" size="sm" className="w-full">
+                  <Info className="mr-2 h-4 w-4" />
+                  Configure Source
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
