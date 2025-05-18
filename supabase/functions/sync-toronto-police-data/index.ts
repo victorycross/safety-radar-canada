@@ -6,6 +6,12 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") as string;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") as string;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
 
+// CORS headers for browser requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 // Use the service role key for full admin rights to DB
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -33,6 +39,7 @@ async function fetchPoliceData(endpoint: string, params: Record<string, string> 
       url.searchParams.append(key, value);
     });
     
+    console.log(`Fetching data from: ${url.toString()}`);
     const response = await fetch(url.toString());
     
     if (!response.ok) {
@@ -87,12 +94,15 @@ async function processData(data: any) {
     return { processed: 0, message: "No new records to insert" };
   }
   
+  console.log(`Inserting ${newRecords.length} new records`);
+  
   // Insert new records
   const { data: insertedData, error } = await supabase
     .from('toronto_police_incidents')
     .insert(newRecords);
   
   if (error) {
+    console.error("Error inserting records:", error);
     throw error;
   }
   
@@ -101,7 +111,14 @@ async function processData(data: any) {
 
 // Main handler
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+  
   try {
+    console.log("Starting Toronto Police data sync");
+    
     // Update status to processing
     await supabase
       .from('data_sync_status')
@@ -112,14 +129,17 @@ serve(async (req) => {
       })
       .eq('source', 'toronto_police');
     
+    console.log("Fetching major crimes data");
     // Fetch major crimes data
     const majorCrimes = await fetchPoliceData(MAJOR_CRIMES_ENDPOINT);
     const majorCrimesResult = await processData(majorCrimes);
     
+    console.log("Fetching shooting data");
     // Fetch shooting data
     const shootings = await fetchPoliceData(SHOOTING_ENDPOINT);
     const shootingsResult = await processData(shootings);
     
+    console.log("Sync completed successfully");
     // Update status to success
     await supabase
       .from('data_sync_status')
@@ -136,10 +156,17 @@ serve(async (req) => {
         majorCrimes: majorCrimesResult,
         shootings: shootingsResult
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders 
+        } 
+      }
     );
     
   } catch (error: any) {
+    console.error("Error during sync:", error);
+    
     // Update status to error
     await supabase
       .from('data_sync_status')
@@ -157,7 +184,10 @@ serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: { "Content-Type": "application/json" } 
+        headers: { 
+          "Content-Type": "application/json",
+          ...corsHeaders
+        } 
       }
     );
   }

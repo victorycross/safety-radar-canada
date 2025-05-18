@@ -37,9 +37,18 @@ const TorontoPoliceSource = () => {
   const triggerSync = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('sync-toronto-police-data');
+      // Direct HTTP request to the edge function instead of using supabase.functions.invoke
+      const response = await fetch('https://hablzabjqwdusajkoevb.supabase.co/functions/v1/sync-toronto-police-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.auth.session()?.access_token || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhYmx6YWJqcXdkdXNhamtvZXZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1MjkxOTYsImV4cCI6MjA2MzEwNTE5Nn0.Vt8DYuqfEu_7FHj8-xi_0CbNFfWqAUbyTTVzoY_yz0Q'}`
+        }
+      });
       
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`Failed to sync data: ${response.statusText}`);
+      }
       
       toast({
         title: "Sync initiated",
@@ -52,6 +61,7 @@ const TorontoPoliceSource = () => {
         setLoading(false);
       }, 3000);
     } catch (error: any) {
+      console.error('Sync error:', error);
       toast({
         variant: "destructive",
         title: "Sync failed",
@@ -77,7 +87,7 @@ const TorontoPoliceSource = () => {
           {syncStatus?.status && (
             syncStatus.status === 'success' ? (
               <Badge className="bg-success hover:bg-success/90">Synced</Badge>
-            ) : syncStatus.status === 'pending' ? (
+            ) : syncStatus.status === 'pending' || syncStatus.status === 'processing' ? (
               <Badge variant="outline">Pending</Badge>
             ) : (
               <Badge variant="destructive">
