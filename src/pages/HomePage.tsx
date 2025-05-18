@@ -58,6 +58,22 @@ const HomePage = () => {
         </Card>
       )}
       
+      {alertProvinces.length === 0 && (
+        <Card className="border-success bg-success-light">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">All Clear</CardTitle>
+            <CardDescription>
+              No provinces currently reporting security alerts
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-8">
+              <p className="text-center text-success font-medium">All provinces are reporting normal security status</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <SimpleGlobeMap />

@@ -56,6 +56,16 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId }) => {
     ? incidents.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0] 
     : null;
   
+  // Format current date for display
+  const currentDate = new Date().toLocaleString('en-CA', { 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  
   return (
     <Card>
       <CardHeader className={`${getStatusColor()} text-white`}>
@@ -89,7 +99,7 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId }) => {
       </CardContent>
       <CardFooter className="flex justify-between border-t pt-4">
         <div className="text-xs text-muted-foreground">
-          Last updated: {new Date().toLocaleString('en-CA')}
+          Last updated: {currentDate}
         </div>
         <div className="text-xs font-medium">
           Security Barometer
