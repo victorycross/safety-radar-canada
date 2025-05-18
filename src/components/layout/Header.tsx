@@ -23,14 +23,14 @@ const Header = () => {
           {severeCount > 0 && (
             <div className="mr-3 flex items-center">
               <span className="h-3 w-3 rounded-full bg-danger mr-1"></span>
-              <span className="text-sm text-danger font-medium">{severeCount} Severe</span>
+              <span className="text-sm text-danger font-medium">{severeCount} {severeCount === 1 ? 'Severe' : 'Severe'}</span>
             </div>
           )}
           
           {warningCount > 0 && (
             <div className="mr-3 flex items-center">
               <span className="h-3 w-3 rounded-full bg-warning mr-1"></span>
-              <span className="text-sm text-warning font-medium">{warningCount} Warning</span>
+              <span className="text-sm text-warning font-medium">{warningCount} {warningCount === 1 ? 'Warning' : 'Warning'}</span>
             </div>
           )}
         </div>

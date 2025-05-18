@@ -17,7 +17,7 @@ import {
 const Sidebar = () => {
   const { provinces } = useSecurity();
   
-  // Count incidents by alert level
+  // Count provinces by alert level
   const severeCount = provinces.filter(p => p.alertLevel === AlertLevel.SEVERE).length;
   const warningCount = provinces.filter(p => p.alertLevel === AlertLevel.WARNING).length;
 
@@ -38,13 +38,19 @@ const Sidebar = () => {
           {severeCount > 0 && (
             <div className="flex items-center">
               <div className="h-2 w-2 rounded-full bg-danger mr-2"></div>
-              <span>{severeCount} Severe</span>
+              <span>{severeCount} {severeCount === 1 ? 'Severe' : 'Severe'}</span>
             </div>
           )}
           {warningCount > 0 && (
             <div className="flex items-center">
               <div className="h-2 w-2 rounded-full bg-warning mr-2"></div>
-              <span>{warningCount} Warning</span>
+              <span>{warningCount} {warningCount === 1 ? 'Warning' : 'Warning'}</span>
+            </div>
+          )}
+          {severeCount === 0 && warningCount === 0 && (
+            <div className="flex items-center">
+              <div className="h-2 w-2 rounded-full bg-success mr-2"></div>
+              <span>All Clear</span>
             </div>
           )}
         </div>
