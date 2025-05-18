@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useSecurity } from '@/context/SecurityContext';
+import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { AlertLevel } from '@/types';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -9,7 +9,7 @@ import { Circle, Globe, Map } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const SimpleGlobeMap = () => {
-  const { provinces } = useSecurity();
+  const { provinces } = useSupabaseDataContext();
   const globeRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [rotation, setRotation] = useState({ x: 20, y: -10 });
