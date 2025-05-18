@@ -8,7 +8,7 @@ import { useSecurity } from '@/context/SecurityContext';
 import { AlertLevel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Bell } from 'lucide-react';
 
 const HomePage = () => {
   const { provinces } = useSecurity();
@@ -39,7 +39,13 @@ const HomePage = () => {
                 <StatusWidget key={province.id} provinceId={province.id} />
               ))}
             </div>
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex justify-between">
+              <Link to="/alert-ready">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  <span>Alert Ready Feed</span>
+                </Button>
+              </Link>
               <Link to="/widget">
                 <Button variant="outline" className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4" />

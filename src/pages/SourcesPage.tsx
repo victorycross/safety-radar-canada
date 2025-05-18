@@ -3,11 +3,21 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Info } from "lucide-react";
+import { Bell, Info, AlertTriangle, Globe } from "lucide-react";
 import { IncidentSource, VerificationStatus } from "@/types";
+import { Link } from 'react-router-dom';
 
 const SourcesPage = () => {
   const sources = [
+    {
+      id: "alert-ready",
+      name: "Alert Ready",
+      description: "Canada's National Public Alerting System for emergency notifications",
+      type: IncidentSource.POLICE,
+      verificationStatus: VerificationStatus.VERIFIED,
+      lastUpdate: "real-time",
+      route: "/alert-ready"
+    },
     {
       id: "police",
       name: "Police Reports",
@@ -81,15 +91,28 @@ const SourcesPage = () => {
             </CardHeader>
             <CardContent className="pb-2">
               <div className="flex items-center text-sm text-muted-foreground">
-                <Bell className="h-3 w-3 mr-1" />
+                {source.id === "alert-ready" ? (
+                  <AlertTriangle className="h-3 w-3 mr-1 text-warning" />
+                ) : (
+                  <Bell className="h-3 w-3 mr-1" />
+                )}
                 <span>Last update: {source.lastUpdate}</span>
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" size="sm" className="w-full">
-                <Info className="mr-2 h-4 w-4" />
-                Configure Source
-              </Button>
+              {source.route ? (
+                <Link to={source.route} className="w-full">
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Globe className="mr-2 h-4 w-4" />
+                    View Data Feed
+                  </Button>
+                </Link>
+              ) : (
+                <Button variant="outline" size="sm" className="w-full">
+                  <Info className="mr-2 h-4 w-4" />
+                  Configure Source
+                </Button>
+              )}
             </CardFooter>
           </Card>
         ))}
