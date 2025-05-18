@@ -9,6 +9,7 @@ import { AlertLevel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { CheckCircle, Bell } from 'lucide-react';
+import RecentAlerts from '@/components/dashboard/RecentAlerts';
 
 const HomePage = () => {
   const { provinces } = useSecurity();
@@ -58,7 +59,10 @@ const HomePage = () => {
       )}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SimpleGlobeMap />
+        <div className="space-y-6">
+          <SimpleGlobeMap />
+          <RecentAlerts />
+        </div>
         
         <div className="space-y-6">
           <IncidentsList />

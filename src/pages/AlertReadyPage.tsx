@@ -5,23 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, AlertTriangle, Bell, Info, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-// Interface for CAP Alert data
-interface AlertItem {
-  id: string;
-  title: string;
-  published: string;
-  updated?: string;
-  summary: string;
-  severity: 'Minor' | 'Moderate' | 'Severe' | 'Extreme' | 'Unknown';
-  urgency: 'Immediate' | 'Expected' | 'Future' | 'Past' | 'Unknown';
-  category: string;
-  status: 'Actual' | 'Exercise' | 'System' | 'Test' | 'Draft';
-  area: string;
-  url?: string;
-}
+import { 
+  AlertItem, 
+  fetchAlertReadyData, 
+  getSeverityBadge,
+  getUrgencyBadge,
+  formatAlertDate 
+} from '@/utils/alertReadyUtils';
 
 const AlertReadyPage = () => {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
@@ -36,20 +27,11 @@ const AlertReadyPage = () => {
   
   const fetchAlerts = async () => {
     setLoading(true);
+    setError(null);
     
     try {
-      // Call the Supabase edge function to fetch alerts
-      const { data, error } = await supabase.functions.invoke('fetch-alerts', {
-        body: { source: 'alert-ready' }
-      });
-      
-      if (error) throw new Error(error.message);
-      
-      if (data && Array.isArray(data.alerts)) {
-        setAlerts(data.alerts);
-      } else {
-        setAlerts([]);
-      }
+      const data = await fetchAlertReadyData();
+      setAlerts(data);
     } catch (err) {
       console.error('Error fetching alerts:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch alerts');
@@ -63,44 +45,14 @@ const AlertReadyPage = () => {
     }
   };
   
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
-      case 'Extreme':
-        return <Badge className="bg-danger">Extreme</Badge>;
-      case 'Severe':
-        return <Badge className="bg-danger/80">Severe</Badge>;
-      case 'Moderate':
-        return <Badge className="bg-warning">Moderate</Badge>;
-      case 'Minor':
-        return <Badge className="bg-warning/70">Minor</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
+  const renderSeverityBadge = (severity: string) => {
+    const badgeInfo = getSeverityBadge(severity);
+    return <Badge className={badgeInfo.color}>{badgeInfo.text}</Badge>;
   };
   
-  const getUrgencyBadge = (urgency: string) => {
-    switch (urgency) {
-      case 'Immediate':
-        return <Badge className="bg-danger/90">Immediate</Badge>;
-      case 'Expected':
-        return <Badge className="bg-warning/90">Expected</Badge>;
-      case 'Future':
-        return <Badge variant="secondary">Future</Badge>;
-      case 'Past':
-        return <Badge variant="outline">Past</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-CA', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const renderUrgencyBadge = (urgency: string) => {
+    const badgeInfo = getUrgencyBadge(urgency);
+    return <Badge className={badgeInfo.color}>{badgeInfo.text}</Badge>;
   };
   
   const filterAlerts = (alerts: AlertItem[]) => {
@@ -186,19 +138,19 @@ const AlertReadyPage = () => {
           ) : (
             <div className="space-y-4">
               {filteredAlerts.map((alert) => (
-                <Card key={alert.id} className="overflow-hidden">
+                <Card key={alert.id + Math.random()} className="overflow-hidden">
                   <div className={`h-2 ${alert.severity === 'Extreme' || alert.severity === 'Severe' ? 'bg-danger' : alert.urgency === 'Immediate' ? 'bg-warning' : 'bg-muted'}`}></div>
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-lg">{alert.title}</CardTitle>
                       <div className="flex space-x-2">
-                        {getSeverityBadge(alert.severity)}
-                        {getUrgencyBadge(alert.urgency)}
+                        {renderSeverityBadge(alert.severity)}
+                        {renderUrgencyBadge(alert.urgency)}
                       </div>
                     </div>
                     <CardDescription>
-                      Published: {formatDate(alert.published)}
-                      {alert.updated && ` • Updated: ${formatDate(alert.updated)}`}
+                      Published: {formatAlertDate(alert.published)}
+                      {alert.updated && ` • Updated: ${formatAlertDate(alert.updated)}`}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
