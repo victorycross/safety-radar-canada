@@ -8,7 +8,7 @@ import { useSecurity } from '@/context/SecurityContext';
 import { AlertLevel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Search } from 'lucide-react';
+import { CheckCircle, Search, Database } from 'lucide-react';
 import DataSourceUpdates from '@/components/sources/DataSourceUpdates';
 
 const HomePage = () => {
@@ -75,6 +75,28 @@ const HomePage = () => {
                   <Button size="sm" className="flex items-center gap-2">
                     <Search className="h-4 w-4" />
                     <span>Explore Toronto Data</span>
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-success/20 bg-success/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Canada Open Data Portal</CardTitle>
+              <CardDescription>
+                Access public data from the Open Government Portal
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm">
+                Explore datasets from Canada's Open Government Portal, including data from provinces and municipalities.
+              </p>
+              <div className="flex justify-end">
+                <Link to="/open-data">
+                  <Button size="sm" variant="outline" className="flex items-center gap-2">
+                    <Database className="h-4 w-4" />
+                    <span>Explore Open Data</span>
                   </Button>
                 </Link>
               </div>

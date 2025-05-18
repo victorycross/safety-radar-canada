@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Info, Search } from "lucide-react";
+import { Bell, Info, Search, Database } from "lucide-react";
 import { IncidentSource, VerificationStatus } from "@/types";
 import TorontoPoliceSource from "@/components/sources/TorontoPoliceSource";
 import { Link } from "react-router-dom";
@@ -89,6 +90,29 @@ const SourcesPage = () => {
                 <Link to="/toronto-data">
                   <Search className="mr-2 h-4 w-4" />
                   Explore Data
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+          
+          <Card className="border-primary/40">
+            <CardHeader>
+              <CardTitle className="text-lg">Canada Open Data Portal</CardTitle>
+              <CardDescription>
+                Access public data from the Open Government CKAN API
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-2">
+              <p className="text-sm text-muted-foreground">
+                Browse and search datasets from Canada's Open Government Portal, including 
+                data federated from provinces and municipalities.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button asChild>
+                <Link to="/open-data">
+                  <Database className="mr-2 h-4 w-4" />
+                  Explore Open Data
                 </Link>
               </Button>
             </CardFooter>

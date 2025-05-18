@@ -19,6 +19,7 @@ import WidgetPage from "./pages/WidgetPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ProvinceDetailPage from "./pages/ProvinceDetailPage";
 import TorontoDataPage from "./pages/TorontoDataPage";
+import OpenDataPage from "./pages/OpenDataPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="widget" element={<WidgetPage />} />
               <Route path="province/:provinceId" element={<ProvinceDetailPage />} />
               <Route path="toronto-data" element={<TorontoDataPage />} />
+              <Route path="open-data" element={<OpenDataPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
