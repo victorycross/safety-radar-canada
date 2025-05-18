@@ -63,13 +63,20 @@ const SimpleGlobeMap = () => {
       </div>
       
       <div className="relative h-[400px] w-full overflow-hidden p-4">
-        <div className="canada-map-container h-full w-full relative">
-          {/* SVG Map of Canada */}
+        <div className="north-america-map-container h-full w-full relative">
+          {/* SVG Map of North America with focus on Canadian provinces */}
           <svg 
-            viewBox="0 0 1000 850" 
+            viewBox="0 0 1000 600" 
             className="h-full w-full"
-            aria-label="Map of Canada showing security incidents by province"
+            aria-label="Map of North America focusing on Canadian provinces showing security incidents"
           >
+            {/* United States (simplified background) */}
+            <path 
+              d="M100,400 L150,450 L250,470 L350,460 L450,470 L550,450 L600,430 L630,400 L600,350 L550,300 L500,280 L450,270 L400,280 L350,300 L300,320 L250,330 L200,350 L150,380 Z" 
+              className="fill-slate-100 stroke-slate-300"
+            />
+            
+            {/* Canadian Provinces */}
             {/* British Columbia */}
             <path 
               d="M100,240 L160,240 L180,300 L140,380 L100,400 L80,350 Z" 
@@ -150,6 +157,7 @@ const SimpleGlobeMap = () => {
               onMouseLeave={() => handleProvinceHover(null)}
             />
             
+            {/* Northern territories */}
             {/* Yukon */}
             <path 
               d="M120,180 L170,180 L170,240 L120,240 Z" 
@@ -173,6 +181,52 @@ const SimpleGlobeMap = () => {
               onMouseEnter={() => handleProvinceHover("nu")}
               onMouseLeave={() => handleProvinceHover(null)}
             />
+            
+            {/* Add ocean/water */}
+            <path 
+              d="M0,0 L0,600 L100,600 L100,400 L80,350 L100,240 L120,180 L100,100 L0,100 Z" 
+              className="fill-blue-100 stroke-blue-200"
+            />
+            <path 
+              d="M650,410 L670,420 L690,390 L680,370 L700,350 L750,400 L800,350 L850,400 L900,350 L950,400 L1000,350 L1000,600 L0,600 L100,600 L100,400 L140,380 L140,400 L240,400 L300,400 L360,400 L480,450 L500,480 L600,430 L630,450 Z" 
+              className="fill-blue-100 stroke-blue-200"
+            />
+            
+            {/* Canada-US Border line */}
+            <path 
+              d="M100,400 L140,380 L140,400" 
+              className="fill-none stroke-slate-400 stroke-dashed"
+              strokeDasharray="5,5"
+            />
+            
+            {/* Arctic/Northern waters */}
+            <path 
+              d="M0,0 L1000,0 L1000,100 L900,150 L800,120 L700,150 L600,120 L500,150 L400,120 L300,130 L200,100 L100,100 L120,180 L270,180 L370,180 L370,240 L360,300 L300,300 L240,300 L180,300 L160,240 L120,240 Z" 
+              className="fill-blue-100 stroke-blue-200"
+            />
+            
+            {/* Province labels */}
+            <text x="130" y="320" className="fill-slate-900 text-xs font-medium">BC</text>
+            <text x="210" y="350" className="fill-slate-900 text-xs font-medium">AB</text>
+            <text x="270" y="350" className="fill-slate-900 text-xs font-medium">SK</text>
+            <text x="330" y="350" className="fill-slate-900 text-xs font-medium">MB</text>
+            <text x="420" y="400" className="fill-slate-900 text-xs font-medium">ON</text>
+            <text x="540" y="400" className="fill-slate-900 text-xs font-medium">QC</text>
+            <text x="600" y="430" className="fill-slate-900 text-xs font-medium">NB</text>
+            <text x="630" y="450" className="fill-slate-900 text-xs font-medium">NS</text>
+            <text x="615" y="420" className="fill-slate-900 text-xs font-medium">PE</text>
+            <text x="670" y="390" className="fill-slate-900 text-xs font-medium">NL</text>
+            <text x="145" y="210" className="fill-slate-900 text-xs font-medium">YT</text>
+            <text x="220" y="210" className="fill-slate-900 text-xs font-medium">NT</text>
+            <text x="320" y="210" className="fill-slate-900 text-xs font-medium">NU</text>
+            
+            {/* USA label */}
+            <text x="350" y="380" className="fill-slate-400 text-xs font-medium opacity-70">UNITED STATES</text>
+            
+            {/* Ocean labels */}
+            <text x="50" y="50" className="fill-blue-400 text-xs font-medium italic">ARCTIC OCEAN</text>
+            <text x="800" y="450" className="fill-blue-400 text-xs font-medium italic">ATLANTIC OCEAN</text>
+            <text x="50" y="500" className="fill-blue-400 text-xs font-medium italic">PACIFIC OCEAN</text>
             
             {/* Incident count circles */}
             {provinces.map(province => {
@@ -219,21 +273,6 @@ const SimpleGlobeMap = () => {
                 </g>
               );
             })}
-            
-            {/* Province labels */}
-            <text x="130" y="320" className="fill-slate-900 text-xs font-medium">BC</text>
-            <text x="210" y="350" className="fill-slate-900 text-xs font-medium">AB</text>
-            <text x="270" y="350" className="fill-slate-900 text-xs font-medium">SK</text>
-            <text x="330" y="350" className="fill-slate-900 text-xs font-medium">MB</text>
-            <text x="420" y="400" className="fill-slate-900 text-xs font-medium">ON</text>
-            <text x="540" y="400" className="fill-slate-900 text-xs font-medium">QC</text>
-            <text x="600" y="450" className="fill-slate-900 text-xs font-medium">NB</text>
-            <text x="630" y="470" className="fill-slate-900 text-xs font-medium">NS</text>
-            <text x="615" y="440" className="fill-slate-900 text-xs font-medium">PE</text>
-            <text x="670" y="410" className="fill-slate-900 text-xs font-medium">NL</text>
-            <text x="145" y="230" className="fill-slate-900 text-xs font-medium">YT</text>
-            <text x="220" y="230" className="fill-slate-900 text-xs font-medium">NT</text>
-            <text x="320" y="230" className="fill-slate-900 text-xs font-medium">NU</text>
           </svg>
           
           {/* Province Info Popup when hovering */}
