@@ -50,7 +50,7 @@ const AlertsList = ({ alerts, loading, error, fetchAlerts, activeView }: AlertsL
   return (
     <div className="space-y-4">
       {alerts.map((alert) => (
-        <AlertCard key={alert.id + Math.random()} alert={alert} />
+        <AlertCard key={alert.id} alert={alert} />
       ))}
     </div>
   );
