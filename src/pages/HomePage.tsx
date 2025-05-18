@@ -9,6 +9,7 @@ import { AlertLevel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
+import DataSourceUpdates from '@/components/sources/DataSourceUpdates';
 
 const HomePage = () => {
   const { provinces } = useSecurity();
@@ -50,6 +51,9 @@ const HomePage = () => {
           </CardContent>
         </Card>
       )}
+      
+      {/* Data Source Updates Section */}
+      <DataSourceUpdates />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SimpleGlobeMap />
