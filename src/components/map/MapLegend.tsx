@@ -1,5 +1,7 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { Bell } from 'lucide-react';
 
 const MapLegend = () => {
   return (
@@ -20,6 +22,12 @@ const MapLegend = () => {
       <div className="flex items-center gap-2 mt-1">
         <div className="w-4 h-4 rounded-full bg-white border border-slate-700 flex items-center justify-center text-[10px]">5</div>
         <span>Incident Count</span>
+      </div>
+      <div className="mt-2 pt-2 border-t border-slate-200">
+        <Link to="/alert-ready" className="text-primary text-[10px] flex items-center">
+          <Bell className="w-2 h-2 mr-1" />
+          View BC Alerts
+        </Link>
       </div>
     </div>
   );
