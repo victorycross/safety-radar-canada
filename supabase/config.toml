@@ -3,3 +3,9 @@ project_id = "hablzabjqwdusajkoevb"
 
 [functions.fetch-alerts]
 verify_jwt = false
+
+[functions.fetch-bc-alerts]
+verify_jwt = false
+
+[functions.fetch-everbridge-alerts]
+verify_jwt = false

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +13,15 @@ const SourcesPage = () => {
       name: "Alert Ready",
       description: "Canada's National Public Alerting System for emergency notifications",
       type: IncidentSource.POLICE,
+      verificationStatus: VerificationStatus.VERIFIED,
+      lastUpdate: "real-time",
+      route: "/alert-ready"
+    },
+    {
+      id: "everbridge",
+      name: "Everbridge Alerts",
+      description: "Emergency notifications from Everbridge critical event management platform",
+      type: IncidentSource.EVERBRIDGE,
       verificationStatus: VerificationStatus.VERIFIED,
       lastUpdate: "real-time",
       route: "/alert-ready"
@@ -41,14 +49,6 @@ const SourcesPage = () => {
       type: IncidentSource.US_SOC,
       verificationStatus: VerificationStatus.VERIFIED,
       lastUpdate: "15 minutes ago"
-    },
-    {
-      id: "everbridge",
-      name: "Everbridge Alerts",
-      description: "Emergency notifications from Everbridge critical event management platform",
-      type: IncidentSource.EVERBRIDGE,
-      verificationStatus: VerificationStatus.VERIFIED,
-      lastUpdate: "30 minutes ago"
     },
     {
       id: "news",
@@ -91,7 +91,7 @@ const SourcesPage = () => {
             </CardHeader>
             <CardContent className="pb-2">
               <div className="flex items-center text-sm text-muted-foreground">
-                {source.id === "alert-ready" ? (
+                {source.id === "alert-ready" || source.id === "everbridge" ? (
                   <AlertTriangle className="h-3 w-3 mr-1 text-warning" />
                 ) : (
                   <Bell className="h-3 w-3 mr-1" />
