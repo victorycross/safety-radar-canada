@@ -78,6 +78,7 @@ const AlertReadyPage = () => {
                 loading={nationalLoading}
                 error={nationalError}
                 fetchAlerts={fetchNationalAlerts}
+                activeView={activeTab}
               />
             </TabsContent>
             
@@ -87,6 +88,7 @@ const AlertReadyPage = () => {
                 loading={nationalLoading}
                 error={nationalError}
                 fetchAlerts={fetchNationalAlerts}
+                activeView={activeTab}
               />
             </TabsContent>
             
@@ -96,6 +98,7 @@ const AlertReadyPage = () => {
                 loading={nationalLoading}
                 error={nationalError}
                 fetchAlerts={fetchNationalAlerts}
+                activeView={activeTab}
               />
             </TabsContent>
           </Tabs>
