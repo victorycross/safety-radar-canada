@@ -11,7 +11,8 @@ import {
   Info,
   MapPin,
   Search,
-  Users
+  Users,
+  Settings
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -119,6 +120,16 @@ const Sidebar = () => {
         >
           <Users className="mr-2" size={18} />
           Employee Distribution
+        </NavLink>
+        
+        <NavLink 
+          to="/admin" 
+          className={({ isActive }) => 
+            cn("flex items-center px-3 py-2 rounded-md text-sm", 
+              isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
+        >
+          <Settings className="mr-2" size={18} />
+          Admin Dashboard
         </NavLink>
         
         <NavLink 
