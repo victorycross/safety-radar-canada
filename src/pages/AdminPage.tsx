@@ -66,7 +66,7 @@ const AdminPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Badge variant="outline" className="justify-center p-3">
                     <AlertTriangle className="mr-2 h-4 w-4" />
-                    <1min Alert Response Time
+                    &lt;1min Alert Response Time
                   </Badge>
                   <Badge variant="outline" className="justify-center p-3">
                     <Users className="mr-2 h-4 w-4" />
@@ -248,11 +248,11 @@ const AdminPage = () => {
                 <div className="pl-4 space-y-2 text-sm">
                   <p><strong>Performance Targets:</strong></p>
                   <ul className="list-disc list-inside pl-4 space-y-1">
-                    <li>Application load time: <3 seconds</li>
+                    <li>Application load time: &lt;3 seconds</li>
                     <li>Dashboard refresh rate: 30 seconds</li>
                     <li>Concurrent users: 500+</li>
                     <li>Data processing: 10,000 records/minute</li>
-                    <li>API response time: <500ms</li>
+                    <li>API response time: &lt;500ms</li>
                     <li>99.9% uptime SLA</li>
                   </ul>
                 </div>
@@ -466,8 +466,8 @@ const AdminPage = () => {
                   <p><strong>Conditions:</strong></p>
                   <ul className="list-disc list-inside pl-4 space-y-1">
                     <li>If Alert Level = Severe, immediate escalation</li>
-                    <li>If Alert Level = Warning and >2 hours old, escalate</li>
-                    <li>If incident unassigned for >30 minutes, escalate</li>
+                    <li>If Alert Level = Warning and &gt;2 hours old, escalate</li>
+                    <li>If incident unassigned for &gt;30 minutes, escalate</li>
                   </ul>
                   <p><strong>Actions:</strong></p>
                   <ul className="list-disc list-inside pl-4 space-y-1">
@@ -605,7 +605,7 @@ const AdminPage = () => {
                   <p><strong>Calculated Measures:</strong></p>
                   <ul className="list-disc list-inside pl-4 space-y-1">
                     <li>Total Employees = SUM(Employees[Count])</li>
-                    <li>Employees at Risk = CALCULATE(SUM(Employees[Count]), Provinces[AlertLevel] IN {"Warning", "Severe"})</li>
+                    <li>Employees at Risk = CALCULATE(SUM(Employees[Count]), Provinces[AlertLevel] IN {"{\"Warning\", \"Severe\"}"})</li>
                     <li>Risk Percentage = [Employees at Risk] / [Total Employees]</li>
                     <li>Province Risk Score = SWITCH(Provinces[AlertLevel], "Normal", 1, "Warning", 2, "Severe", 3)</li>
                   </ul>
@@ -651,10 +651,10 @@ const AdminPage = () => {
                   </ul>
                   <p><strong>Relationships:</strong></p>
                   <ul className="list-disc list-inside pl-4 space-y-1">
-                    <li>Incidents -> Provinces (Many-to-One)</li>
-                    <li>Employees -> Provinces (Many-to-One)</li>
-                    <li>Check-ins -> Employees (Many-to-One)</li>
-                    <li>All fact tables -> Date (Many-to-One)</li>
+                    <li>Incidents -&gt; Provinces (Many-to-One)</li>
+                    <li>Employees -&gt; Provinces (Many-to-One)</li>
+                    <li>Check-ins -&gt; Employees (Many-to-One)</li>
+                    <li>All fact tables -&gt; Date (Many-to-One)</li>
                   </ul>
                 </div>
               </div>
