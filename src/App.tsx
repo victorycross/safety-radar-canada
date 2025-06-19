@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SupabaseDataProvider } from "./context/SupabaseDataProvider";
+import { SecurityProvider } from "./context/SecurityContext";
 
 // Import layout
 import MainLayout from "./components/layout/MainLayout";
@@ -27,24 +28,26 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <SupabaseDataProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<HomePage />} />
-              <Route path="incidents" element={<IncidentsPage />} />
-              <Route path="report" element={<ReportPage />} />
-              <Route path="sources" element={<SourcesPage />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
-              <Route path="employees" element={<EmployeesPage />} />
-              <Route path="widget" element={<WidgetPage />} />
-              <Route path="province/:provinceId" element={<ProvinceDetailPage />} />
-              <Route path="alert-ready" element={<AlertReadyPage />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <SecurityProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<HomePage />} />
+                <Route path="incidents" element={<IncidentsPage />} />
+                <Route path="report" element={<ReportPage />} />
+                <Route path="sources" element={<SourcesPage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="employees" element={<EmployeesPage />} />
+                <Route path="widget" element={<WidgetPage />} />
+                <Route path="province/:provinceId" element={<ProvinceDetailPage />} />
+                <Route path="alert-ready" element={<AlertReadyPage />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </SecurityProvider>
       </SupabaseDataProvider>
     </TooltipProvider>
   </QueryClientProvider>
