@@ -1,8 +1,10 @@
+
 import React from 'react';
 import CanadianProvincesGrid from '@/components/map/CanadianProvincesGrid';
 import InternationalHubs from '@/components/map/InternationalHubs';
 import IncidentsList from '@/components/incidents/IncidentsList';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import StatusWidget from '@/components/dashboard/StatusWidget';
 import { AlertLevel } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -12,11 +14,13 @@ import RecentAlerts from '@/components/dashboard/RecentAlerts';
 import EmployeeDistributionChart from '@/components/dashboard/EmployeeDistributionChart';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
+import { useAccordionState } from '@/hooks/useAccordionState';
 import LocationVisibilitySettings from '@/components/map/LocationVisibilitySettings';
 
 const HomePage = () => {
   const { provinces, loading } = useSupabaseDataContext();
   const { isProvinceVisible } = useLocationVisibility();
+  const { getOpenSections } = useAccordionState();
   
   // International hubs data - consolidated here
   const internationalHubs = [
@@ -82,80 +86,148 @@ const HomePage = () => {
         />
       </div>
       
-      {alertProvinces.length > 0 && (
-        <Card className="border-warning bg-warning-light">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Active Alerts</CardTitle>
-            <CardDescription>
-              {alertProvinces.length} {alertProvinces.length === 1 ? 'province' : 'provinces'} with security alerts
-              {visibleAlertProvinces.length !== alertProvinces.length && (
-                <span className="text-xs text-muted-foreground ml-2">
-                  ({visibleAlertProvinces.length} visible in current view)
-                </span>
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {visibleAlertProvinces.map((province) => (
-                <StatusWidget key={province.id} provinceId={province.id} />
-              ))}
+      <Accordion type="multiple" value={getOpenSections()} className="space-y-4">
+        {/* Active Alerts Section */}
+        <AccordionItem value="active-alerts" className="border-0">
+          <AccordionTrigger className="hover:no-underline p-0 pb-4">
+            <div className="text-left">
+              <h2 className="text-xl font-semibold">
+                {alertProvinces.length > 0 ? 'Active Alerts' : 'System Status'}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {alertProvinces.length > 0 
+                  ? `${alertProvinces.length} ${alertProvinces.length === 1 ? 'province' : 'provinces'} with security alerts`
+                  : 'No provinces currently reporting security alerts'
+                }
+              </p>
             </div>
-            {visibleAlertProvinces.length === 0 && (
-              <div className="text-center py-4 text-muted-foreground">
-                All provinces with alerts are currently hidden. Use the "Customize View" button to show them.
-              </div>
+          </AccordionTrigger>
+          <AccordionContent className="pb-6">
+            {alertProvinces.length > 0 && (
+              <Card className="border-warning bg-warning-light">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Active Alerts</CardTitle>
+                  <CardDescription>
+                    {alertProvinces.length} {alertProvinces.length === 1 ? 'province' : 'provinces'} with security alerts
+                    {visibleAlertProvinces.length !== alertProvinces.length && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({visibleAlertProvinces.length} visible in current view)
+                      </span>
+                    )}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {visibleAlertProvinces.map((province) => (
+                      <StatusWidget key={province.id} provinceId={province.id} />
+                    ))}
+                  </div>
+                  {visibleAlertProvinces.length === 0 && (
+                    <div className="text-center py-4 text-muted-foreground">
+                      All provinces with alerts are currently hidden. Use the "Customize View" button to show them.
+                    </div>
+                  )}
+                  <div className="mt-4 flex justify-between">
+                    <Link to="/alert-ready">
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <Bell className="h-4 w-4" />
+                        <span>Alert Ready Feed</span>
+                      </Button>
+                    </Link>
+                    <Link to="/widget">
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Employee Check-In Widget</span>
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
             )}
-            <div className="mt-4 flex justify-between">
-              <Link to="/alert-ready">
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  <span>Alert Ready Feed</span>
-                </Button>
-              </Link>
-              <Link to="/widget">
-                <Button variant="outline" className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  <span>Employee Check-In Widget</span>
-                </Button>
-              </Link>
+            
+            {alertProvinces.length === 0 && (
+              <Card className="border-success bg-success-light">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">All Clear</CardTitle>
+                  <CardDescription>
+                    No provinces currently reporting security alerts
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center py-8">
+                    <p className="text-center text-success font-medium">All provinces are reporting normal security status</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Canadian Provinces Section */}
+        <AccordionItem value="provinces" className="border-0">
+          <AccordionTrigger className="hover:no-underline p-0 pb-4">
+            <div className="text-left">
+              <h2 className="text-xl font-semibold">Canadian Provinces & Territories</h2>
+              <p className="text-sm text-muted-foreground">Provincial security status overview</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {alertProvinces.length === 0 && (
-        <Card className="border-success bg-success-light">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">All Clear</CardTitle>
-            <CardDescription>
-              No provinces currently reporting security alerts
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center py-8">
-              <p className="text-center text-success font-medium">All provinces are reporting normal security status</p>
+          </AccordionTrigger>
+          <AccordionContent className="pb-6">
+            <CanadianProvincesGrid />
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* International Hubs Section */}
+        <AccordionItem value="international" className="border-0">
+          <AccordionTrigger className="hover:no-underline p-0 pb-4">
+            <div className="text-left">
+              <h2 className="text-xl font-semibold">International Financial Hubs</h2>
+              <p className="text-sm text-muted-foreground">Security status for key financial services locations</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Visual Map Sections */}
-      <div className="space-y-6">
-        <CanadianProvincesGrid />
-        <InternationalHubs />
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
-          <RecentAlerts />
-        </div>
-        
-        <div className="space-y-6">
-          <IncidentsList />
-          <EmployeeDistributionChart />
-        </div>
-      </div>
+          </AccordionTrigger>
+          <AccordionContent className="pb-6">
+            <InternationalHubs />
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Recent Alerts Section */}
+        <AccordionItem value="recent-alerts" className="border-0">
+          <AccordionTrigger className="hover:no-underline p-0 pb-4">
+            <div className="text-left">
+              <h2 className="text-xl font-semibold">Recent Emergency Alerts</h2>
+              <p className="text-sm text-muted-foreground">Latest alerts from emergency services</p>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pb-6">
+            <RecentAlerts />
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Incidents Section */}
+        <AccordionItem value="incidents" className="border-0">
+          <AccordionTrigger className="hover:no-underline p-0 pb-4">
+            <div className="text-left">
+              <h2 className="text-xl font-semibold">Recent Incidents</h2>
+              <p className="text-sm text-muted-foreground">Latest security incidents across all locations</p>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pb-6">
+            <IncidentsList />
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Employee Distribution Chart Section */}
+        <AccordionItem value="employee-chart" className="border-0">
+          <AccordionTrigger className="hover:no-underline p-0 pb-4">
+            <div className="text-left">
+              <h2 className="text-xl font-semibold">Employee Distribution</h2>
+              <p className="text-sm text-muted-foreground">Geographic distribution of employees</p>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pb-6">
+            <EmployeeDistributionChart />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 };
