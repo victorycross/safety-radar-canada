@@ -2,9 +2,9 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { AlertLevel } from '@/types';
-import { Circle, Filter } from 'lucide-react';
+import { Circle, Filter, RefreshCw } from 'lucide-react';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
-import LocationVisibilitySettings from './LocationVisibilitySettings';
+import { Button } from '../ui/button';
 
 interface InternationalHub {
   id: string;
@@ -22,10 +22,12 @@ const InternationalHubs = () => {
     getVisibleInternationalHubsCount,
     getTotalInternationalHubsCount,
     isInternationalHubVisible,
-    isFiltered
+    isFiltered,
+    refreshKey,
+    isRefreshing,
+    forceRefresh
   } = useLocationVisibility();
 
-  // Mock data for international financial hubs
   const internationalHubs: InternationalHub[] = [
     {
       id: 'nyc',
@@ -167,12 +169,22 @@ const InternationalHubs = () => {
   const filtered = isFiltered();
 
   return (
-    <Card className="bg-white rounded-lg shadow-sm">
+    <Card key={refreshKey} className="bg-white rounded-lg shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold">Major International Financial Hubs</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={forceRefresh}
+                disabled={isRefreshing}
+                className="gap-1 h-8"
+                title="Refresh view"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
               {filtered && (
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Filter className="h-4 w-4" />

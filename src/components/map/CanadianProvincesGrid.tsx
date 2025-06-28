@@ -4,9 +4,9 @@ import { AlertLevel } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Link } from 'react-router-dom';
-import { Circle, Filter } from 'lucide-react';
+import { Circle, Filter, RefreshCw } from 'lucide-react';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
-import LocationVisibilitySettings from './LocationVisibilitySettings';
+import { Button } from '../ui/button';
 
 // Fallback data for all Canadian provinces and territories
 const fallbackProvinces = [
@@ -31,13 +31,16 @@ const CanadianProvincesGrid = () => {
     getVisibleProvincesCount,
     getTotalProvincesCount,
     isProvinceVisible,
-    isFiltered
+    isFiltered,
+    refreshKey,
+    isRefreshing,
+    forceRefresh
   } = useLocationVisibility();
 
   // Use data from context if available, otherwise use fallback data
   const displayProvinces = provinces.length > 0 ? provinces : fallbackProvinces;
   
-  // Filter provinces based on visibility settings
+  // Filter provinces based on visibility settings (key prop forces re-render)
   const visibleProvinces = displayProvinces.filter(province => isProvinceVisible(province.id));
 
   const provinceEmojis = {
@@ -87,12 +90,22 @@ const CanadianProvincesGrid = () => {
   const filtered = isFiltered();
 
   return (
-    <Card className="bg-white rounded-lg shadow-sm">
+    <Card key={refreshKey} className="bg-white rounded-lg shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold">Canadian Provinces & Territories</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={forceRefresh}
+                disabled={isRefreshing}
+                className="gap-1 h-8"
+                title="Refresh view"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
               {filtered && (
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Filter className="h-4 w-4" />

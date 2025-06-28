@@ -36,8 +36,8 @@ const LocationVisibilitySettings = ({ provinces, internationalHubs }: LocationVi
     const success = applyChanges();
     if (success) {
       toast({
-        title: "Settings Applied",
-        description: "Location visibility preferences have been saved successfully.",
+        title: "View Updated Successfully",
+        description: "Your location visibility preferences have been applied immediately to all sections.",
       });
       setIsOpen(false);
     }
@@ -83,7 +83,7 @@ const LocationVisibilitySettings = ({ provinces, internationalHubs }: LocationVi
             </Button>
           </DialogTitle>
           <DialogDescription>
-            Choose which locations to display on your security dashboard. Changes will only be applied when you click the Apply button.
+            Choose which locations to display on your security dashboard. Changes will be applied immediately when you click Apply.
             Currently selected: {pendingProvincesCount} provinces, {pendingHubsCount} international hubs.
           </DialogDescription>
         </DialogHeader>
@@ -170,7 +170,7 @@ const LocationVisibilitySettings = ({ provinces, internationalHubs }: LocationVi
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="text-sm text-muted-foreground">
             {hasUnsavedChanges ? (
-              <span className="text-orange-600">You have unsaved changes</span>
+              <span className="text-orange-600">You have unsaved changes that will be applied immediately</span>
             ) : (
               <span>No unsaved changes</span>
             )}

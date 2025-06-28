@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface LocationVisibilityState {
   provinces: Record<string, boolean>;
@@ -23,6 +22,8 @@ export const useLocationVisibility = () => {
   const [visibility, setVisibility] = useState<LocationVisibilityState>(getDefaultVisibility);
   const [pendingVisibility, setPendingVisibility] = useState<LocationVisibilityState>(getDefaultVisibility);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -43,6 +44,14 @@ export const useLocationVisibility = () => {
     const hasChanges = JSON.stringify(visibility) !== JSON.stringify(pendingVisibility);
     setHasUnsavedChanges(hasChanges);
   }, [visibility, pendingVisibility]);
+
+  const forceRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    // Simulate a brief loading state
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setRefreshKey(prev => prev + 1);
+    setIsRefreshing(false);
+  }, []);
 
   const togglePendingProvince = (provinceId: string) => {
     setPendingVisibility(prev => ({
@@ -95,6 +104,8 @@ export const useLocationVisibility = () => {
   const applyChanges = () => {
     setVisibility(pendingVisibility);
     localStorage.setItem('locationVisibility', JSON.stringify(pendingVisibility));
+    // Force immediate refresh of all consuming components
+    setRefreshKey(prev => prev + 1);
     return true; // Success
   };
 
@@ -160,6 +171,9 @@ export const useLocationVisibility = () => {
     visibility,
     pendingVisibility,
     hasUnsavedChanges,
+    refreshKey,
+    isRefreshing,
+    forceRefresh,
     togglePendingProvince,
     togglePendingInternationalHub,
     selectAllPendingProvinces,
