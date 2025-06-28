@@ -1,12 +1,12 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { AlertLevel, Incident, IncidentSource, Province, VerificationStatus } from '@/types';
+import { AlertLevel, Incident, IncidentSource, Province, VerificationStatus, User } from '@/types';
 import { incidentsData, provincesData } from '@/data/mockData';
 import { toast } from '@/components/ui/use-toast';
 
 interface SecurityContextType {
   provinces: Province[];
   incidents: Incident[];
+  user: User | null;
   addIncident: (incident: Omit<Incident, 'id' | 'timestamp'>) => void;
   reportIncident: (incident: Omit<Incident, 'id' | 'timestamp'>) => void;
   updateProvinceAlertLevel: (provinceId: string, alertLevel: AlertLevel) => void;
@@ -19,6 +19,12 @@ const SecurityContext = createContext<SecurityContextType | undefined>(undefined
 export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [provinces, setProvinces] = useState<Province[]>(provincesData);
   const [incidents, setIncidents] = useState<Incident[]>(incidentsData);
+  const [user] = useState<User | null>({
+    id: 'user-1',
+    name: 'Demo User',
+    isAuthorized: true,
+    provinceId: 'on'
+  });
 
   const addIncident = (incidentData: Omit<Incident, 'id' | 'timestamp'>) => {
     const newIncident: Incident = {
@@ -86,6 +92,7 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
   const value = {
     provinces,
     incidents,
+    user,
     addIncident,
     reportIncident,
     updateProvinceAlertLevel,
