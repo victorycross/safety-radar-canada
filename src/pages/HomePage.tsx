@@ -1,4 +1,3 @@
-
 import React from 'react';
 import CanadianProvincesGrid from '@/components/map/CanadianProvincesGrid';
 import InternationalHubs from '@/components/map/InternationalHubs';
@@ -9,7 +8,7 @@ import StatusWidget from '@/components/dashboard/StatusWidget';
 import { AlertLevel } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Bell, Loader2 } from 'lucide-react';
+import { CheckCircle, Bell, Loader2, Expand, Minimize2, RotateCcw } from 'lucide-react';
 import RecentAlerts from '@/components/dashboard/RecentAlerts';
 import EmployeeDistributionChart from '@/components/dashboard/EmployeeDistributionChart';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
@@ -18,9 +17,16 @@ import { useAccordionState } from '@/hooks/useAccordionState';
 import LocationVisibilitySettings from '@/components/map/LocationVisibilitySettings';
 
 const HomePage = () => {
-  const { provinces, loading } = useSupabaseDataContext();
+  const { provinces, incidents, loading } = useSupabaseDataContext();
   const { isProvinceVisible } = useLocationVisibility();
-  const { getOpenSections } = useAccordionState();
+  const { 
+    getOpenSections, 
+    handleAccordionChange, 
+    expandAll, 
+    collapseAll, 
+    resetToDefault,
+    accordionState 
+  } = useAccordionState();
   
   // International hubs data - consolidated here
   const internationalHubs = [
@@ -64,6 +70,12 @@ const HomePage = () => {
   // Filter alert provinces based on visibility for display purposes
   const visibleAlertProvinces = alertProvinces.filter(province => isProvinceVisible(province.id));
 
+  // Get visible provinces count
+  const visibleProvincesCount = displayProvinces.filter(province => isProvinceVisible(province.id)).length;
+
+  // Recent incidents count
+  const recentIncidentsCount = incidents.length;
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh]">
@@ -80,13 +92,49 @@ const HomePage = () => {
           <h1 className="text-3xl font-bold">Security Dashboard</h1>
           <p className="text-muted-foreground">Monitor security events across Canadian operations and international financial hubs</p>
         </div>
-        <LocationVisibilitySettings 
-          provinces={displayProvinces}
-          internationalHubs={internationalHubs}
-        />
+        <div className="flex items-center gap-2">
+          <LocationVisibilitySettings 
+            provinces={displayProvinces}
+            internationalHubs={internationalHubs}
+          />
+          <div className="flex items-center gap-1 border-l pl-2 ml-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={expandAll}
+              className="flex items-center gap-1"
+            >
+              <Expand className="h-4 w-4" />
+              Expand All
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={collapseAll}
+              className="flex items-center gap-1"
+            >
+              <Minimize2 className="h-4 w-4" />
+              Collapse All
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={resetToDefault}
+              className="flex items-center gap-1"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reset
+            </Button>
+          </div>
+        </div>
       </div>
       
-      <Accordion type="multiple" value={getOpenSections()} className="space-y-4">
+      <Accordion 
+        type="multiple" 
+        value={getOpenSections()} 
+        onValueChange={handleAccordionChange}
+        className="space-y-4"
+      >
         {/* Active Alerts Section */}
         <AccordionItem value="active-alerts" className="border-0">
           <AccordionTrigger className="hover:no-underline p-0 pb-4">
@@ -168,7 +216,9 @@ const HomePage = () => {
           <AccordionTrigger className="hover:no-underline p-0 pb-4">
             <div className="text-left">
               <h2 className="text-xl font-semibold">Canadian Provinces & Territories</h2>
-              <p className="text-sm text-muted-foreground">Provincial security status overview</p>
+              <p className="text-sm text-muted-foreground">
+                Provincial security status overview ({visibleProvincesCount} of {displayProvinces.length} visible)
+              </p>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pb-6">
@@ -181,7 +231,9 @@ const HomePage = () => {
           <AccordionTrigger className="hover:no-underline p-0 pb-4">
             <div className="text-left">
               <h2 className="text-xl font-semibold">International Financial Hubs</h2>
-              <p className="text-sm text-muted-foreground">Security status for key financial services locations</p>
+              <p className="text-sm text-muted-foreground">
+                Security status for key financial services locations ({internationalHubs.length} hubs)
+              </p>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pb-6">
@@ -207,7 +259,9 @@ const HomePage = () => {
           <AccordionTrigger className="hover:no-underline p-0 pb-4">
             <div className="text-left">
               <h2 className="text-xl font-semibold">Recent Incidents</h2>
-              <p className="text-sm text-muted-foreground">Latest security incidents across all locations</p>
+              <p className="text-sm text-muted-foreground">
+                Latest security incidents across all locations ({recentIncidentsCount} incidents)
+              </p>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pb-6">

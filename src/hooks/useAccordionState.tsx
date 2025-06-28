@@ -42,13 +42,52 @@ export const useAccordionState = () => {
     return accordionState[sectionId] ?? false;
   };
 
+  // Return array of open sections for Radix UI Accordion
   const getOpenSections = () => {
     return Object.keys(accordionState).filter(key => accordionState[key]);
+  };
+
+  // Handle accordion value changes from Radix UI
+  const handleAccordionChange = (value: string[]) => {
+    const newState = { ...accordionState };
+    
+    // Set all sections to false first
+    Object.keys(newState).forEach(key => {
+      newState[key] = false;
+    });
+    
+    // Set open sections to true
+    value.forEach(sectionId => {
+      newState[sectionId] = true;
+    });
+    
+    setAccordionState(newState);
+  };
+
+  const expandAll = () => {
+    const allSections = Object.keys(DEFAULT_ACCORDION_STATE);
+    const newState = Object.fromEntries(allSections.map(key => [key, true]));
+    setAccordionState(newState);
+  };
+
+  const collapseAll = () => {
+    const allSections = Object.keys(DEFAULT_ACCORDION_STATE);
+    const newState = Object.fromEntries(allSections.map(key => [key, false]));
+    setAccordionState(newState);
+  };
+
+  const resetToDefault = () => {
+    setAccordionState(DEFAULT_ACCORDION_STATE);
   };
 
   return {
     toggleSection,
     isSectionOpen,
-    getOpenSections
+    getOpenSections,
+    handleAccordionChange,
+    expandAll,
+    collapseAll,
+    resetToDefault,
+    accordionState
   };
 };
