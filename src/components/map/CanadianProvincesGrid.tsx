@@ -107,10 +107,6 @@ const CanadianProvincesGrid = () => {
               </span>
             </div>
           </div>
-          <LocationVisibilitySettings 
-            provinces={displayProvinces}
-            internationalHubs={[]} // Will be populated from InternationalHubs component
-          />
         </CardTitle>
       </CardHeader>
       

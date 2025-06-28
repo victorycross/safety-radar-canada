@@ -21,6 +21,8 @@ const getDefaultVisibility = (): LocationVisibilityState => ({
 
 export const useLocationVisibility = () => {
   const [visibility, setVisibility] = useState<LocationVisibilityState>(getDefaultVisibility);
+  const [pendingVisibility, setPendingVisibility] = useState<LocationVisibilityState>(getDefaultVisibility);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -29,19 +31,21 @@ export const useLocationVisibility = () => {
       try {
         const parsed = JSON.parse(saved);
         setVisibility(parsed);
+        setPendingVisibility(parsed);
       } catch (error) {
         console.error('Failed to parse saved location visibility:', error);
       }
     }
   }, []);
 
-  // Save to localStorage whenever visibility changes
+  // Check for unsaved changes
   useEffect(() => {
-    localStorage.setItem('locationVisibility', JSON.stringify(visibility));
-  }, [visibility]);
+    const hasChanges = JSON.stringify(visibility) !== JSON.stringify(pendingVisibility);
+    setHasUnsavedChanges(hasChanges);
+  }, [visibility, pendingVisibility]);
 
-  const toggleProvince = (provinceId: string) => {
-    setVisibility(prev => ({
+  const togglePendingProvince = (provinceId: string) => {
+    setPendingVisibility(prev => ({
       ...prev,
       provinces: {
         ...prev.provinces,
@@ -50,8 +54,8 @@ export const useLocationVisibility = () => {
     }));
   };
 
-  const toggleInternationalHub = (hubId: string) => {
-    setVisibility(prev => ({
+  const togglePendingInternationalHub = (hubId: string) => {
+    setPendingVisibility(prev => ({
       ...prev,
       internationalHubs: {
         ...prev.internationalHubs,
@@ -60,36 +64,47 @@ export const useLocationVisibility = () => {
     }));
   };
 
-  const selectAllProvinces = () => {
-    setVisibility(prev => ({
+  const selectAllPendingProvinces = () => {
+    setPendingVisibility(prev => ({
       ...prev,
       provinces: Object.fromEntries(Object.keys(prev.provinces).map(id => [id, true]))
     }));
   };
 
-  const deselectAllProvinces = () => {
-    setVisibility(prev => ({
+  const deselectAllPendingProvinces = () => {
+    setPendingVisibility(prev => ({
       ...prev,
       provinces: Object.fromEntries(Object.keys(prev.provinces).map(id => [id, false]))
     }));
   };
 
-  const selectAllInternationalHubs = () => {
-    setVisibility(prev => ({
+  const selectAllPendingInternationalHubs = () => {
+    setPendingVisibility(prev => ({
       ...prev,
       internationalHubs: Object.fromEntries(Object.keys(prev.internationalHubs).map(id => [id, true]))
     }));
   };
 
-  const deselectAllInternationalHubs = () => {
-    setVisibility(prev => ({
+  const deselectAllPendingInternationalHubs = () => {
+    setPendingVisibility(prev => ({
       ...prev,
       internationalHubs: Object.fromEntries(Object.keys(prev.internationalHubs).map(id => [id, false]))
     }));
   };
 
+  const applyChanges = () => {
+    setVisibility(pendingVisibility);
+    localStorage.setItem('locationVisibility', JSON.stringify(pendingVisibility));
+    return true; // Success
+  };
+
+  const cancelChanges = () => {
+    setPendingVisibility(visibility);
+  };
+
   const resetToDefault = () => {
-    setVisibility(getDefaultVisibility());
+    const defaultState = getDefaultVisibility();
+    setPendingVisibility(defaultState);
   };
 
   const getVisibleProvincesCount = () => {
@@ -108,12 +123,28 @@ export const useLocationVisibility = () => {
     return Object.keys(visibility.internationalHubs).length;
   };
 
+  const getPendingVisibleProvincesCount = () => {
+    return Object.values(pendingVisibility.provinces).filter(Boolean).length;
+  };
+
+  const getPendingVisibleInternationalHubsCount = () => {
+    return Object.values(pendingVisibility.internationalHubs).filter(Boolean).length;
+  };
+
   const isProvinceVisible = (provinceId: string) => {
     return visibility.provinces[provinceId] ?? true;
   };
 
   const isInternationalHubVisible = (hubId: string) => {
     return visibility.internationalHubs[hubId] ?? true;
+  };
+
+  const isPendingProvinceVisible = (provinceId: string) => {
+    return pendingVisibility.provinces[provinceId] ?? true;
+  };
+
+  const isPendingInternationalHubVisible = (hubId: string) => {
+    return pendingVisibility.internationalHubs[hubId] ?? true;
   };
 
   const isFiltered = () => {
@@ -127,19 +158,27 @@ export const useLocationVisibility = () => {
 
   return {
     visibility,
-    toggleProvince,
-    toggleInternationalHub,
-    selectAllProvinces,
-    deselectAllProvinces,
-    selectAllInternationalHubs,
-    deselectAllInternationalHubs,
+    pendingVisibility,
+    hasUnsavedChanges,
+    togglePendingProvince,
+    togglePendingInternationalHub,
+    selectAllPendingProvinces,
+    deselectAllPendingProvinces,
+    selectAllPendingInternationalHubs,
+    deselectAllPendingInternationalHubs,
+    applyChanges,
+    cancelChanges,
     resetToDefault,
     getVisibleProvincesCount,
     getTotalProvincesCount,
     getVisibleInternationalHubsCount,
     getTotalInternationalHubsCount,
+    getPendingVisibleProvincesCount,
+    getPendingVisibleInternationalHubsCount,
     isProvinceVisible,
     isInternationalHubVisible,
+    isPendingProvinceVisible,
+    isPendingInternationalHubVisible,
     isFiltered
   };
 };

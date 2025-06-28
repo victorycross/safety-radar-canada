@@ -1,4 +1,3 @@
-
 import React from 'react';
 import CanadianProvincesGrid from '@/components/map/CanadianProvincesGrid';
 import InternationalHubs from '@/components/map/InternationalHubs';
@@ -13,13 +12,48 @@ import RecentAlerts from '@/components/dashboard/RecentAlerts';
 import EmployeeDistributionChart from '@/components/dashboard/EmployeeDistributionChart';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
+import LocationVisibilitySettings from '@/components/map/LocationVisibilitySettings';
 
 const HomePage = () => {
   const { provinces, loading } = useSupabaseDataContext();
   const { isProvinceVisible } = useLocationVisibility();
   
+  // International hubs data - consolidated here
+  const internationalHubs = [
+    { id: 'nyc', name: 'New York', country: 'United States' },
+    { id: 'london', name: 'London', country: 'United Kingdom' },
+    { id: 'hk', name: 'Hong Kong', country: 'China' },
+    { id: 'singapore', name: 'Singapore', country: 'Singapore' },
+    { id: 'tokyo', name: 'Tokyo', country: 'Japan' },
+    { id: 'frankfurt', name: 'Frankfurt', country: 'Germany' },
+    { id: 'zurich', name: 'Zurich', country: 'Switzerland' },
+    { id: 'dubai', name: 'Dubai', country: 'UAE' },
+    { id: 'sydney', name: 'Sydney', country: 'Australia' },
+    { id: 'toronto-intl', name: 'Toronto Financial District', country: 'Canada' }
+  ];
+
+  // Fallback provinces data
+  const fallbackProvinces = [
+    { id: 'ab', name: 'Alberta', code: 'AB', alertLevel: 'normal' as const, employeeCount: 15420 },
+    { id: 'bc', name: 'British Columbia', code: 'BC', alertLevel: 'normal' as const, employeeCount: 23150 },
+    { id: 'mb', name: 'Manitoba', code: 'MB', alertLevel: 'normal' as const, employeeCount: 5890 },
+    { id: 'nb', name: 'New Brunswick', code: 'NB', alertLevel: 'normal' as const, employeeCount: 3420 },
+    { id: 'nl', name: 'Newfoundland and Labrador', code: 'NL', alertLevel: 'normal' as const, employeeCount: 2180 },
+    { id: 'ns', name: 'Nova Scotia', code: 'NS', alertLevel: 'normal' as const, employeeCount: 4350 },
+    { id: 'on', name: 'Ontario', code: 'ON', alertLevel: 'normal' as const, employeeCount: 45200 },
+    { id: 'pe', name: 'Prince Edward Island', code: 'PE', alertLevel: 'normal' as const, employeeCount: 890 },
+    { id: 'qc', name: 'Quebec', code: 'QC', alertLevel: 'normal' as const, employeeCount: 32100 },
+    { id: 'sk', name: 'Saskatchewan', code: 'SK', alertLevel: 'normal' as const, employeeCount: 4750 },
+    { id: 'nt', name: 'Northwest Territories', code: 'NT', alertLevel: 'normal' as const, employeeCount: 220 },
+    { id: 'nu', name: 'Nunavut', code: 'NU', alertLevel: 'normal' as const, employeeCount: 180 },
+    { id: 'yt', name: 'Yukon', code: 'YT', alertLevel: 'normal' as const, employeeCount: 150 }
+  ];
+
+  // Use data from context if available, otherwise use fallback data
+  const displayProvinces = provinces.length > 0 ? provinces : fallbackProvinces;
+  
   // Get provinces with severe or warning statuses (only count visible provinces for display)
-  const alertProvinces = provinces.filter(province => 
+  const alertProvinces = displayProvinces.filter(province => 
     province.alertLevel === AlertLevel.SEVERE || province.alertLevel === AlertLevel.WARNING
   );
 
@@ -37,9 +71,15 @@ const HomePage = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Security Dashboard</h1>
-        <p className="text-muted-foreground">Monitor security events across Canadian operations and international financial hubs</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Security Dashboard</h1>
+          <p className="text-muted-foreground">Monitor security events across Canadian operations and international financial hubs</p>
+        </div>
+        <LocationVisibilitySettings 
+          provinces={displayProvinces}
+          internationalHubs={internationalHubs}
+        />
       </div>
       
       {alertProvinces.length > 0 && (
