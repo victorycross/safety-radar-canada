@@ -1,6 +1,7 @@
 
 import React from 'react';
-import SimpleGlobeMap from '@/components/map/SimpleGlobeMap';
+import CanadianProvincesGrid from '@/components/map/CanadianProvincesGrid';
+import InternationalHubs from '@/components/map/InternationalHubs';
 import IncidentsList from '@/components/incidents/IncidentsList';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusWidget from '@/components/dashboard/StatusWidget';
@@ -33,7 +34,7 @@ const HomePage = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Security Dashboard</h1>
-        <p className="text-muted-foreground">Monitor security events across Canadian operations</p>
+        <p className="text-muted-foreground">Monitor security events across Canadian operations and international financial hubs</p>
       </div>
       
       {alertProvinces.length > 0 && (
@@ -84,9 +85,14 @@ const HomePage = () => {
         </Card>
       )}
       
+      {/* New Visual Map Sections */}
+      <div className="space-y-6">
+        <CanadianProvincesGrid />
+        <InternationalHubs />
+      </div>
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <SimpleGlobeMap />
           <RecentAlerts />
         </div>
         
