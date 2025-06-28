@@ -5,25 +5,25 @@ import { AlertLevel } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Link } from 'react-router-dom';
-import { Circle, Square, Hexagon, Triangle, Diamond } from 'lucide-react';
+import { Circle } from 'lucide-react';
 
 const CanadianProvincesGrid = () => {
   const { provinces } = useSupabaseDataContext();
 
-  const provinceShapes = {
-    bc: { shape: Diamond, color: 'text-blue-600' },
-    ab: { shape: Square, color: 'text-green-600' },
-    sk: { shape: Triangle, color: 'text-yellow-600' },
-    mb: { shape: Hexagon, color: 'text-purple-600' },
-    on: { shape: Circle, color: 'text-red-600' },
-    qc: { shape: Circle, color: 'text-indigo-600' },
-    nb: { shape: Square, color: 'text-orange-600' },
-    ns: { shape: Triangle, color: 'text-pink-600' },
-    pe: { shape: Diamond, color: 'text-teal-600' },
-    nl: { shape: Hexagon, color: 'text-cyan-600' },
-    yt: { shape: Triangle, color: 'text-amber-600' },
-    nt: { shape: Diamond, color: 'text-lime-600' },
-    nu: { shape: Hexagon, color: 'text-emerald-600' }
+  const provinceEmojis = {
+    bc: '🏔️',
+    ab: '🛢️',
+    sk: '🌾',
+    mb: '🦬',
+    on: '🏙️',
+    qc: '⚜️',
+    nb: '🦞',
+    ns: '⚓',
+    pe: '🥔',
+    nl: '🐟',
+    yt: '❄️',
+    nt: '💎',
+    nu: '🐻‍❄️'
   };
 
   const getAlertColor = (alertLevel: AlertLevel) => {
@@ -66,34 +66,40 @@ const CanadianProvincesGrid = () => {
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
           {provinces.map((province) => {
-            const shapeConfig = provinceShapes[province.id as keyof typeof provinceShapes];
-            if (!shapeConfig) return null;
-            
-            const ShapeIcon = shapeConfig.shape;
+            const emoji = provinceEmojis[province.id as keyof typeof provinceEmojis];
             
             return (
               <Link key={province.id} to={`/province/${province.id}`}>
-                <div className={`
-                  ${getAlertColor(province.alertLevel)} 
-                  rounded-lg p-4 transition-all duration-300 ease-in-out 
-                  hover:scale-105 hover:shadow-lg cursor-pointer
-                  flex flex-col items-center justify-center space-y-2
-                  min-h-[120px]
-                `}>
-                  <ShapeIcon 
-                    size={48} 
-                    className={`${shapeConfig.color} transition-transform duration-200`}
+                <div 
+                  className={`
+                    ${getAlertColor(province.alertLevel)} 
+                    rounded-lg p-4 transition-all duration-300 ease-in-out 
+                    hover:scale-105 hover:shadow-lg cursor-pointer
+                    flex flex-col items-center justify-center space-y-2
+                    min-h-[140px] group
+                  `}
+                  title={`${province.name} - ${province.employeeCount.toLocaleString()} employees`}
+                >
+                  <div className="text-3xl mb-1">{emoji}</div>
+                  <Circle 
+                    size={36} 
+                    className="text-white/80 group-hover:text-white transition-colors duration-200"
                   />
                   <div className="text-center">
                     <div className="text-white font-bold text-sm">
                       {province.code.toUpperCase()}
                     </div>
                     <div className="text-white/90 text-xs">
-                      {province.employeeCount.toLocaleString()} employees
+                      {province.name}
                     </div>
                   </div>
                   <div className="mt-1">
                     {getAlertBadge(province.alertLevel)}
+                  </div>
+                  
+                  {/* Employee count */}
+                  <div className="text-white/80 text-xs text-center mt-1">
+                    <div>{province.employeeCount.toLocaleString()} employees</div>
                   </div>
                 </div>
               </Link>
