@@ -42,13 +42,13 @@ const CanadianProvincesGrid = () => {
   const getAlertBadge = (alertLevel: AlertLevel) => {
     switch (alertLevel) {
       case AlertLevel.SEVERE:
-        return <Badge className="bg-danger text-white text-xs">Severe</Badge>;
+        return 'High Risk';
       case AlertLevel.WARNING:
-        return <Badge className="bg-warning text-white text-xs">Warning</Badge>;
+        return 'Caution';
       case AlertLevel.NORMAL:
-        return <Badge className="bg-success text-white text-xs">Normal</Badge>;
+        return 'Safe';
       default:
-        return <Badge className="bg-muted text-xs">Unknown</Badge>;
+        return 'Unknown';
     }
   };
 
@@ -75,30 +75,38 @@ const CanadianProvincesGrid = () => {
                     ${getAlertColor(province.alertLevel)} 
                     rounded-lg p-4 transition-all duration-300 ease-in-out 
                     hover:scale-105 hover:shadow-lg cursor-pointer
-                    flex flex-col items-center justify-center space-y-2
-                    min-h-[140px] group
+                    flex flex-col items-center justify-center space-y-3
+                    min-h-[200px] group
                   `}
                   title={`${province.name} - ${province.employeeCount.toLocaleString()} employees`}
                 >
-                  <div className="text-3xl mb-1">{emoji}</div>
+                  {/* Flag/Emoji */}
+                  <div className="text-3xl mb-2">{emoji}</div>
+                  
+                  {/* Circle Icon */}
                   <Circle 
-                    size={36} 
-                    className="text-white/80 group-hover:text-white transition-colors duration-200"
+                    size={48} 
+                    className="text-white/80 group-hover:text-white transition-colors duration-200 stroke-2"
                   />
+                  
+                  {/* Location Name */}
                   <div className="text-center">
-                    <div className="text-white font-bold text-sm">
-                      {province.code.toUpperCase()}
-                    </div>
-                    <div className="text-white/90 text-xs">
+                    <div className="text-white font-bold text-lg">
                       {province.name}
                     </div>
+                    <div className="text-white/90 text-sm">
+                      {province.code.toUpperCase()}
+                    </div>
                   </div>
-                  <div className="mt-1">
+                  
+                  {/* Status Badge */}
+                  <div className="text-white font-semibold text-lg">
                     {getAlertBadge(province.alertLevel)}
                   </div>
                   
-                  {/* Employee count */}
-                  <div className="text-white/80 text-xs text-center mt-1">
+                  {/* Stats */}
+                  <div className="text-white/90 text-sm text-center space-y-1">
+                    <div>0 warnings</div>
                     <div>{province.employeeCount.toLocaleString()} employees</div>
                   </div>
                 </div>
@@ -111,15 +119,15 @@ const CanadianProvincesGrid = () => {
         <div className="flex items-center justify-center space-x-6 pt-4 border-t">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-success"></div>
-            <span className="text-sm">Normal</span>
+            <span className="text-sm">Safe</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-warning"></div>
-            <span className="text-sm">Warning</span>
+            <span className="text-sm">Caution</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-danger"></div>
-            <span className="text-sm">Severe</span>
+            <span className="text-sm">High Risk</span>
           </div>
         </div>
       </CardContent>
