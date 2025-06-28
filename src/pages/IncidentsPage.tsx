@@ -9,7 +9,7 @@ import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import IncidentFilters from '@/components/incidents/IncidentFilters';
 import EnhancedIncidentsList from '@/components/incidents/EnhancedIncidentsList';
 import IncidentForm from '@/components/forms/IncidentForm';
-import { useSecurityContext } from '@/context/SecurityContext';
+import { useSecurity } from '@/context/SecurityContext';
 import { VerificationStatus } from '@/types';
 
 const IncidentsPage = () => {
@@ -28,8 +28,8 @@ const IncidentsPage = () => {
     collapseAll 
   } = useIncidentState();
   
-  const { incidents, provinces, refreshIncidents } = useSupabaseDataContext();
-  const { user } = useSecurityContext();
+  const { incidents, provinces, refreshData } = useSupabaseDataContext();
+  const { user } = useSecurity();
 
   // Filter incidents based on current filters
   const filteredIncidents = React.useMemo(() => {
@@ -214,19 +214,15 @@ const IncidentsPage = () => {
           </AccordionTrigger>
           <AccordionContent className="pt-4">
             <EnhancedIncidentsList
-              incidents={paginatedIncidents}
-              totalIncidents={sortedIncidents.length}
-              currentPage={state.currentPage}
-              itemsPerPage={state.itemsPerPage}
+              filters={state.filters}
               sortBy={state.sortBy}
               sortOrder={state.sortOrder}
+              currentPage={state.currentPage}
+              itemsPerPage={state.itemsPerPage}
               autoRefresh={state.autoRefresh}
-              refreshInterval={state.refreshInterval}
               onSortChange={updateSorting}
               onPageChange={updatePagination}
-              onRefresh={refreshIncidents}
               onToggleAutoRefresh={toggleAutoRefresh}
-              onRefreshIntervalChange={setRefreshInterval}
             />
           </AccordionContent>
         </AccordionItem>
