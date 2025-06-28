@@ -12,14 +12,19 @@ import { CheckCircle, Bell, Loader2 } from 'lucide-react';
 import RecentAlerts from '@/components/dashboard/RecentAlerts';
 import EmployeeDistributionChart from '@/components/dashboard/EmployeeDistributionChart';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
+import { useLocationVisibility } from '@/hooks/useLocationVisibility';
 
 const HomePage = () => {
   const { provinces, loading } = useSupabaseDataContext();
+  const { isProvinceVisible } = useLocationVisibility();
   
-  // Get provinces with severe or warning statuses
+  // Get provinces with severe or warning statuses (only count visible provinces for display)
   const alertProvinces = provinces.filter(province => 
     province.alertLevel === AlertLevel.SEVERE || province.alertLevel === AlertLevel.WARNING
   );
+
+  // Filter alert provinces based on visibility for display purposes
+  const visibleAlertProvinces = alertProvinces.filter(province => isProvinceVisible(province.id));
 
   if (loading) {
     return (
@@ -43,14 +48,24 @@ const HomePage = () => {
             <CardTitle className="text-lg">Active Alerts</CardTitle>
             <CardDescription>
               {alertProvinces.length} {alertProvinces.length === 1 ? 'province' : 'provinces'} with security alerts
+              {visibleAlertProvinces.length !== alertProvinces.length && (
+                <span className="text-xs text-muted-foreground ml-2">
+                  ({visibleAlertProvinces.length} visible in current view)
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {alertProvinces.map((province) => (
+              {visibleAlertProvinces.map((province) => (
                 <StatusWidget key={province.id} provinceId={province.id} />
               ))}
             </div>
+            {visibleAlertProvinces.length === 0 && (
+              <div className="text-center py-4 text-muted-foreground">
+                All provinces with alerts are currently hidden. Use the "Customize View" button to show them.
+              </div>
+            )}
             <div className="mt-4 flex justify-between">
               <Link to="/alert-ready">
                 <Button variant="outline" className="flex items-center gap-2">
@@ -85,7 +100,7 @@ const HomePage = () => {
         </Card>
       )}
       
-      {/* New Visual Map Sections */}
+      {/* Visual Map Sections */}
       <div className="space-y-6">
         <CanadianProvincesGrid />
         <InternationalHubs />

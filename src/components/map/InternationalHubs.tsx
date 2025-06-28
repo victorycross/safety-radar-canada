@@ -1,9 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { AlertLevel } from '@/types';
-import { Circle } from 'lucide-react';
+import { Circle, Filter } from 'lucide-react';
+import { useLocationVisibility } from '@/hooks/useLocationVisibility';
+import LocationVisibilitySettings from './LocationVisibilitySettings';
 
 interface InternationalHub {
   id: string;
@@ -17,6 +18,13 @@ interface InternationalHub {
 }
 
 const InternationalHubs = () => {
+  const {
+    getVisibleInternationalHubsCount,
+    getTotalInternationalHubsCount,
+    isInternationalHubVisible,
+    isFiltered
+  } = useLocationVisibility();
+
   // Mock data for international financial hubs
   const internationalHubs: InternationalHub[] = [
     {
@@ -152,20 +160,43 @@ const InternationalHubs = () => {
     console.log(`Clicked on ${hub.name}:`, hub);
   };
 
+  const visibleHubs = internationalHubs.filter(hub => isInternationalHubVisible(hub.id));
+
+  const visibleCount = getVisibleInternationalHubsCount();
+  const totalCount = getTotalInternationalHubsCount();
+  const filtered = isFiltered();
+
   return (
     <Card className="bg-white rounded-lg shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold">Major International Financial Hubs</h2>
-            <p className="text-sm text-muted-foreground mt-1">Security status for key financial services locations</p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold">Major International Financial Hubs</h2>
+              {filtered && (
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Filter className="h-4 w-4" />
+                  <span>Filtered View</span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-4 mt-1">
+              <p className="text-sm text-muted-foreground">Security status for key financial services locations</p>
+              <span className="text-sm font-medium">
+                Showing {visibleCount} of {totalCount} locations
+              </span>
+            </div>
           </div>
+          <LocationVisibilitySettings 
+            provinces={[]} // Will be populated from CanadianProvincesGrid component
+            internationalHubs={internationalHubs}
+          />
         </CardTitle>
       </CardHeader>
       
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
-          {internationalHubs.map((hub) => (
+          {visibleHubs.map((hub) => (
             <div 
               key={hub.id}
               onClick={() => handleHubClick(hub)}
@@ -203,6 +234,12 @@ const InternationalHubs = () => {
             </div>
           ))}
         </div>
+
+        {visibleHubs.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No international hubs selected. Use the "Customize View" button to show locations.</p>
+          </div>
+        )}
 
         {/* Legend */}
         <div className="flex items-center justify-center space-x-6 pt-4 border-t">
