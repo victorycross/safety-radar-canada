@@ -1,13 +1,6 @@
 
 import { useState, useEffect } from 'react';
-
-export interface SourceFilter {
-  search: string;
-  verificationStatus: string[];
-  sourceTypes: string[];
-  healthStatus: string[];
-  lastUpdated: string;
-}
+import { SourceFilter } from '@/components/sources/SourceFilters';
 
 export interface SourcesState {
   filters: SourceFilter;
@@ -61,17 +54,10 @@ export const useSourcesState = () => {
     localStorage.setItem('sourcesPageState', JSON.stringify(state));
   }, [state]);
 
-  const updateFilters = (filters: Partial<SourceFilter>) => {
+  const updateFilters = (filters: SourceFilter) => {
     setState(prev => ({
       ...prev,
-      filters: { ...prev.filters, ...filters }
-    }));
-  };
-
-  const clearFilters = () => {
-    setState(prev => ({
-      ...prev,
-      filters: DEFAULT_SOURCES_STATE.filters
+      filters
     }));
   };
 
@@ -94,12 +80,10 @@ export const useSourcesState = () => {
   const handleAccordionChange = (value: string[]) => {
     const newAccordionState = { ...state.accordionState };
     
-    // Set all sections to false first
     Object.keys(newAccordionState).forEach(key => {
       newAccordionState[key] = false;
     });
     
-    // Set open sections to true
     value.forEach(sectionId => {
       newAccordionState[sectionId] = true;
     });
@@ -126,7 +110,6 @@ export const useSourcesState = () => {
   return {
     state,
     updateFilters,
-    clearFilters,
     updateSorting,
     toggleAutoRefresh,
     setRefreshInterval,

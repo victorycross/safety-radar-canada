@@ -3,19 +3,16 @@ import React from 'react';
 import { AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
-import SourceFilters from "@/components/sources/SourceFilters";
-import { SourceFilter } from "@/hooks/useSourcesState";
+import SourceFilters, { SourceFilter } from "@/components/sources/SourceFilters";
 
 interface FiltersSectionProps {
   filters: SourceFilter;
-  onFiltersChange: (filters: Partial<SourceFilter>) => void;
-  onClearFilters: () => void;
+  onFiltersChange: (filters: SourceFilter) => void;
 }
 
 const FiltersSection: React.FC<FiltersSectionProps> = ({
   filters,
-  onFiltersChange,
-  onClearFilters
+  onFiltersChange
 }) => {
   const hasActiveFilters = filters.search || 
     filters.verificationStatus.length > 0 || 
@@ -36,9 +33,8 @@ const FiltersSection: React.FC<FiltersSectionProps> = ({
       </AccordionTrigger>
       <AccordionContent className="pt-4">
         <SourceFilters 
-          filters={filters}
           onFiltersChange={onFiltersChange}
-          onClearFilters={onClearFilters}
+          initialFilters={filters}
         />
       </AccordionContent>
     </AccordionItem>

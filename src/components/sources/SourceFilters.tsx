@@ -2,20 +2,53 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Search, X, Filter } from 'lucide-react';
-import { SourceFilter } from '@/hooks/useSourcesState';
+import { Search, X } from 'lucide-react';
+import { useGenericFilter } from '@/hooks/useGenericFilter';
+import FilterControls from '@/components/common/FilterControls';
 
-interface SourceFiltersProps {
-  filters: SourceFilter;
-  onFiltersChange: (filters: Partial<SourceFilter>) => void;
-  onClearFilters: () => void;
+export interface SourceFilter {
+  search: string;
+  verificationStatus: string[];
+  sourceTypes: string[];
+  healthStatus: string[];
+  lastUpdated: string;
 }
 
-const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFiltersProps) => {
+interface SourceFiltersProps {
+  onFiltersChange: (filters: SourceFilter) => void;
+  initialFilters?: Partial<SourceFilter>;
+}
+
+const DEFAULT_FILTERS: SourceFilter = {
+  search: '',
+  verificationStatus: [],
+  sourceTypes: [],
+  healthStatus: [],
+  lastUpdated: 'all'
+};
+
+const SourceFilters: React.FC<SourceFiltersProps> = ({ 
+  onFiltersChange, 
+  initialFilters = {} 
+}) => {
+  const {
+    filters,
+    pendingFilters,
+    hasUnsavedChanges,
+    updatePendingFilters,
+    applyChanges,
+    cancelChanges,
+    resetFilters,
+    hasActiveFilters,
+    activeFilterCount
+  } = useGenericFilter({
+    defaultFilters: { ...DEFAULT_FILTERS, ...initialFilters },
+    storageKey: 'sourceFilters'
+  });
+
   const verificationOptions = [
     { value: 'verified', label: 'Verified' },
     { value: 'unverified', label: 'Unverified' }
@@ -38,24 +71,28 @@ const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFilte
     { value: 'error', label: 'Error' }
   ];
 
-  const hasActiveFilters = filters.search || 
-    filters.verificationStatus.length > 0 || 
-    filters.sourceTypes.length > 0 || 
-    filters.healthStatus.length > 0 || 
-    filters.lastUpdated !== 'all';
-
   const handleCheckboxChange = (
     field: 'verificationStatus' | 'sourceTypes' | 'healthStatus',
     value: string,
     checked: boolean
   ) => {
-    const currentValues = filters[field];
+    const currentValues = pendingFilters[field];
     const newValues = checked
       ? [...currentValues, value]
       : currentValues.filter(v => v !== value);
     
-    onFiltersChange({ [field]: newValues });
+    updatePendingFilters({ [field]: newValues });
   };
+
+  const handleApply = () => {
+    applyChanges();
+    onFiltersChange(pendingFilters);
+  };
+
+  // Apply filters immediately for non-modal use
+  React.useEffect(() => {
+    onFiltersChange(filters);
+  }, [filters, onFiltersChange]);
 
   return (
     <div className="space-y-6">
@@ -65,12 +102,15 @@ const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFilte
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search sources by name, description, or type..."
-            value={filters.search}
-            onChange={(e) => onFiltersChange({ search: e.target.value })}
+            value={pendingFilters.search}
+            onChange={(e) => updatePendingFilters({ search: e.target.value })}
             className="pl-10"
           />
         </div>
-        <Select value={filters.lastUpdated} onValueChange={(value) => onFiltersChange({ lastUpdated: value })}>
+        <Select 
+          value={pendingFilters.lastUpdated} 
+          onValueChange={(value) => updatePendingFilters({ lastUpdated: value })}
+        >
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Last Updated" />
           </SelectTrigger>
@@ -94,7 +134,7 @@ const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFilte
               <div key={option.value} className="flex items-center space-x-2">
                 <Checkbox
                   id={`verification-${option.value}`}
-                  checked={filters.verificationStatus.includes(option.value)}
+                  checked={pendingFilters.verificationStatus.includes(option.value)}
                   onCheckedChange={(checked) => 
                     handleCheckboxChange('verificationStatus', option.value, checked as boolean)
                   }
@@ -115,7 +155,7 @@ const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFilte
               <div key={option.value} className="flex items-center space-x-2">
                 <Checkbox
                   id={`type-${option.value}`}
-                  checked={filters.sourceTypes.includes(option.value)}
+                  checked={pendingFilters.sourceTypes.includes(option.value)}
                   onCheckedChange={(checked) => 
                     handleCheckboxChange('sourceTypes', option.value, checked as boolean)
                   }
@@ -136,7 +176,7 @@ const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFilte
               <div key={option.value} className="flex items-center space-x-2">
                 <Checkbox
                   id={`health-${option.value}`}
-                  checked={filters.healthStatus.includes(option.value)}
+                  checked={pendingFilters.healthStatus.includes(option.value)}
                   onCheckedChange={(checked) => 
                     handleCheckboxChange('healthStatus', option.value, checked as boolean)
                   }
@@ -150,20 +190,21 @@ const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFilte
         </div>
       </div>
 
-      {/* Active Filters & Clear */}
+      {/* Active Filters Display */}
       {hasActiveFilters && (
-        <div className="flex items-center gap-2 pt-4 border-t">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-wrap gap-2 pt-4 border-t">
           <span className="text-sm text-muted-foreground">Active filters:</span>
           
-          {filters.search && (
+          {pendingFilters.search && (
             <Badge variant="secondary" className="gap-1">
-              Search: {filters.search}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => onFiltersChange({ search: '' })} />
+              Search: {pendingFilters.search}
+              <X className="h-3 w-3 cursor-pointer" onClick={() => 
+                updatePendingFilters({ search: '' })
+              } />
             </Badge>
           )}
           
-          {filters.verificationStatus.map(status => (
+          {pendingFilters.verificationStatus.map(status => (
             <Badge key={status} variant="secondary" className="gap-1">
               {verificationOptions.find(o => o.value === status)?.label}
               <X className="h-3 w-3 cursor-pointer" onClick={() => 
@@ -172,7 +213,7 @@ const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFilte
             </Badge>
           ))}
           
-          {filters.sourceTypes.map(type => (
+          {pendingFilters.sourceTypes.map(type => (
             <Badge key={type} variant="secondary" className="gap-1">
               {sourceTypeOptions.find(o => o.value === type)?.label}
               <X className="h-3 w-3 cursor-pointer" onClick={() => 
@@ -181,7 +222,7 @@ const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFilte
             </Badge>
           ))}
           
-          {filters.healthStatus.map(status => (
+          {pendingFilters.healthStatus.map(status => (
             <Badge key={status} variant="secondary" className="gap-1">
               {healthStatusOptions.find(o => o.value === status)?.label}
               <X className="h-3 w-3 cursor-pointer" onClick={() => 
@@ -189,14 +230,21 @@ const SourceFilters = ({ filters, onFiltersChange, onClearFilters }: SourceFilte
               } />
             </Badge>
           ))}
-          
-          <Button variant="ghost" size="sm" onClick={onClearFilters}>
-            Clear All
-          </Button>
         </div>
       )}
+
+      <FilterControls
+        hasUnsavedChanges={hasUnsavedChanges}
+        hasActiveFilters={hasActiveFilters}
+        activeFilterCount={activeFilterCount}
+        onApply={handleApply}
+        onCancel={cancelChanges}
+        onReset={resetFilters}
+        resetLabel="Clear All Filters"
+      />
     </div>
   );
 };
 
 export default SourceFilters;
+export { DEFAULT_FILTERS as DEFAULT_SOURCE_FILTERS };
