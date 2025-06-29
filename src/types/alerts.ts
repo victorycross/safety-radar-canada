@@ -32,3 +32,19 @@ export interface AlertNormalizationResult {
     failed: number;
   };
 }
+
+// Validation result interface
+export interface AlertValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+// Batch processing result interface
+export interface AlertBatchResult {
+  totalAlerts: number;
+  validAlerts: number;
+  invalidAlerts: number;
+  errors: string[];
+  warnings: string[];
+}

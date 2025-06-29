@@ -1,8 +1,53 @@
 
 import { AlertSource } from './types.ts';
+import { UniversalAlert } from '../../../src/types/alerts.ts';
 
-export async function normalizeAlerts(data: any, source: AlertSource): Promise<any[]> {
-  const alerts: any[] = [];
+// Normalize severity levels from various sources
+export const normalizeSeverity = (severity: string | undefined): UniversalAlert['severity'] => {
+  if (!severity) return 'Unknown';
+  
+  const normalizedSeverity = severity.toLowerCase().trim();
+  
+  if (['extreme', 'critical', 'catastrophic'].includes(normalizedSeverity)) return 'Extreme';
+  if (['severe', 'major', 'high'].includes(normalizedSeverity)) return 'Severe';
+  if (['moderate', 'medium', 'warning'].includes(normalizedSeverity)) return 'Moderate';
+  if (['minor', 'low', 'advisory'].includes(normalizedSeverity)) return 'Minor';
+  if (['info', 'information', 'informational'].includes(normalizedSeverity)) return 'Info';
+  
+  return 'Unknown';
+};
+
+// Normalize urgency levels from various sources
+export const normalizeUrgency = (urgency: string | undefined): UniversalAlert['urgency'] => {
+  if (!urgency) return 'Unknown';
+  
+  const normalizedUrgency = urgency.toLowerCase().trim();
+  
+  if (['immediate', 'now', 'urgent'].includes(normalizedUrgency)) return 'Immediate';
+  if (['expected', 'soon', 'likely'].includes(normalizedUrgency)) return 'Expected';
+  if (['future', 'later', 'eventual'].includes(normalizedUrgency)) return 'Future';
+  if (['past', 'expired', 'historical'].includes(normalizedUrgency)) return 'Past';
+  
+  return 'Unknown';
+};
+
+// Normalize status levels from various sources
+export const normalizeStatus = (status: string | undefined): UniversalAlert['status'] => {
+  if (!status) return 'Unknown';
+  
+  const normalizedStatus = status.toLowerCase().trim();
+  
+  if (['actual', 'real', 'live'].includes(normalizedStatus)) return 'Actual';
+  if (['exercise', 'drill', 'training'].includes(normalizedStatus)) return 'Exercise';
+  if (['system', 'technical', 'maintenance'].includes(normalizedStatus)) return 'System';
+  if (['test', 'testing'].includes(normalizedStatus)) return 'Test';
+  if (['draft', 'preliminary'].includes(normalizedStatus)) return 'Draft';
+  
+  return 'Unknown';
+};
+
+export async function normalizeAlerts(data: any, source: AlertSource): Promise<UniversalAlert[]> {
+  const alerts: UniversalAlert[] = [];
   
   // Handle different data formats
   let items: any[] = [];
@@ -18,34 +63,33 @@ export async function normalizeAlerts(data: any, source: AlertSource): Promise<a
   }
 
   for (const item of items) {
-    const normalizedAlert = {
-      title: item.title || item.properties?.headline || item.summary || 'Untitled Alert',
-      description: item.description || item.properties?.description || item.content || '',
-      severity: normalizeSeverity(item.severity || item.properties?.severity || 'Minor'),
-      timestamp: parseTimestamp(item.pubDate || item.updated || item.properties?.onset || new Date().toISOString()),
-      source_type: source.source_type,
-      source_name: source.name,
-      raw_data: item,
-      confidence_score: calculateConfidenceScore(item, source),
-      geographic_data: extractGeographicData(item)
+    // Extract data from properties if it's a GeoJSON feature
+    const props = item.properties || item;
+    
+    const normalizedAlert: UniversalAlert = {
+      id: item.id || props.id || `${source.source_type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      title: props.title || props.headline || props.name || 'Untitled Alert',
+      description: props.description || props.summary || props.details || 'No description available',
+      severity: normalizeSeverity(props.severity || props.priority),
+      urgency: normalizeUrgency(props.urgency || props.immediacy),
+      category: props.category || props.type || 'General',
+      status: normalizeStatus(props.status),
+      area: props.area || props.location || props.region || 'Area not specified',
+      published: parseTimestamp(props.published || props.created || props.date || new Date().toISOString()),
+      updated: props.updated ? parseTimestamp(props.updated) : undefined,
+      expires: props.expires || props.expiry ? parseTimestamp(props.expires || props.expiry) : undefined,
+      effective: props.effective || props.onset ? parseTimestamp(props.effective || props.onset) : undefined,
+      url: props.url || props.link,
+      instructions: props.instructions || props.action,
+      author: props.author || props.source || source.name,
+      source: getSourceName(source.source_type),
+      coordinates: extractCoordinates(item)
     };
     
     alerts.push(normalizedAlert);
   }
   
   return alerts;
-}
-
-function normalizeSeverity(severity: string): string {
-  const severityLower = severity.toLowerCase();
-  
-  if (['extreme', 'severe', 'critical', 'high'].includes(severityLower)) {
-    return 'severe';
-  } else if (['moderate', 'warning', 'medium'].includes(severityLower)) {
-    return 'warning';
-  } else {
-    return 'normal';
-  }
 }
 
 function parseTimestamp(timestamp: string): string {
@@ -56,47 +100,42 @@ function parseTimestamp(timestamp: string): string {
   }
 }
 
-function calculateConfidenceScore(item: any, source: AlertSource): number {
-  let score = 0.5; // Base score
-  
-  // Increase confidence for official sources
-  if (['weather', 'weather-geocmet', 'emergency', 'security-rss'].includes(source.source_type)) {
-    score += 0.3;
+function getSourceName(sourceType: string): UniversalAlert['source'] {
+  switch (sourceType.toLowerCase()) {
+    case 'alert-ready':
+    case 'national':
+      return 'Alert Ready';
+    case 'bc':
+    case 'bc-emergency':
+      return 'BC Emergency';
+    case 'everbridge':
+      return 'Everbridge';
+    default:
+      return 'Other';
   }
-  
-  // Increase confidence if location data is present
-  if (item.geometry || item.area || item.location) {
-    score += 0.1;
-  }
-  
-  // Increase confidence if timestamp is recent
-  const timestamp = new Date(item.pubDate || item.updated || Date.now());
-  const hoursOld = (Date.now() - timestamp.getTime()) / (1000 * 60 * 60);
-  if (hoursOld < 24) {
-    score += 0.1;
-  }
-  
-  return Math.min(1.0, score);
 }
 
-function extractGeographicData(item: any): any {
-  const geoData: any = {};
-  
-  // Extract coordinates from various formats
+function extractCoordinates(item: any): { latitude: number; longitude: number } | undefined {
+  // Try various coordinate formats
   if (item.geometry?.coordinates) {
-    geoData.longitude = item.geometry.coordinates[0];
-    geoData.latitude = item.geometry.coordinates[1];
+    const coords = item.geometry.coordinates;
+    if (Array.isArray(coords) && coords.length >= 2) {
+      return { longitude: coords[0], latitude: coords[1] };
+    }
   }
   
-  // Extract area information
-  if (item.area || item.properties?.areaDesc) {
-    geoData.area = item.area || item.properties.areaDesc;
+  if (item.latitude && item.longitude) {
+    return { latitude: parseFloat(item.latitude), longitude: parseFloat(item.longitude) };
   }
   
-  return geoData;
+  if (item.lat && item.lng) {
+    return { latitude: parseFloat(item.lat), longitude: parseFloat(item.lng) };
+  }
+  
+  return undefined;
 }
 
-export async function queueAlertsForProcessing(supabaseClient: any, alerts: any[], sourceId: string): Promise<number> {
+export async function queueAlertsForProcessing(supabaseClient: any, alerts: UniversalAlert[], sourceId: string): Promise<number> {
   if (!alerts.length) return 0;
   
   const queueItems = alerts.map(alert => ({

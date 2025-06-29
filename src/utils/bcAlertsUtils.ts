@@ -35,6 +35,7 @@ export const fetchBCAlertsData = async (): Promise<UniversalAlert[]> => {
   }
 };
 
+// Utility functions for backward compatibility with BCAlertsCard
 export const getSeverityClass = (severity: string) => {
   switch (severity?.toLowerCase()) {
     case 'extreme':
