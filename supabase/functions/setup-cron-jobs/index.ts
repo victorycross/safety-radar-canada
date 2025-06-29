@@ -19,20 +19,29 @@ Deno.serve(async (req) => {
 
     console.log('Setting up cron jobs for data ingestion...');
 
-    // Enable required extensions
-    const { error: cronError } = await supabaseClient.auth.admin.query(
-      'CREATE EXTENSION IF NOT EXISTS pg_cron; CREATE EXTENSION IF NOT EXISTS pg_net;'
-    );
-
-    if (cronError) {
-      console.log('Extensions may already be enabled:', cronError.message);
+    // First, try to enable the required extensions
+    try {
+      const extensionSql = `
+        CREATE EXTENSION IF NOT EXISTS pg_cron;
+        CREATE EXTENSION IF NOT EXISTS pg_net;
+      `;
+      
+      const { error: extensionError } = await supabaseClient.rpc('exec_sql', { 
+        sql: extensionSql 
+      });
+      
+      if (extensionError) {
+        console.log('Extensions setup result:', extensionError.message);
+      }
+    } catch (extError) {
+      console.log('Extensions may already be enabled or require superuser privileges');
     }
 
     // Set up cron job to run master ingestion orchestrator every 5 minutes
-    const cronJobSql = `
+    const masterJobSql = `
       SELECT cron.schedule(
         'master-ingestion-job',
-        '*/5 * * * *', -- every 5 minutes
+        '*/5 * * * *',
         $$
         SELECT
           net.http_post(
@@ -45,10 +54,10 @@ Deno.serve(async (req) => {
     `;
 
     // Set up cron job to process alert queue every 2 minutes
-    const queueProcessorSql = `
+    const queueJobSql = `
       SELECT cron.schedule(
         'process-alert-queue-job',
-        '*/2 * * * *', -- every 2 minutes
+        '*/2 * * * *',
         $$
         SELECT
           net.http_post(
@@ -60,38 +69,68 @@ Deno.serve(async (req) => {
       );
     `;
 
+    // Try to set up the cron jobs
+    const results = [];
+    
     try {
-      // Execute cron job setup
-      const { error: masterJobError } = await supabaseClient.rpc('exec_sql', { 
-        sql: cronJobSql 
+      const { data: masterJobData, error: masterJobError } = await supabaseClient.rpc('exec_sql', { 
+        sql: masterJobSql 
       });
       
-      const { error: queueJobError } = await supabaseClient.rpc('exec_sql', { 
-        sql: queueProcessorSql 
-      });
+      if (masterJobError) {
+        console.log('Master job setup error:', masterJobError.message);
+        results.push({ job: 'master-ingestion-job', status: 'error', error: masterJobError.message });
+      } else {
+        console.log('Master ingestion job scheduled successfully');
+        results.push({ job: 'master-ingestion-job', status: 'success' });
+      }
+    } catch (error) {
+      console.log('Master job scheduling failed:', error.message);
+      results.push({ job: 'master-ingestion-job', status: 'failed', error: error.message });
+    }
 
-      console.log('Cron jobs configured successfully');
+    try {
+      const { data: queueJobData, error: queueJobError } = await supabaseClient.rpc('exec_sql', { 
+        sql: queueJobSql 
+      });
       
+      if (queueJobError) {
+        console.log('Queue job setup error:', queueJobError.message);
+        results.push({ job: 'process-alert-queue-job', status: 'error', error: queueJobError.message });
+      } else {
+        console.log('Queue processing job scheduled successfully');
+        results.push({ job: 'process-alert-queue-job', status: 'success' });
+      }
+    } catch (error) {
+      console.log('Queue job scheduling failed:', error.message);
+      results.push({ job: 'process-alert-queue-job', status: 'failed', error: error.message });
+    }
+
+    // Check if any jobs were successfully set up
+    const successCount = results.filter(r => r.status === 'success').length;
+    const hasErrors = results.some(r => r.status === 'error' || r.status === 'failed');
+
+    if (successCount > 0) {
       return new Response(
         JSON.stringify({
           success: true,
-          message: 'Cron jobs configured successfully',
-          jobs: [
-            'master-ingestion-job (every 5 minutes)',
-            'process-alert-queue-job (every 2 minutes)'
-          ]
+          message: `Successfully configured ${successCount} cron job(s)`,
+          jobs: results,
+          note: hasErrors ? 'Some jobs failed - this may be due to database permissions. Check the Supabase SQL editor for manual setup.' : undefined
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-
-    } catch (error) {
-      console.log('Could not set up cron jobs (may require database admin privileges):', error.message);
-      
+    } else {
       return new Response(
         JSON.stringify({
-          success: true,
-          message: 'Cron jobs setup initiated (requires admin privileges to complete)',
-          note: 'You may need to run the cron setup manually from the Supabase SQL editor'
+          success: false,
+          message: 'Cron jobs setup failed - likely due to database permissions',
+          jobs: results,
+          instructions: [
+            '1. Go to the Supabase SQL Editor',
+            '2. Enable extensions: CREATE EXTENSION IF NOT EXISTS pg_cron; CREATE EXTENSION IF NOT EXISTS pg_net;',
+            '3. Run the cron.schedule commands manually with proper permissions'
+          ]
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -102,7 +141,8 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        success: false 
+        success: false,
+        message: 'Failed to set up cron jobs - check edge function logs for details'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
