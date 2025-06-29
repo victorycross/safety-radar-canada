@@ -45,13 +45,13 @@ const FeedTestingDashboard: React.FC = () => {
     feedName: ''
   });
 
-  // Initialize with known sources
+  // Initialize with known sources including new GeoMet-OGC
   React.useEffect(() => {
     const knownSources = [
       { id: 'alert-ready', name: 'Alert Ready (Canada Emergency Alerts)' },
       { id: 'bc-arcgis', name: 'BC ArcGIS Emergency Data' },
       { id: 'everbridge', name: 'Everbridge Alerts' },
-      { id: 'weather-ca', name: 'Environment Canada Weather' },
+      { id: 'weather-ca-geocmet', name: 'Environment Canada GeoMet-OGC Weather' },
       { id: 'cisa-alerts', name: 'CISA Security Alerts' },
       { id: 'social-media', name: 'Social Media Monitoring' }
     ];
@@ -76,6 +76,12 @@ const FeedTestingDashboard: React.FC = () => {
       
       // Test specific feeds based on source ID with proper request bodies
       switch (sourceId) {
+        case 'weather-ca-geocmet':
+          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
+            body: { source: 'weather-geocmet', test_mode: true }
+          });
+          details = 'Environment Canada GeoMet-OGC API provides real-time weather alerts in GeoJSON format';
+          break;
         case 'alert-ready':
           result = await supabase.functions.invoke('fetch-alerts', {
             body: { source: 'alert-ready' }
@@ -108,13 +114,14 @@ const FeedTestingDashboard: React.FC = () => {
       const recordsProcessed = result.data?.alerts?.length || 
                               result.data?.processed_count || 
                               result.data?.results?.length || 
-                              result.data?.count || 0;
+                              result.data?.count || 
+                              result.data?.records_processed || 0;
 
       let statusMessage = '';
       if (recordsProcessed === 0) {
         switch (sourceId) {
-          case 'weather-ca':
-            statusMessage = 'Success but no records - likely needs Environment Canada API key';
+          case 'weather-ca-geocmet':
+            statusMessage = 'Success but no records - may indicate no active weather alerts or API access issues';
             break;
           case 'cisa-alerts':
             statusMessage = 'Success but no records - may need to verify CISA RSS feed endpoint';
@@ -227,6 +234,15 @@ const FeedTestingDashboard: React.FC = () => {
 
       if (incidentsError) throw incidentsError;
 
+      // Check weather alerts ingest table
+      const { data: weatherAlerts, error: weatherError } = await supabase
+        .from('weather_alerts_ingest')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (weatherError) throw weatherError;
+
       // Check queue status
       const { data: queueItems, error: queueError } = await supabase
         .from('alert_ingestion_queue')
@@ -238,10 +254,11 @@ const FeedTestingDashboard: React.FC = () => {
 
       toast({
         title: 'Database Check',
-        description: `Found ${incidents?.length || 0} recent incidents, ${queueItems?.length || 0} queue items`,
+        description: `Found ${incidents?.length || 0} incidents, ${weatherAlerts?.length || 0} weather alerts, ${queueItems?.length || 0} queue items`,
       });
 
       console.log('Recent incidents:', incidents);
+      console.log('Weather alerts:', weatherAlerts);
       console.log('Queue items:', queueItems);
 
     } catch (error) {
@@ -304,7 +321,7 @@ const FeedTestingDashboard: React.FC = () => {
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               This dashboard helps you test each external data source individually and verify data flow into the database.
-              Feeds showing "success but no records" likely need API keys or configuration.
+              The new Environment Canada GeoMet-OGC API provides weather alerts in GeoJSON format with enhanced error handling and retry logic.
             </AlertDescription>
           </Alert>
 

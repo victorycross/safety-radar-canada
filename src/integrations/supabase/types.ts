@@ -408,6 +408,45 @@ export type Database = {
         }
         Relationships: []
       }
+      weather_alerts_ingest: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_type: string | null
+          expires: string | null
+          geometry_coordinates: Json | null
+          id: string
+          onset: string | null
+          raw_data: Json | null
+          severity: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_type?: string | null
+          expires?: string | null
+          geometry_coordinates?: Json | null
+          id: string
+          onset?: string | null
+          raw_data?: Json | null
+          severity?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_type?: string | null
+          expires?: string | null
+          geometry_coordinates?: Json | null
+          id?: string
+          onset?: string | null
+          raw_data?: Json | null
+          severity?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

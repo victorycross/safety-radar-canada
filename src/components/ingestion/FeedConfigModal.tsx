@@ -40,13 +40,25 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
 
   const getConfigDetails = (feedId: string) => {
     switch (feedId) {
+      case 'weather-ca-geocmet':
+        return {
+          description: 'Environment Canada GeoMet-OGC API for weather alerts in GeoJSON format',
+          apiKeyLabel: 'API Key (Optional)',
+          apiKeyPlaceholder: 'Usually not required for public weather alerts',
+          endpointDefault: 'https://api.weather.gc.ca/collections/alerts-fc/items',
+          helpText: 'GeoMet-OGC API provides weather alerts with geographic data in GeoJSON format. No authentication typically required for public alerts.',
+          pollIntervalDefault: '300',
+          pollIntervalNote: 'Recommended: 5 minutes (300 seconds) for weather alerts'
+        };
       case 'weather-ca':
         return {
           description: 'Environment Canada Weather API requires authentication for full access',
           apiKeyLabel: 'Environment Canada API Key',
           apiKeyPlaceholder: 'Enter your Environment Canada API key',
           endpointDefault: 'https://weather.gc.ca/rss/warning/on_e.xml',
-          helpText: 'You can obtain an API key from Environment and Climate Change Canada\'s web services portal'
+          helpText: 'You can obtain an API key from Environment and Climate Change Canada\'s web services portal',
+          pollIntervalDefault: '300',
+          pollIntervalNote: 'Standard polling interval for weather data'
         };
       case 'social-media':
         return {
@@ -54,7 +66,9 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
           apiKeyLabel: 'Social Media API Keys (JSON)',
           apiKeyPlaceholder: '{"twitter": "key", "facebook": "key"}',
           endpointDefault: 'Multiple platforms',
-          helpText: 'Configure API keys for Twitter, Facebook, and other social media platforms in JSON format'
+          helpText: 'Configure API keys for Twitter, Facebook, and other social media platforms in JSON format',
+          pollIntervalDefault: '600',
+          pollIntervalNote: 'Social media can be polled less frequently'
         };
       case 'everbridge':
         return {
@@ -62,7 +76,9 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
           apiKeyLabel: 'Everbridge API Credentials',
           apiKeyPlaceholder: 'username:password:orgId',
           endpointDefault: 'https://api.everbridge.net/rest/broadcasts',
-          helpText: 'Format: username:password:organizationId'
+          helpText: 'Format: username:password:organizationId',
+          pollIntervalDefault: '300',
+          pollIntervalNote: 'Emergency alerts should be checked frequently'
         };
       case 'cisa-alerts':
         return {
@@ -70,7 +86,9 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
           apiKeyLabel: 'API Key (Optional)',
           apiKeyPlaceholder: 'Not typically required',
           endpointDefault: 'https://www.cisa.gov/cybersecurity-advisories/all.xml',
-          helpText: 'CISA RSS feeds are typically public and don\'t require authentication'
+          helpText: 'CISA RSS feeds are typically public and don\'t require authentication',
+          pollIntervalDefault: '1800',
+          pollIntervalNote: 'Security advisories can be checked every 30 minutes'
         };
       case 'alert-ready':
         return {
@@ -78,7 +96,9 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
           apiKeyLabel: 'API Key (Optional)',
           apiKeyPlaceholder: 'Not typically required',
           endpointDefault: 'https://alerts.pelmorex.com/rss',
-          helpText: 'Alert Ready feeds are public emergency alerts and typically don\'t require authentication'
+          helpText: 'Alert Ready feeds are public emergency alerts and typically don\'t require authentication',
+          pollIntervalDefault: '300',
+          pollIntervalNote: 'Emergency alerts should be checked frequently'
         };
       case 'bc-arcgis':
         return {
@@ -86,7 +106,9 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
           apiKeyLabel: 'API Key (Optional)',
           apiKeyPlaceholder: 'Not typically required',
           endpointDefault: 'BC ArcGIS Emergency Services API',
-          helpText: 'BC government emergency data is typically publicly accessible'
+          helpText: 'BC government emergency data is typically publicly accessible',
+          pollIntervalDefault: '600',
+          pollIntervalNote: 'GIS data can be updated less frequently'
         };
       default:
         return {
@@ -94,12 +116,22 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
           apiKeyLabel: 'API Key',
           apiKeyPlaceholder: 'Enter API key if required',
           endpointDefault: '',
-          helpText: 'Configure the data source settings'
+          helpText: 'Configure the data source settings',
+          pollIntervalDefault: '300',
+          pollIntervalNote: 'Standard polling interval'
         };
     }
   };
 
   const details = getConfigDetails(feedId);
+
+  React.useEffect(() => {
+    setConfig(prev => ({
+      ...prev,
+      endpoint: details.endpointDefault,
+      pollInterval: details.pollIntervalDefault
+    }));
+  }, [feedId]);
 
   const handleSave = () => {
     console.log('Saving configuration for', feedId, config);
@@ -150,7 +182,14 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="pollInterval">Poll Interval (seconds)</Label>
+                <Label htmlFor="pollInterval">
+                  Poll Interval (seconds)
+                  {feedId === 'weather-ca-geocmet' && (
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      5min recommended
+                    </Badge>
+                  )}
+                </Label>
                 <Select value={config.pollInterval} onValueChange={(value) => setConfig(prev => ({ ...prev, pollInterval: value }))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -162,6 +201,9 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
                     <SelectItem value="1800">30 minutes</SelectItem>
                   </SelectContent>
                 </Select>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {details.pollIntervalNote}
+                </div>
               </div>
 
               <div>
@@ -172,6 +214,23 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
                   value={config.timeout}
                   onChange={(e) => setConfig(prev => ({ ...prev, timeout: e.target.value }))}
                 />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="retries">Max Retries</Label>
+              <Select value={config.retries} onValueChange={(value) => setConfig(prev => ({ ...prev, retries: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 retry</SelectItem>
+                  <SelectItem value="3">3 retries</SelectItem>
+                  <SelectItem value="5">5 retries</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="text-xs text-muted-foreground mt-1">
+                Number of retry attempts for failed requests
               </div>
             </div>
 
