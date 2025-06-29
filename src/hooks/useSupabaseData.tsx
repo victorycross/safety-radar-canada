@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { AlertLevel, Incident, Province, IncidentSource, VerificationStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,9 +44,18 @@ export function useSupabaseData() {
 
   const fetchIncidents = async () => {
     try {
+      // Fetch incidents with enhanced data including correlations and geospatial info
       const { data, error } = await supabase
         .from('incidents')
-        .select('*')
+        .select(`
+          *,
+          geospatial_data(*),
+          alert_correlations:alert_correlations!primary_incident_id(
+            related_incident_id,
+            correlation_type,
+            confidence_score
+          )
+        `)
         .order('timestamp', { ascending: false });
       
       if (error) throw error;
@@ -60,9 +68,18 @@ export function useSupabaseData() {
           provinceId: incident.province_id,
           timestamp: new Date(incident.timestamp),
           alertLevel: incident.alert_level as AlertLevel,
-          source: incident.source as IncidentSource, // Cast to ensure type compatibility
+          source: incident.source as IncidentSource,
           verificationStatus: incident.verification_status as VerificationStatus,
-          recommendedAction: incident.recommended_action || undefined
+          recommendedAction: incident.recommended_action || undefined,
+          // Enhanced fields from new schema
+          confidenceScore: incident.confidence_score || 0.5,
+          correlationId: incident.correlation_id || undefined,
+          rawPayload: incident.raw_payload || undefined,
+          dataSourceId: incident.data_source_id || undefined,
+          geographicScope: incident.geographic_scope || undefined,
+          severityNumeric: incident.severity_numeric || 1,
+          geospatialData: incident.geospatial_data?.[0] || undefined,
+          correlations: incident.alert_correlations || []
         }));
         
         setIncidents(mappedIncidents);
@@ -224,6 +241,58 @@ export function useSupabaseData() {
     }
   };
 
+  // Enhanced method to get incidents with correlation data
+  const getCorrelatedIncidents = (incidentId: string) => {
+    return incidents.filter(incident => 
+      incident.correlations?.some(corr => 
+        corr.related_incident_id === incidentId || 
+        incident.id === incidentId
+      )
+    );
+  };
+
+  // Method to get incidents by confidence score range
+  const getIncidentsByConfidence = (minConfidence: number = 0, maxConfidence: number = 1) => {
+    return incidents.filter(incident => 
+      (incident.confidenceScore || 0) >= minConfidence && 
+      (incident.confidenceScore || 0) <= maxConfidence
+    );
+  };
+
+  // Method to get incidents with geospatial data
+  const getGeotaggedIncidents = () => {
+    return incidents.filter(incident => incident.geospatialData);
+  };
+
+  // Method to trigger data ingestion manually
+  const triggerDataIngestion = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('master-ingestion-orchestrator');
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Data Ingestion Triggered',
+        description: `Processing data from ${data?.processed_sources || 0} sources`,
+      });
+      
+      // Refresh data after a delay to allow processing
+      setTimeout(() => {
+        refreshData();
+      }, 5000);
+      
+      return data;
+    } catch (err) {
+      console.error('Error triggering data ingestion:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to trigger data ingestion. Please try again.',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
   return {
     provinces,
     incidents,
@@ -234,6 +303,10 @@ export function useSupabaseData() {
     getIncidentsByProvince,
     addIncident,
     reportIncident,
-    updateProvinceAlertLevel
+    updateProvinceAlertLevel,
+    getCorrelatedIncidents,
+    getIncidentsByConfidence,
+    getGeotaggedIncidents,
+    triggerDataIngestion
   };
 }

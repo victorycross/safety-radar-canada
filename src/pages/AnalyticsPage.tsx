@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import ExecutiveSummary from "@/components/analytics/ExecutiveSummary";
 import EnhancedCharts from "@/components/analytics/EnhancedCharts";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ExpandIcon, ShrinkIcon } from "lucide-react";
+import DataIngestionDashboard from "@/components/ingestion/DataIngestionDashboard";
 
 const AnalyticsPage = () => {
   const { incidents, provinces } = useSecurity();
@@ -200,21 +200,18 @@ const AnalyticsPage = () => {
           </AccordionContent>
         </AccordionItem>
 
-        {/* Source Performance */}
+        {/* Data Ingestion & Source Performance */}
         <AccordionItem value="source-performance" className="border rounded-lg">
           <AccordionTrigger className="px-6 py-4 hover:no-underline">
             <div className="flex items-center">
-              <span className="font-semibold text-lg">Source Performance</span>
+              <span className="font-semibold text-lg">Data Ingestion & Source Performance</span>
               <span className="ml-2 text-sm text-muted-foreground">
-                Data source reliability and metrics
+                Real-time monitoring and control of data sources
               </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 pb-6">
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Source performance analytics coming soon...</p>
-              <p className="text-sm mt-2">Will include uptime monitoring, data quality metrics, and alert performance</p>
-            </div>
+            <DataIngestionDashboard />
           </AccordionContent>
         </AccordionItem>
 

@@ -9,6 +9,134 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      alert_correlations: {
+        Row: {
+          confidence_score: number
+          correlation_type: string
+          created_at: string
+          id: string
+          primary_incident_id: string | null
+          related_incident_id: string | null
+        }
+        Insert: {
+          confidence_score?: number
+          correlation_type: string
+          created_at?: string
+          id?: string
+          primary_incident_id?: string | null
+          related_incident_id?: string | null
+        }
+        Update: {
+          confidence_score?: number
+          correlation_type?: string
+          created_at?: string
+          id?: string
+          primary_incident_id?: string | null
+          related_incident_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_correlations_primary_incident_id_fkey"
+            columns: ["primary_incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_correlations_related_incident_id_fkey"
+            columns: ["related_incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alert_ingestion_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          processed_at: string | null
+          processing_attempts: number
+          processing_status: string
+          raw_payload: Json
+          source_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          processing_attempts?: number
+          processing_status?: string
+          raw_payload: Json
+          source_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          processing_attempts?: number
+          processing_status?: string
+          raw_payload?: Json
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_ingestion_queue_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "alert_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alert_sources: {
+        Row: {
+          api_endpoint: string
+          configuration: Json | null
+          created_at: string
+          description: string | null
+          health_status: string
+          id: string
+          is_active: boolean
+          last_poll_at: string | null
+          name: string
+          polling_interval: number
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          api_endpoint: string
+          configuration?: Json | null
+          created_at?: string
+          description?: string | null
+          health_status?: string
+          id?: string
+          is_active?: boolean
+          last_poll_at?: string | null
+          name: string
+          polling_interval?: number
+          source_type: string
+          updated_at?: string
+        }
+        Update: {
+          api_endpoint?: string
+          configuration?: Json | null
+          created_at?: string
+          description?: string | null
+          health_status?: string
+          id?: string
+          is_active?: boolean
+          last_poll_at?: string | null
+          name?: string
+          polling_interval?: number
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       data_sync_status: {
         Row: {
           last_sync_time: string | null
@@ -30,14 +158,70 @@ export type Database = {
         }
         Relationships: []
       }
+      geospatial_data: {
+        Row: {
+          administrative_area: string | null
+          affected_radius_km: number | null
+          country_code: string | null
+          created_at: string
+          geohash: string | null
+          id: string
+          incident_id: string | null
+          latitude: number | null
+          longitude: number | null
+          population_impact: number | null
+          updated_at: string
+        }
+        Insert: {
+          administrative_area?: string | null
+          affected_radius_km?: number | null
+          country_code?: string | null
+          created_at?: string
+          geohash?: string | null
+          id?: string
+          incident_id?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          population_impact?: number | null
+          updated_at?: string
+        }
+        Update: {
+          administrative_area?: string | null
+          affected_radius_km?: number | null
+          country_code?: string | null
+          created_at?: string
+          geohash?: string | null
+          id?: string
+          incident_id?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          population_impact?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geospatial_data_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           alert_level: string
+          confidence_score: number | null
+          correlation_id: string | null
           created_at: string
+          data_source_id: string | null
           description: string
+          geographic_scope: string | null
           id: string
           province_id: string
+          raw_payload: Json | null
           recommended_action: string | null
+          severity_numeric: number | null
           source: string
           timestamp: string
           title: string
@@ -46,11 +230,17 @@ export type Database = {
         }
         Insert: {
           alert_level?: string
+          confidence_score?: number | null
+          correlation_id?: string | null
           created_at?: string
+          data_source_id?: string | null
           description: string
+          geographic_scope?: string | null
           id?: string
           province_id: string
+          raw_payload?: Json | null
           recommended_action?: string | null
+          severity_numeric?: number | null
           source: string
           timestamp?: string
           title: string
@@ -59,11 +249,17 @@ export type Database = {
         }
         Update: {
           alert_level?: string
+          confidence_score?: number | null
+          correlation_id?: string | null
           created_at?: string
+          data_source_id?: string | null
           description?: string
+          geographic_scope?: string | null
           id?: string
           province_id?: string
+          raw_payload?: Json | null
           recommended_action?: string | null
+          severity_numeric?: number | null
           source?: string
           timestamp?: string
           title?: string
@@ -71,6 +267,13 @@ export type Database = {
           verification_status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "incidents_data_source_id_fkey"
+            columns: ["data_source_id"]
+            isOneToOne: false
+            referencedRelation: "alert_sources"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "incidents_province_id_fkey"
             columns: ["province_id"]
@@ -109,6 +312,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      source_health_metrics: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          http_status_code: number | null
+          id: string
+          records_processed: number | null
+          response_time_ms: number | null
+          source_id: string | null
+          success: boolean
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          http_status_code?: number | null
+          id?: string
+          records_processed?: number | null
+          response_time_ms?: number | null
+          source_id?: string | null
+          success: boolean
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          http_status_code?: number | null
+          id?: string
+          records_processed?: number | null
+          response_time_ms?: number | null
+          source_id?: string | null
+          success?: boolean
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_health_metrics_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "alert_sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       toronto_police_incidents: {
         Row: {
