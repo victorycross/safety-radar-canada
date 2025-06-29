@@ -137,6 +137,50 @@ export type Database = {
         }
         Relationships: []
       }
+      cities: {
+        Row: {
+          code: string
+          coordinates: unknown | null
+          created_at: string
+          id: string
+          is_major_city: boolean
+          name: string
+          population: number | null
+          province_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          coordinates?: unknown | null
+          created_at?: string
+          id?: string
+          is_major_city?: boolean
+          name: string
+          population?: number | null
+          province_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          coordinates?: unknown | null
+          created_at?: string
+          id?: string
+          is_major_city?: boolean
+          name?: string
+          population?: number | null
+          province_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cities_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_sync_status: {
         Row: {
           last_sync_time: string | null
@@ -189,6 +233,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "employee_history_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_locations: {
+        Row: {
+          city_id: string
+          created_at: string
+          current_location_count: number
+          home_base_count: number
+          id: string
+          last_updated_at: string
+          province_id: string
+          travel_away_count: number
+          updated_by: string | null
+        }
+        Insert: {
+          city_id: string
+          created_at?: string
+          current_location_count?: number
+          home_base_count?: number
+          id?: string
+          last_updated_at?: string
+          province_id: string
+          travel_away_count?: number
+          updated_by?: string | null
+        }
+        Update: {
+          city_id?: string
+          created_at?: string
+          current_location_count?: number
+          home_base_count?: number
+          id?: string
+          last_updated_at?: string
+          province_id?: string
+          travel_away_count?: number
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_locations_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_locations_province_id_fkey"
             columns: ["province_id"]
             isOneToOne: false
             referencedRelation: "provinces"
@@ -317,6 +412,62 @@ export type Database = {
             columns: ["province_id"]
             isOneToOne: false
             referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_history: {
+        Row: {
+          change_reason: string | null
+          change_type: string
+          changed_by: string | null
+          city_id: string
+          created_at: string
+          current_location_count: number
+          data_source: string | null
+          home_base_count: number
+          id: string
+          previous_current_location_count: number | null
+          previous_home_base_count: number | null
+          previous_travel_away_count: number | null
+          travel_away_count: number
+        }
+        Insert: {
+          change_reason?: string | null
+          change_type: string
+          changed_by?: string | null
+          city_id: string
+          created_at?: string
+          current_location_count: number
+          data_source?: string | null
+          home_base_count: number
+          id?: string
+          previous_current_location_count?: number | null
+          previous_home_base_count?: number | null
+          previous_travel_away_count?: number | null
+          travel_away_count: number
+        }
+        Update: {
+          change_reason?: string | null
+          change_type?: string
+          changed_by?: string | null
+          city_id?: string
+          created_at?: string
+          current_location_count?: number
+          data_source?: string | null
+          home_base_count?: number
+          id?: string
+          previous_current_location_count?: number | null
+          previous_home_base_count?: number | null
+          previous_travel_away_count?: number | null
+          travel_away_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_history_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
             referencedColumns: ["id"]
           },
         ]
@@ -487,6 +638,108 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      travel_integration_config: {
+        Row: {
+          api_endpoint: string | null
+          authentication_config: Json | null
+          created_at: string
+          error_message: string | null
+          id: string
+          is_active: boolean
+          last_sync_at: string | null
+          platform_name: string
+          sync_frequency_minutes: number | null
+          sync_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_endpoint?: string | null
+          authentication_config?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          platform_name: string
+          sync_frequency_minutes?: number | null
+          sync_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_endpoint?: string | null
+          authentication_config?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_active?: boolean
+          last_sync_at?: string | null
+          platform_name?: string
+          sync_frequency_minutes?: number | null
+          sync_status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      travel_records: {
+        Row: {
+          created_at: string
+          current_city_id: string | null
+          departure_date: string | null
+          emergency_contact_info: Json | null
+          employee_id: string
+          external_booking_id: string | null
+          home_city_id: string
+          id: string
+          return_date: string | null
+          travel_platform: string | null
+          travel_status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_city_id?: string | null
+          departure_date?: string | null
+          emergency_contact_info?: Json | null
+          employee_id: string
+          external_booking_id?: string | null
+          home_city_id: string
+          id?: string
+          return_date?: string | null
+          travel_platform?: string | null
+          travel_status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_city_id?: string | null
+          departure_date?: string | null
+          emergency_contact_info?: Json | null
+          employee_id?: string
+          external_booking_id?: string | null
+          home_city_id?: string
+          id?: string
+          return_date?: string | null
+          travel_platform?: string | null
+          travel_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_records_current_city_id_fkey"
+            columns: ["current_city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "travel_records_home_city_id_fkey"
+            columns: ["home_city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weather_alerts_ingest: {
         Row: {
