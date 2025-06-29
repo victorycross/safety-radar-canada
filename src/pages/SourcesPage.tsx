@@ -55,7 +55,8 @@ const SourcesPage = () => {
   useEffect(() => {
     if (dbSources) {
       const enhancedSources: EnhancedSource[] = dbSources.map(source => {
-        const health = getSourceHealth(source.id);
+        const healthMetrics = getSourceHealth(source.id);
+        const latestHealth = healthMetrics.length > 0 ? healthMetrics[0] : null;
         const uptime = getSourceUptime(source.id);
         
         return {
@@ -67,10 +68,10 @@ const SourcesPage = () => {
           lastUpdate: source.last_poll_at ? new Date(source.last_poll_at).toLocaleString() : 'Never',
           healthStatus: source.health_status as 'healthy' | 'degraded' | 'offline' | 'error',
           uptime: uptime,
-          dataVolume: health?.records_processed || 0,
-          responseTime: health?.response_time_ms || 0,
-          errorRate: health?.success === false ? 100 : 0,
-          reliabilityScore: health?.success === false ? 0 : uptime
+          dataVolume: latestHealth?.records_processed || 0,
+          responseTime: latestHealth?.response_time_ms || 0,
+          errorRate: latestHealth?.success === false ? 100 : 0,
+          reliabilityScore: latestHealth?.success === false ? 0 : uptime
         };
       });
       setSources(enhancedSources);
