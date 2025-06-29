@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface AlertItem {
@@ -49,13 +48,30 @@ export const getSeverityLevel = (severity: string) => {
 };
 
 export const formatAlertDate = (dateString: string) => {
-  return new Date(dateString).toLocaleString('en-CA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  if (!dateString) {
+    return 'Date not available';
+  }
+  
+  try {
+    const date = new Date(dateString);
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date string:', dateString);
+      return 'Invalid date';
+    }
+    
+    return date.toLocaleString('en-CA', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formatting date:', dateString, error);
+    return 'Date formatting error';
+  }
 };
 
 export const getSeverityBadge = (severity: string) => {

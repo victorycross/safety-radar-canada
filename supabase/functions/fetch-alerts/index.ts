@@ -88,12 +88,29 @@ async function fetchAlertReadyData() {
         if (areaMatch) area = areaMatch[1].trim();
       }
       
+      // Helper function to safely parse and format dates
+      const parseDate = (dateStr: string | undefined) => {
+        if (!dateStr) return undefined;
+        
+        try {
+          const date = new Date(dateStr);
+          if (isNaN(date.getTime())) {
+            console.warn('Invalid date found:', dateStr);
+            return new Date().toISOString(); // Fallback to current time
+          }
+          return date.toISOString();
+        } catch (error) {
+          console.error('Error parsing date:', dateStr, error);
+          return new Date().toISOString(); // Fallback to current time
+        }
+      };
+      
       return {
         id: entry.id?.[0] || `alert-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        title: entry.title?.[0]?._,
-        published: entry.published?.[0],
-        updated: entry.updated?.[0],
-        summary: entry.summary?.[0]?._,
+        title: entry.title?.[0]?._ || entry.title?.[0] || 'Untitled Alert',
+        published: parseDate(entry.published?.[0]) || new Date().toISOString(),
+        updated: parseDate(entry.updated?.[0]),
+        summary: entry.summary?.[0]?._ || entry.summary?.[0] || 'No summary available',
         severity,
         urgency,
         category,
