@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,8 @@ import {
   TrendingUp,
   Search
 } from "lucide-react";
-import { IncidentSource, VerificationStatus } from "@/types";
 import { useSourcesState } from "@/hooks/useSourcesState";
+import { useDataIngestion } from "@/hooks/useDataIngestion";
 import SourceFilters from "@/components/sources/SourceFilters";
 import EnhancedSourceCard, { EnhancedSource } from "@/components/sources/EnhancedSourceCard";
 import SourceAnalytics from "@/components/sources/SourceAnalytics";
@@ -38,109 +39,43 @@ const SourcesPage = () => {
     resetToDefault
   } = useSourcesState();
 
-  // Enhanced sources data with mock analytics
-  const [sources] = useState<EnhancedSource[]>([
-    {
-      id: "alert-ready",
-      name: "Alert Ready",
-      description: "Canada's National Public Alerting System for emergency notifications",
-      type: "police",
-      verificationStatus: "verified",
-      lastUpdate: "real-time",
-      route: "/alert-ready",
-      healthStatus: "healthy",
-      uptime: 99.8,
-      dataVolume: 1250,
-      responseTime: 145,
-      errorRate: 0.2,
-      reliabilityScore: 98
-    },
-    {
-      id: "everbridge",
-      name: "Everbridge Alerts",
-      description: "Emergency notifications from Everbridge critical event management platform",
-      type: "everbridge",
-      verificationStatus: "verified",
-      lastUpdate: "real-time",
-      route: "/alert-ready",
-      healthStatus: "healthy",
-      uptime: 99.5,
-      dataVolume: 890,
-      responseTime: 178,
-      errorRate: 0.5,
-      reliabilityScore: 96
-    },
-    {
-      id: "police",
-      name: "Police Reports",
-      description: "Official reports from local and provincial police forces across Canada",
-      type: "police",
-      verificationStatus: "verified",
-      lastUpdate: "10 minutes ago",
-      healthStatus: "degraded",
-      uptime: 95.2,
-      dataVolume: 2100,
-      responseTime: 320,
-      errorRate: 4.8,
-      reliabilityScore: 88
-    },
-    {
-      id: "global-security",
-      name: "Global Security",
-      description: "Internal security monitoring and reporting from corporate security team",
-      type: "global_security",
-      verificationStatus: "verified",
-      lastUpdate: "5 minutes ago",
-      healthStatus: "healthy",
-      uptime: 99.9,
-      dataVolume: 1840,
-      responseTime: 98,
-      errorRate: 0.1,
-      reliabilityScore: 99
-    },
-    {
-      id: "us-soc",
-      name: "US Security Operations Centre",
-      description: "Intelligence from US-based security operations center",
-      type: "us_soc",
-      verificationStatus: "verified",
-      lastUpdate: "15 minutes ago",
-      healthStatus: "healthy",
-      uptime: 98.7,
-      dataVolume: 1560,
-      responseTime: 205,
-      errorRate: 1.3,
-      reliabilityScore: 94
-    },
-    {
-      id: "news",
-      name: "News Aggregator",
-      description: "Selected news sources covering relevant security events",
-      type: "news",
-      verificationStatus: "unverified",
-      lastUpdate: "3 minutes ago",
-      healthStatus: "error",
-      uptime: 87.4,
-      dataVolume: 5600,
-      responseTime: 890,
-      errorRate: 12.6,
-      reliabilityScore: 72
-    },
-    {
-      id: "crowdsourced",
-      name: "Crowdsourced Reports",
-      description: "Aggregated data from social media and public reporting platforms",
-      type: "crowdsourced",
-      verificationStatus: "unverified",
-      lastUpdate: "1 minute ago",
-      healthStatus: "degraded",
-      uptime: 92.1,
-      dataVolume: 8900,
-      responseTime: 445,
-      errorRate: 7.9,
-      reliabilityScore: 78
+  const { 
+    sources: dbSources, 
+    healthMetrics, 
+    loading, 
+    error, 
+    refreshData,
+    getSourceHealth,
+    getSourceUptime
+  } = useDataIngestion();
+
+  // Convert database sources to EnhancedSource format
+  const [sources, setSources] = useState<EnhancedSource[]>([]);
+
+  useEffect(() => {
+    if (dbSources) {
+      const enhancedSources: EnhancedSource[] = dbSources.map(source => {
+        const health = getSourceHealth(source.id);
+        const uptime = getSourceUptime(source.id);
+        
+        return {
+          id: source.id,
+          name: source.name,
+          description: source.description || 'No description available',
+          type: source.source_type,
+          verificationStatus: 'verified' as const, // All DB sources are considered verified
+          lastUpdate: source.last_poll_at ? new Date(source.last_poll_at).toLocaleString() : 'Never',
+          healthStatus: source.health_status as 'healthy' | 'degraded' | 'offline' | 'error',
+          uptime: uptime,
+          dataVolume: health?.records_processed || 0,
+          responseTime: health?.response_time_ms || 0,
+          errorRate: health?.success === false ? 100 : 0,
+          reliabilityScore: health?.success === false ? 0 : uptime
+        };
+      });
+      setSources(enhancedSources);
     }
-  ]);
+  }, [dbSources, healthMetrics, getSourceHealth, getSourceUptime]);
 
   // Auto-refresh logic
   useEffect(() => {
@@ -148,11 +83,11 @@ const SourcesPage = () => {
 
     const interval = setInterval(() => {
       console.log('Auto-refreshing sources data...');
-      // Here you would typically refetch data
+      refreshData();
     }, state.refreshInterval);
 
     return () => clearInterval(interval);
-  }, [state.autoRefresh, state.refreshInterval]);
+  }, [state.autoRefresh, state.refreshInterval, refreshData]);
 
   // Filter sources based on current filters
   const filteredSources = React.useMemo(() => {
@@ -205,7 +140,6 @@ const SourcesPage = () => {
           bValue = b.name.toLowerCase();
           break;
         case 'lastUpdate':
-          // Simple sorting - in real app you'd parse the date strings
           aValue = a.lastUpdate;
           bValue = b.lastUpdate;
           break;
@@ -249,6 +183,28 @@ const SourcesPage = () => {
     return { total, healthy, verified, avgUptime };
   }, [sources]);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading data sources...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error loading data sources: {error}</p>
+          <Button onClick={refreshData}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -289,7 +245,7 @@ const SourcesPage = () => {
         onValueChange={handleAccordionChange}
         className="space-y-4"
       >
-        {/* Add Feed Testing Dashboard as first section */}
+        {/* Feed Testing Dashboard */}
         <AccordionItem value="feed-testing" className="border rounded-lg px-6">
           <AccordionTrigger className="text-lg font-semibold">
             <div className="flex items-center gap-2">
@@ -416,7 +372,7 @@ const SourcesPage = () => {
 
         {/* Configuration Management */}
         <AccordionItem value="configuration" className="border rounded-lg px-6">
-          <AccordionTrigger className="text-lg font-semibold">
+          <AccordionTrigger className="text-lg font-semibent">
             <div className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
               Source Configuration & Management
@@ -468,15 +424,15 @@ const SourcesPage = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span>Data Completeness</span>
-                    <Badge variant="secondary">94.2%</Badge>
+                    <Badge variant="secondary">{((stats.healthy / stats.total) * 100).toFixed(1)}%</Badge>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span>Source Reliability</span>
-                    <Badge variant="secondary">91.8%</Badge>
+                    <Badge variant="secondary">{stats.avgUptime.toFixed(1)}%</Badge>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span>Update Frequency</span>
-                    <Badge variant="secondary">98.5%</Badge>
+                    <Badge variant="secondary">Real-time</Badge>
                   </div>
                 </div>
               </div>
@@ -486,15 +442,19 @@ const SourcesPage = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span>Avg Response Time</span>
-                    <Badge variant="secondary">247ms</Badge>
+                    <Badge variant="secondary">
+                      {sources.length > 0 ? Math.round(sources.reduce((acc, s) => acc + s.responseTime, 0) / sources.length) : 0}ms
+                    </Badge>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span>Error Rate</span>
-                    <Badge variant="secondary">3.2%</Badge>
+                    <Badge variant="secondary">
+                      {sources.length > 0 ? (sources.reduce((acc, s) => acc + s.errorRate, 0) / sources.length).toFixed(1) : 0}%
+                    </Badge>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span>Uptime SLA</span>
-                    <Badge variant="secondary">99.1%</Badge>
+                    <Badge variant="secondary">{stats.avgUptime.toFixed(1)}%</Badge>
                   </div>
                 </div>
               </div>
@@ -513,7 +473,7 @@ const SourcesPage = () => {
           <AccordionContent className="pt-4">
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button variant="outline">
+                <Button variant="outline" onClick={refreshData}>
                   Run Health Check
                 </Button>
                 <Button variant="outline">
@@ -527,7 +487,10 @@ const SourcesPage = () => {
               <div className="p-4 bg-muted rounded-lg">
                 <h4 className="font-medium mb-2">System Status</h4>
                 <div className="text-sm text-muted-foreground">
-                  All systems operational. Last full diagnostic: 2 hours ago
+                  {stats.healthy === stats.total ? 
+                    `All ${stats.total} systems operational.` : 
+                    `${stats.healthy}/${stats.total} systems operational. ${stats.total - stats.healthy} systems need attention.`
+                  } Last refresh: {new Date().toLocaleTimeString()}
                 </div>
               </div>
             </div>
