@@ -2,23 +2,21 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Play, 
-  Pause, 
   RefreshCw, 
-  CheckCircle, 
-  XCircle, 
   AlertTriangle,
   Database,
   Settings,
-  Eye,
-  Clock
+  Eye
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import FeedTestCard from './FeedTestCard';
+import FeedDetailsView from './FeedDetailsView';
+import FeedAnalysisView from './FeedAnalysisView';
 
 interface FeedTest {
   sourceId: string;
@@ -86,24 +84,6 @@ const FeedTestingDashboard: React.FC = () => {
             body: { source: 'everbridge' }
           });
           details = 'Everbridge requires API credentials for access to emergency notifications';
-          break;
-        case 'weather-ca':
-          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
-            body: { source: 'weather-ca', test_mode: true }
-          });
-          details = 'Environment Canada Weather API requires API key for weather alerts and warnings';
-          break;
-        case 'cisa-alerts':
-          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
-            body: { source: 'cisa-alerts', test_mode: true }
-          });
-          details = 'CISA provides cybersecurity alerts and advisories - should work without API key';
-          break;
-        case 'social-media':
-          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
-            body: { source: 'social-media', test_mode: true }
-          });
-          details = 'Social Media Monitoring requires API keys for Twitter, Facebook, etc.';
           break;
         default:
           result = await supabase.functions.invoke('master-ingestion-orchestrator', {
@@ -265,15 +245,6 @@ const FeedTestingDashboard: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success': return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'error': return <XCircle className="h-4 w-4 text-red-600" />;
-      case 'testing': return <RefreshCw className="h-4 w-4 text-blue-600 animate-spin" />;
-      default: return <Clock className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
   const handleViewDetails = (sourceId: string) => {
     setSelectedFeed(sourceId);
     setActiveTab('details');
@@ -329,203 +300,22 @@ const FeedTestingDashboard: React.FC = () => {
             <TabsContent value="feeds" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {feedTests.map((feed) => (
-                  <Card key={feed.sourceId} className="border">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-sm">{feed.sourceName}</h4>
-                        {getStatusIcon(feed.status)}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span>Status:</span>
-                          <Badge variant={
-                            feed.status === 'success' ? 'default' :
-                            feed.status === 'error' ? 'destructive' :
-                            feed.status === 'testing' ? 'secondary' : 'outline'
-                          }>
-                            {feed.status.toUpperCase()}
-                          </Badge>
-                        </div>
-                        
-                        {feed.lastTest && (
-                          <div className="flex justify-between items-center text-xs">
-                            <span>Last Test:</span>
-                            <span>{feed.lastTest.toLocaleTimeString()}</span>
-                          </div>
-                        )}
-                        
-                        {feed.records !== undefined && (
-                          <div className="flex justify-between items-center text-xs">
-                            <span>Records:</span>
-                            <span className={feed.records === 0 ? 'text-orange-600' : 'text-green-600'}>
-                              {feed.records}
-                            </span>
-                          </div>
-                        )}
-                        
-                        {feed.error && (
-                          <div className="text-xs text-red-600 mt-2 p-2 bg-red-50 rounded">
-                            {feed.error}
-                          </div>
-                        )}
-
-                        {feed.records === 0 && feed.status === 'success' && (
-                          <div className="text-xs text-orange-600 mt-2 p-2 bg-orange-50 rounded">
-                            Connected but no data - may need API key
-                          </div>
-                        )}
-                        
-                        <div className="flex space-x-1 mt-3">
-                          <Button 
-                            size="sm" 
-                            onClick={() => testIndividualFeed(feed.sourceId)}
-                            disabled={feed.status === 'testing'}
-                            className="flex-1"
-                          >
-                            {feed.status === 'testing' ? (
-                              <RefreshCw className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Play className="h-3 w-3" />
-                            )}
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleViewDetails(feed.sourceId)}
-                          >
-                            <Eye className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <FeedTestCard 
+                    key={feed.sourceId}
+                    feed={feed}
+                    onTest={testIndividualFeed}
+                    onViewDetails={handleViewDetails}
+                  />
                 ))}
               </div>
             </TabsContent>
 
             <TabsContent value="details">
-              {selectedFeedData ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{selectedFeedData.sourceName} - Details</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <span className="font-medium">Source ID:</span>
-                          <p className="text-sm text-muted-foreground">{selectedFeedData.sourceId}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Status:</span>
-                          <p className="text-sm">{selectedFeedData.status}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium">Records Processed:</span>
-                          <p className="text-sm">{selectedFeedData.records || 0}</p>
-                        </div>
-                        {selectedFeedData.lastTest && (
-                          <div>
-                            <span className="font-medium">Last Test:</span>
-                            <p className="text-sm">{selectedFeedData.lastTest.toLocaleString()}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {selectedFeedData.details && (
-                        <div>
-                          <span className="font-medium">Details:</span>
-                          <p className="text-sm text-muted-foreground mt-1">{selectedFeedData.details}</p>
-                        </div>
-                      )}
-
-                      {selectedFeedData.error && (
-                        <div>
-                          <span className="font-medium">Error:</span>
-                          <p className="text-sm text-red-600 mt-1">{selectedFeedData.error}</p>
-                        </div>
-                      )}
-                      
-                      {selectedFeedData.rawData && (
-                        <div>
-                          <span className="font-medium">Raw Response:</span>
-                          <pre className="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto max-h-64">
-                            {JSON.stringify(selectedFeedData.rawData, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-
-                      {/* API Configuration Recommendations */}
-                      {selectedFeedData.records === 0 && selectedFeedData.status === 'success' && (
-                        <Alert>
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertDescription>
-                            <strong>Configuration Needed:</strong>
-                            {selectedFeedData.sourceId === 'weather-ca' && (
-                              <span> This feed requires an Environment Canada API key to access weather data.</span>
-                            )}
-                            {selectedFeedData.sourceId === 'social-media' && (
-                              <span> This feed requires API keys for social media platforms (Twitter API, Facebook API, etc.).</span>
-                            )}
-                            {selectedFeedData.sourceId === 'everbridge' && (
-                              <span> This feed requires Everbridge API credentials (username, password, organization ID).</span>
-                            )}
-                            {selectedFeedData.sourceId === 'cisa-alerts' && (
-                              <span> This feed should work without API keys. The RSS endpoint may be temporarily unavailable.</span>
-                            )}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="pt-6">
-                    <p className="text-muted-foreground text-center">
-                      Select a feed from the testing tab to view details
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <FeedDetailsView selectedFeedData={selectedFeedData} />
             </TabsContent>
 
             <TabsContent value="analysis">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Data Flow Analysis</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        This section will show aggregation patterns, data quality metrics, and processing statistics once feeds are active.
-                      </AlertDescription>
-                    </Alert>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="p-4 border rounded-lg">
-                        <h4 className="font-medium">Processing Rate</h4>
-                        <p className="text-2xl font-bold text-blue-600">-</p>
-                        <p className="text-sm text-muted-foreground">Records/hour</p>
-                      </div>
-                      <div className="p-4 border rounded-lg">
-                        <h4 className="font-medium">Success Rate</h4>
-                        <p className="text-2xl font-bold text-green-600">-</p>
-                        <p className="text-sm text-muted-foreground">% successful</p>
-                      </div>
-                      <div className="p-4 border rounded-lg">
-                        <h4 className="font-medium">Data Quality</h4>
-                        <p className="text-2xl font-bold text-orange-600">-</p>
-                        <p className="text-sm text-muted-foreground">Quality score</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <FeedAnalysisView />
             </TabsContent>
           </Tabs>
         </CardContent>
