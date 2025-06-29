@@ -10,11 +10,15 @@ import { useAnalyticsState } from '@/hooks/useAnalyticsState';
 const AnalyticsPage = () => {
   const { 
     state, 
-    updateDateRange, 
     updateFilters, 
-    clearFilters,
+    resetFilters,
     exportData 
   } = useAnalyticsState();
+
+  // Helper function to update date range
+  const updateDateRange = (dateRange: { from: Date; to: Date }) => {
+    updateFilters({ dateRange });
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -34,28 +38,29 @@ const AnalyticsPage = () => {
 
         <TabsContent value="overview" className="space-y-6">
           <AnalyticsFilters
-            dateRange={state.dateRange}
             filters={state.filters}
-            onDateRangeChange={updateDateRange}
             onFiltersChange={updateFilters}
-            onClearFilters={clearFilters}
+            onReset={resetFilters}
             onExport={exportData}
+            autoRefresh={state.autoRefresh}
+            onAutoRefreshToggle={() => updateFilters({ refreshInterval: state.filters.refreshInterval })}
           />
           
           <EnhancedCharts 
-            dateRange={state.dateRange}
-            filters={state.filters}
+            incidentsByAlertLevel={[]}
+            incidentsBySource={[]}
+            provincesByAlertLevel={[]}
           />
         </TabsContent>
 
         <TabsContent value="detailed" className="space-y-6">
           <AnalyticsFilters
-            dateRange={state.dateRange}
             filters={state.filters}
-            onDateRangeChange={updateDateRange}
             onFiltersChange={updateFilters}
-            onClearFilters={clearFilters}
+            onReset={resetFilters}
             onExport={exportData}
+            autoRefresh={state.autoRefresh}
+            onAutoRefreshToggle={() => updateFilters({ refreshInterval: state.filters.refreshInterval })}
           />
           
           <Card>
@@ -67,9 +72,9 @@ const AnalyticsPage = () => {
             </CardHeader>
             <CardContent>
               <EnhancedCharts 
-                dateRange={state.dateRange}
-                filters={state.filters}
-                detailed={true}
+                incidentsByAlertLevel={[]}
+                incidentsBySource={[]}
+                provincesByAlertLevel={[]}
               />
             </CardContent>
           </Card>
@@ -77,8 +82,11 @@ const AnalyticsPage = () => {
 
         <TabsContent value="executive" className="space-y-6">
           <ExecutiveSummary 
-            dateRange={state.dateRange}
-            filters={state.filters}
+            totalIncidents={0}
+            affectedProvinces={0}
+            latestIncident=""
+            incidentsByAlertLevel={[]}
+            provinces={[]}
           />
         </TabsContent>
       </Tabs>
