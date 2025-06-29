@@ -3,21 +3,14 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Settings, 
-  TestTube, 
-  CheckCircle, 
-  AlertTriangle, 
-  Clock,
-  Activity,
-  ExternalLink,
-  Edit
-} from 'lucide-react';
+import { Activity, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertSource } from '@/types/dataIngestion';
+import FeedHealthStatus from './FeedHealthStatus';
+import FeedStatusToggle from './FeedStatusToggle';
+import FeedTestResult from './FeedTestResult';
+import FeedActions from './FeedActions';
 
 interface FeedConfigurationCardProps {
   feed: AlertSource;
@@ -84,35 +77,6 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
     }
   };
 
-  const getHealthStatusIcon = (status: string) => {
-    switch (status) {
-      case 'healthy':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'degraded':
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      case 'error':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getHealthStatusBadge = (status: string) => {
-    const variants = {
-      healthy: 'default' as const,
-      degraded: 'secondary' as const,
-      error: 'destructive' as const,
-      unknown: 'outline' as const
-    };
-    
-    return (
-      <Badge variant={variants[status as keyof typeof variants] || 'outline'}>
-        {getHealthStatusIcon(status)}
-        <span className="ml-1 capitalize">{status}</span>
-      </Badge>
-    );
-  };
-
   const formatLastPoll = (lastPoll: string | null) => {
     if (!lastPoll) return 'Never';
     const date = new Date(lastPoll);
@@ -141,7 +105,7 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
               {feed.description || 'No description provided'}
             </CardDescription>
           </div>
-          {getHealthStatusBadge(feed.health_status)}
+          <FeedHealthStatus status={feed.health_status} />
         </div>
       </CardHeader>
       
@@ -161,15 +125,10 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
           </div>
           <div>
             <p className="font-medium">Status</p>
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={feed.is_active}
-                onCheckedChange={handleToggleActive}
-              />
-              <span className="text-xs text-muted-foreground">
-                {feed.is_active ? 'Active' : 'Inactive'}
-              </span>
-            </div>
+            <FeedStatusToggle
+              isActive={feed.is_active}
+              onToggle={handleToggleActive}
+            />
           </div>
         </div>
 
@@ -189,39 +148,9 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
           </div>
         )}
 
-        {testResult && (
-          <Alert variant={testResult.success ? "default" : "destructive"}>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              Last test: {testResult.success ? 'Success' : 'Failed'} - 
-              {testResult.success && ` ${testResult.recordsFound} records in ${testResult.responseTime}ms`}
-              <br />
-              <span className="text-xs text-muted-foreground">
-                {new Date(testResult.timestamp).toLocaleString()}
-              </span>
-            </AlertDescription>
-          </Alert>
-        )}
+        <FeedTestResult testResult={testResult} />
 
-        <div className="flex space-x-2 pt-2">
-          <Button size="sm" variant="outline" onClick={handleTest} disabled={testing}>
-            {testing ? (
-              <>
-                <Activity className="h-3 w-3 mr-1 animate-spin" />
-                Testing...
-              </>
-            ) : (
-              <>
-                <TestTube className="h-3 w-3 mr-1" />
-                Test
-              </>
-            )}
-          </Button>
-          <Button size="sm" variant="outline" disabled>
-            <Edit className="h-3 w-3 mr-1" />
-            Edit
-          </Button>
-        </div>
+        <FeedActions onTest={handleTest} testing={testing} />
       </CardContent>
     </Card>
   );
