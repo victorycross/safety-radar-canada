@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { AlertLevel } from '@/types';
@@ -8,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { Circle, Filter, RefreshCw } from 'lucide-react';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
 import { Button } from '../ui/button';
+import LocationVisibilitySettings from './LocationVisibilitySettings';
 
 // Fallback data for all Canadian provinces and territories
 const fallbackProvinces = [
