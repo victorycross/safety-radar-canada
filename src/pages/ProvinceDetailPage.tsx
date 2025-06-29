@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSecurity } from "@/context/SecurityContext";
+import { useSupabaseDataContext } from "@/context/SupabaseDataProvider";
 import { AlertLevel } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +12,10 @@ import IncidentForm from "@/components/forms/IncidentForm";
 const ProvinceDetailPage = () => {
   const { provinceId } = useParams<{ provinceId: string }>();
   const navigate = useNavigate();
-  const { getProvinceById, getIncidentsByProvince } = useSecurity();
+  const { provinces, incidents, getProvinceById, getIncidentsByProvince } = useSupabaseDataContext();
   
   const province = provinceId ? getProvinceById(provinceId) : undefined;
-  const incidents = provinceId ? getIncidentsByProvince(provinceId) : [];
+  const provinceIncidents = provinceId ? getIncidentsByProvince(provinceId) : [];
 
   if (!province) {
     return (
@@ -40,16 +40,16 @@ const ProvinceDetailPage = () => {
   const getAlertBadge = (alertLevel: AlertLevel) => {
     switch (alertLevel) {
       case AlertLevel.SEVERE:
-        return <Badge className="bg-danger">Severe Risk</Badge>;
+        return <Badge variant="destructive">Severe Risk</Badge>;
       case AlertLevel.WARNING:
-        return <Badge className="bg-warning">Warning</Badge>;
+        return <Badge className="bg-yellow-500 text-white">Warning</Badge>;
       case AlertLevel.NORMAL:
-        return <Badge className="bg-success">Normal</Badge>;
+        return <Badge className="bg-green-500 text-white">Normal</Badge>;
     }
   };
 
   // Sort incidents by date, newest first
-  const sortedIncidents = [...incidents].sort(
+  const sortedIncidents = [...provinceIncidents].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
@@ -73,10 +73,10 @@ const ProvinceDetailPage = () => {
       </div>
       
       {province.alertLevel !== AlertLevel.NORMAL && (
-        <Card className={province.alertLevel === AlertLevel.SEVERE ? "border-danger bg-danger-light" : "border-warning bg-warning-light"}>
+        <Card className={province.alertLevel === AlertLevel.SEVERE ? "border-red-500 bg-red-50" : "border-yellow-500 bg-yellow-50"}>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center">
-              <AlertTriangle className={`mr-2 ${province.alertLevel === AlertLevel.SEVERE ? "text-danger" : "text-warning"}`} />
+              <AlertTriangle className={`mr-2 ${province.alertLevel === AlertLevel.SEVERE ? "text-red-500" : "text-yellow-500"}`} />
               {province.alertLevel === AlertLevel.SEVERE ? "Severe Risk Alert" : "Warning Alert"}
             </CardTitle>
             <CardDescription>
@@ -94,11 +94,11 @@ const ProvinceDetailPage = () => {
             <CardHeader>
               <CardTitle>Recent Incidents in {province.name}</CardTitle>
               <CardDescription>
-                {incidents.length} incident{incidents.length !== 1 ? 's' : ''} reported
+                {provinceIncidents.length} incident{provinceIncidents.length !== 1 ? 's' : ''} reported
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {incidents.length > 0 ? (
+              {provinceIncidents.length > 0 ? (
                 <div className="space-y-4">
                   {sortedIncidents.map(incident => (
                     <div key={incident.id} className="border-b pb-4 last:border-0 last:pb-0">
