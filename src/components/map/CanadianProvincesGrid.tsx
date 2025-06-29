@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { AlertLevel } from '@/types';
@@ -27,6 +28,13 @@ const fallbackProvinces = [
 
 const CanadianProvincesGrid = () => {
   const { provinces } = useSupabaseDataContext();
+
+  // Use data from context if available, otherwise use fallback data
+  const displayProvinces = provinces.length > 0 ? provinces : fallbackProvinces;
+  
+  // Extract actual province IDs for the hook
+  const actualProvinceIds = displayProvinces.map(p => p.id);
+  
   const {
     getVisibleProvincesCount,
     getTotalProvincesCount,
@@ -35,10 +43,7 @@ const CanadianProvincesGrid = () => {
     refreshKey,
     isRefreshing,
     forceRefresh
-  } = useLocationVisibility();
-
-  // Use data from context if available, otherwise use fallback data
-  const displayProvinces = provinces.length > 0 ? provinces : fallbackProvinces;
+  } = useLocationVisibility(actualProvinceIds);
   
   // Filter provinces based on visibility settings (key prop forces re-render)
   const visibleProvinces = displayProvinces.filter(province => isProvinceVisible(province.id));

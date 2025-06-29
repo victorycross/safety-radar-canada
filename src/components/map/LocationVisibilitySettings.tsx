@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,11 @@ interface LocationVisibilitySettingsProps {
 const LocationVisibilitySettings = ({ provinces, internationalHubs }: LocationVisibilitySettingsProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  
+  // Extract actual IDs for the hook
+  const actualProvinceIds = provinces.map(p => p.id);
+  const actualHubIds = internationalHubs.map(h => h.id);
+  
   const {
     hasUnsavedChanges,
     togglePendingProvince,
@@ -30,7 +34,7 @@ const LocationVisibilitySettings = ({ provinces, internationalHubs }: LocationVi
     getPendingVisibleInternationalHubsCount,
     isPendingProvinceVisible,
     isPendingInternationalHubVisible
-  } = useLocationVisibility();
+  } = useLocationVisibility(actualProvinceIds, actualHubIds);
 
   const handleApply = () => {
     const success = applyChanges();

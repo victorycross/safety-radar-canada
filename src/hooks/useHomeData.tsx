@@ -1,11 +1,9 @@
-
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
 import { AlertLevel } from '@/types';
 
 export const useHomeData = () => {
   const { provinces, incidents, loading, refreshData } = useSupabaseDataContext();
-  const { isProvinceVisible } = useLocationVisibility();
   
   // International hubs data - consolidated here
   const internationalHubs = [
@@ -40,6 +38,11 @@ export const useHomeData = () => {
 
   // Use data from context if available, otherwise use fallback data
   const displayProvinces = provinces.length > 0 ? provinces : fallbackProvinces;
+  
+  // Extract actual province IDs for the hook
+  const actualProvinceIds = displayProvinces.map(p => p.id);
+  
+  const { isProvinceVisible } = useLocationVisibility(actualProvinceIds);
   
   // Get provinces with severe or warning statuses
   const alertProvinces = displayProvinces.filter(province => 

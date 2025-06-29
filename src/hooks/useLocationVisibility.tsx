@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 
 interface LocationVisibilityState {
@@ -14,31 +13,69 @@ const DEFAULT_INTERNATIONAL_HUBS = [
   'nyc', 'london', 'hk', 'singapore', 'tokyo', 'frankfurt', 'zurich', 'dubai', 'sydney', 'toronto-intl'
 ];
 
-const getDefaultVisibility = (): LocationVisibilityState => ({
-  provinces: Object.fromEntries(DEFAULT_PROVINCES.map(id => [id, true])),
-  internationalHubs: Object.fromEntries(DEFAULT_INTERNATIONAL_HUBS.map(id => [id, true]))
+const getDefaultVisibility = (provinceIds?: string[], hubIds?: string[]): LocationVisibilityState => ({
+  provinces: Object.fromEntries((provinceIds || DEFAULT_PROVINCES).map(id => [id, true])),
+  internationalHubs: Object.fromEntries((hubIds || DEFAULT_INTERNATIONAL_HUBS).map(id => [id, true]))
 });
 
-export const useLocationVisibility = () => {
-  const [visibility, setVisibility] = useState<LocationVisibilityState>(getDefaultVisibility);
-  const [pendingVisibility, setPendingVisibility] = useState<LocationVisibilityState>(getDefaultVisibility);
+export const useLocationVisibility = (actualProvinceIds?: string[], actualHubIds?: string[]) => {
+  const [visibility, setVisibility] = useState<LocationVisibilityState>(() => 
+    getDefaultVisibility(actualProvinceIds, actualHubIds)
+  );
+  const [pendingVisibility, setPendingVisibility] = useState<LocationVisibilityState>(() => 
+    getDefaultVisibility(actualProvinceIds, actualHubIds)
+  );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Load from localStorage on mount
+  // Update visibility when actual IDs change
   useEffect(() => {
-    const saved = localStorage.getItem('locationVisibility');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setVisibility(parsed);
-        setPendingVisibility(parsed);
-      } catch (error) {
-        console.error('Failed to parse saved location visibility:', error);
+    if (actualProvinceIds || actualHubIds) {
+      const newDefaultVisibility = getDefaultVisibility(actualProvinceIds, actualHubIds);
+      
+      // Only update if we don't have saved data for these specific IDs
+      const saved = localStorage.getItem('locationVisibility');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          // Check if saved data has the same keys as current data
+          const savedProvinceKeys = Object.keys(parsed.provinces || {});
+          const currentProvinceKeys = actualProvinceIds || DEFAULT_PROVINCES;
+          const keysMatch = savedProvinceKeys.length === currentProvinceKeys.length && 
+                          savedProvinceKeys.every(key => currentProvinceKeys.includes(key));
+          
+          if (keysMatch) {
+            setVisibility(parsed);
+            setPendingVisibility(parsed);
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to parse saved location visibility:', error);
+        }
+      }
+      
+      // If no saved data or keys don't match, use new default
+      setVisibility(newDefaultVisibility);
+      setPendingVisibility(newDefaultVisibility);
+    }
+  }, [actualProvinceIds, actualHubIds]);
+
+  // Load from localStorage on mount (fallback for when no actual IDs provided)
+  useEffect(() => {
+    if (!actualProvinceIds && !actualHubIds) {
+      const saved = localStorage.getItem('locationVisibility');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setVisibility(parsed);
+          setPendingVisibility(parsed);
+        } catch (error) {
+          console.error('Failed to parse saved location visibility:', error);
+        }
       }
     }
-  }, []);
+  }, [actualProvinceIds, actualHubIds]);
 
   // Check for unsaved changes
   useEffect(() => {
@@ -127,7 +164,7 @@ export const useLocationVisibility = () => {
   };
 
   const resetToDefault = () => {
-    const defaultState = getDefaultVisibility();
+    const defaultState = getDefaultVisibility(actualProvinceIds, actualHubIds);
     setPendingVisibility(defaultState);
   };
 
