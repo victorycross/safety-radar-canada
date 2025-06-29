@@ -3,6 +3,7 @@ import React from 'react';
 import { AlertLevel } from '@/types';
 import { NavLink } from 'react-router-dom';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import { 
   AlertTriangle,
@@ -12,15 +13,22 @@ import {
   MapPin,
   Search,
   Users,
-  Settings
+  Settings,
+  Zap
 } from 'lucide-react';
 
 const Sidebar = () => {
   const { provinces } = useSupabaseDataContext();
+  const { user, isAdmin, isPowerUserOrAdmin } = useAuth();
   
   // Count provinces by alert level
   const severeCount = provinces.filter(p => p.alertLevel === AlertLevel.SEVERE).length;
   const warningCount = provinces.filter(p => p.alertLevel === AlertLevel.WARNING).length;
+
+  // Don't render sidebar if user is not authenticated
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="h-screen w-64 bg-sidebar border-r flex flex-col">
@@ -79,25 +87,15 @@ const Sidebar = () => {
           <AlertTriangle className="mr-2" size={18} />
           Incident Reports
         </NavLink>
-        
+
         <NavLink 
-          to="/report" 
+          to="/alert-ready" 
           className={({ isActive }) => 
             cn("flex items-center px-3 py-2 rounded-md text-sm", 
               isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
         >
-          <Flag className="mr-2" size={18} />
-          Report Incident
-        </NavLink>
-        
-        <NavLink 
-          to="/sources" 
-          className={({ isActive }) => 
-            cn("flex items-center px-3 py-2 rounded-md text-sm", 
-              isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-        >
-          <Bell className="mr-2" size={18} />
-          External Sources
+          <Zap className="mr-2" size={18} />
+          Alert Ready
         </NavLink>
         
         <NavLink 
@@ -109,6 +107,44 @@ const Sidebar = () => {
           <Search className="mr-2" size={18} />
           Analytics
         </NavLink>
+
+        {isPowerUserOrAdmin() && (
+          <NavLink 
+            to="/report" 
+            className={({ isActive }) => 
+              cn("flex items-center px-3 py-2 rounded-md text-sm", 
+                isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
+          >
+            <Flag className="mr-2" size={18} />
+            Report Incident
+          </NavLink>
+        )}
+
+        {isAdmin() && (
+          <>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mt-6 mb-2">Admin</p>
+            
+            <NavLink 
+              to="/sources" 
+              className={({ isActive }) => 
+                cn("flex items-center px-3 py-2 rounded-md text-sm", 
+                  isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
+            >
+              <Bell className="mr-2" size={18} />
+              External Sources
+            </NavLink>
+            
+            <NavLink 
+              to="/admin" 
+              className={({ isActive }) => 
+                cn("flex items-center px-3 py-2 rounded-md text-sm", 
+                  isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
+            >
+              <Settings className="mr-2" size={18} />
+              Admin Dashboard
+            </NavLink>
+          </>
+        )}
         
         <p className="text-xs uppercase tracking-wider text-muted-foreground mt-6 mb-2">Configuration</p>
         
@@ -123,17 +159,7 @@ const Sidebar = () => {
         </NavLink>
         
         <NavLink 
-          to="/admin" 
-          className={({ isActive }) => 
-            cn("flex items-center px-3 py-2 rounded-md text-sm", 
-              isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-        >
-          <Settings className="mr-2" size={18} />
-          Admin Dashboard
-        </NavLink>
-        
-        <NavLink 
-          to="/widget" 
+          to="/widgets" 
           className={({ isActive }) => 
             cn("flex items-center px-3 py-2 rounded-md text-sm", 
               isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
