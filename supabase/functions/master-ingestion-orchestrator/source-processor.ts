@@ -2,6 +2,7 @@
 import { processSecurityRSSSource } from './security-processor.ts';
 import { processGeoMetSource } from './weather-processor.ts';
 import { normalizeAlerts, queueAlertsForProcessing, getAcceptHeader, parseXmlData } from './alert-normalizer.ts';
+import { normalizeWithConfiguration, normalizeAlertBatchWithConfig } from './config-driven-normalizer.ts';
 import { recordHealthMetric } from './health-metrics.ts';
 import { AlertSource, ProcessingResult } from './types.ts';
 
@@ -12,7 +13,7 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
   try {
     console.log(`Fetching data from: ${source.api_endpoint}`);
     
-    // Use specialized processing for different source types
+    // Use specialized processing for certain source types
     if (source.source_type === 'weather-geocmet') {
       return await processGeoMetSource(source, supabaseClient);
     } else if (source.source_type === 'security-rss') {
@@ -27,6 +28,14 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
         'Accept': getAcceptHeader(source.source_type)
       }
     };
+
+    // Add custom headers from configuration
+    if (source.configuration?.headers) {
+      requestConfig.headers = {
+        ...requestConfig.headers,
+        ...source.configuration.headers
+      };
+    }
 
     // Add API key if configured
     if (source.configuration?.api_key) {
@@ -55,8 +64,37 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
       data = await response.text();
     }
 
-    // Process and normalize the data
-    const processedAlerts = await normalizeAlerts(data, source);
+    let processedAlerts: any[];
+    
+    // Check if source has custom normalization configuration
+    if (source.configuration?.normalization && source.configuration.normalization.titleField) {
+      console.log(`Using configuration-driven normalization for ${source.name}`);
+      
+      // Extract alerts from data based on common patterns
+      let alertsArray: any[] = [];
+      if (Array.isArray(data)) {
+        alertsArray = data;
+      } else if (data.alerts && Array.isArray(data.alerts)) {
+        alertsArray = data.alerts;
+      } else if (data.features && Array.isArray(data.features)) {
+        alertsArray = data.features; // GeoJSON
+      } else if (data.items && Array.isArray(data.items)) {
+        alertsArray = data.items;
+      } else if (data.channel && data.channel.item && Array.isArray(data.channel.item)) {
+        alertsArray = data.channel.item; // RSS
+      } else {
+        alertsArray = [data]; // Single alert
+      }
+      
+      processedAlerts = normalizeAlertBatchWithConfig(
+        alertsArray,
+        source.configuration,
+        source.source_type
+      );
+    } else {
+      // Fall back to legacy normalization
+      processedAlerts = await normalizeAlerts(data, source);
+    }
     
     // Queue alerts for processing
     const queuedCount = await queueAlertsForProcessing(supabaseClient, processedAlerts, source.id);

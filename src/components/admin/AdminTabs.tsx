@@ -5,6 +5,7 @@ import OverviewTab from './OverviewTab';
 import RequirementsTab from './RequirementsTab';
 import TechnicalTab from './TechnicalTab';
 import EmployeeManagementTab from './EmployeeManagementTab';
+import FeedManagementTab from './FeedManagementTab';
 
 interface AdminTabsProps {
   activeTab: string;
@@ -14,9 +15,10 @@ interface AdminTabsProps {
 const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-5">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="employees">Employee Data</TabsTrigger>
+        <TabsTrigger value="feeds">Feed Management</TabsTrigger>
         <TabsTrigger value="requirements">Business Requirements</TabsTrigger>
         <TabsTrigger value="technical">Technical Specs</TabsTrigger>
       </TabsList>
@@ -27,6 +29,10 @@ const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
       
       <TabsContent value="employees" className="space-y-4">
         <EmployeeManagementTab />
+      </TabsContent>
+      
+      <TabsContent value="feeds" className="space-y-4">
+        <FeedManagementTab />
       </TabsContent>
       
       <TabsContent value="requirements" className="space-y-4">
