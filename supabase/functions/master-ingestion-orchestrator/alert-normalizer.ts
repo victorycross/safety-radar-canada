@@ -1,6 +1,5 @@
-
 import { AlertSource } from './types.ts';
-import { UniversalAlert } from '../../../src/types/alerts.ts';
+import { UniversalAlert } from './alert-types.ts';
 
 // Normalize severity levels from various sources
 export const normalizeSeverity = (severity: string | undefined): UniversalAlert['severity'] => {
