@@ -9,7 +9,8 @@ import {
   CheckCircle, 
   XCircle, 
   Clock,
-  Eye
+  Eye,
+  Settings
 } from 'lucide-react';
 
 interface FeedTest {
@@ -27,9 +28,15 @@ interface FeedTestCardProps {
   feed: FeedTest;
   onTest: (sourceId: string) => void;
   onViewDetails: (sourceId: string) => void;
+  onConfigure: (sourceId: string) => void;
 }
 
-const FeedTestCard: React.FC<FeedTestCardProps> = ({ feed, onTest, onViewDetails }) => {
+const FeedTestCard: React.FC<FeedTestCardProps> = ({ 
+  feed, 
+  onTest, 
+  onViewDetails, 
+  onConfigure 
+}) => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success': return <CheckCircle className="h-4 w-4 text-green-600" />;
@@ -107,6 +114,13 @@ const FeedTestCard: React.FC<FeedTestCardProps> = ({ feed, onTest, onViewDetails
               onClick={() => onViewDetails(feed.sourceId)}
             >
               <Eye className="h-3 w-3" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => onConfigure(feed.sourceId)}
+            >
+              <Settings className="h-3 w-3" />
             </Button>
           </div>
         </div>

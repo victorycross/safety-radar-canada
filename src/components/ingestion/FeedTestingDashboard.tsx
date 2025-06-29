@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import FeedTestCard from './FeedTestCard';
 import FeedDetailsView from './FeedDetailsView';
 import FeedAnalysisView from './FeedAnalysisView';
+import FeedConfigModal from './FeedConfigModal';
 
 interface FeedTest {
   sourceId: string;
@@ -35,6 +35,15 @@ const FeedTestingDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedFeed, setSelectedFeed] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('feeds');
+  const [configModal, setConfigModal] = useState<{
+    isOpen: boolean;
+    feedId: string;
+    feedName: string;
+  }>({
+    isOpen: false,
+    feedId: '',
+    feedName: ''
+  });
 
   // Initialize with known sources
   React.useEffect(() => {
@@ -250,6 +259,15 @@ const FeedTestingDashboard: React.FC = () => {
     setActiveTab('details');
   };
 
+  const handleConfigure = (sourceId: string) => {
+    const feed = feedTests.find(f => f.sourceId === sourceId);
+    setConfigModal({
+      isOpen: true,
+      feedId: sourceId,
+      feedName: feed?.sourceName || sourceId
+    });
+  };
+
   const selectedFeedData = feedTests.find(f => f.sourceId === selectedFeed);
 
   return (
@@ -305,6 +323,7 @@ const FeedTestingDashboard: React.FC = () => {
                     feed={feed}
                     onTest={testIndividualFeed}
                     onViewDetails={handleViewDetails}
+                    onConfigure={handleConfigure}
                   />
                 ))}
               </div>
@@ -320,6 +339,13 @@ const FeedTestingDashboard: React.FC = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      <FeedConfigModal
+        isOpen={configModal.isOpen}
+        onClose={() => setConfigModal(prev => ({ ...prev, isOpen: false }))}
+        feedId={configModal.feedId}
+        feedName={configModal.feedName}
+      />
     </div>
   );
 };
