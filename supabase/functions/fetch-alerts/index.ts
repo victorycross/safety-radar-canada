@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import * as xml2js from "https://esm.sh/xml2js@0.6.2";
+import { processRSSContent, extractGeographicInfo } from './rss-content-processor.ts';
 
 const ALERT_READY_URL = "https://rss.naad-adna.pelmorex.com/";
 const CORS_HEADERS = {
@@ -53,14 +54,13 @@ async function fetchAlertReadyData() {
 
     const xmlText = await response.text();
     
-    // Skip DOMParser and directly use xml2js for parsing
     // Parse the XML to JSON using xml2js
     const result = await xml2js.parseStringPromise(xmlText);
     
     // Extract entries from the feed
     const entries = result.feed?.entry || [];
     
-    // Process and format the alerts
+    // Process and format the alerts with enhanced content processing
     const processedAlerts = entries.map((entry: any) => {
       // Extract CAP parameters from content
       const content = entry.content?.[0]?._; // Get content text
@@ -70,7 +70,7 @@ async function fetchAlertReadyData() {
       let status = "Actual";
       let area = "Unknown";
       
-      // Parse CAP parameters from content
+      // Enhanced CAP parameter extraction
       if (content) {
         const severityMatch = content.match(/severity:\s*([A-Za-z]+)/i);
         if (severityMatch) severity = severityMatch[1];
@@ -88,6 +88,9 @@ async function fetchAlertReadyData() {
         if (areaMatch) area = areaMatch[1].trim();
       }
       
+      // Process content with enhanced formatting
+      const processedContent = processRSSContent(entry, content);
+      
       // Helper function to safely parse and format dates
       const parseDate = (dateStr: string | undefined) => {
         if (!dateStr) return undefined;
@@ -96,27 +99,31 @@ async function fetchAlertReadyData() {
           const date = new Date(dateStr);
           if (isNaN(date.getTime())) {
             console.warn('Invalid date found:', dateStr);
-            return new Date().toISOString(); // Fallback to current time
+            return new Date().toISOString();
           }
           return date.toISOString();
         } catch (error) {
           console.error('Error parsing date:', dateStr, error);
-          return new Date().toISOString(); // Fallback to current time
+          return new Date().toISOString();
         }
       };
       
       return {
         id: entry.id?.[0] || `alert-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        title: entry.title?.[0]?._ || entry.title?.[0] || 'Untitled Alert',
+        title: processedContent.cleanTitle,
         published: parseDate(entry.published?.[0]) || new Date().toISOString(),
         updated: parseDate(entry.updated?.[0]),
-        summary: entry.summary?.[0]?._ || entry.summary?.[0] || 'No summary available',
+        summary: processedContent.structuredSummary,
         severity,
         urgency,
         category,
         status,
-        area,
-        url: entry.link?.[0]?.$?.href
+        area: processedContent.geographicArea,
+        url: processedContent.additionalInfo.link,
+        instructions: processedContent.instructions,
+        effectiveTime: processedContent.effectiveTime,
+        expiryTime: processedContent.expiryTime,
+        author: processedContent.additionalInfo.author
       };
     });
     

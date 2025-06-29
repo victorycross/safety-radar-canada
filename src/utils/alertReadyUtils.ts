@@ -12,6 +12,10 @@ export interface AlertItem {
   status: 'Actual' | 'Exercise' | 'System' | 'Test' | 'Draft';
   area: string;
   url?: string;
+  instructions?: string;
+  effectiveTime?: string;
+  expiryTime?: string;
+  author?: string;
 }
 
 export const fetchAlertReadyData = async (): Promise<AlertItem[]> => {
@@ -102,4 +106,14 @@ export const getUrgencyBadge = (urgency: string) => {
     default:
       return { color: 'bg-muted', text: 'Unknown' };
   }
+};
+
+export const formatTimeRange = (effectiveTime?: string, expiryTime?: string) => {
+  if (!effectiveTime && !expiryTime) return null;
+  
+  const parts = [];
+  if (effectiveTime) parts.push(`Effective: ${effectiveTime}`);
+  if (expiryTime) parts.push(`Until: ${expiryTime}`);
+  
+  return parts.join(' • ');
 };
