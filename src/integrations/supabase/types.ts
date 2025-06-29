@@ -852,6 +852,14 @@ export type Database = {
         Args: { _user_email: string }
         Returns: undefined
       }
+      verify_rls_coverage: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          rls_enabled: boolean
+          policy_count: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "power_user" | "regular_user"
