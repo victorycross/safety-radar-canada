@@ -80,21 +80,19 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <span>Refresh</span>
           </Button>
 
+          <LocationVisibilitySettings 
+            provinces={provinces}
+            internationalHubs={internationalHubs}
+          />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <Settings className="h-4 w-4 mr-1" />
-                Settings
+                More
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem asChild>
-                <LocationVisibilitySettings 
-                  provinces={provinces}
-                  internationalHubs={internationalHubs}
-                />
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link to="/alert-ready" className="flex items-center w-full">
                   <Bell className="h-4 w-4 mr-2" />
