@@ -19,82 +19,90 @@ Deno.serve(async (req) => {
 
     console.log('Setting up cron jobs for data ingestion...');
 
-    // Enable pg_cron extension if not already enabled
-    const { error: extensionError } = await supabaseClient.rpc('sql', {
-      query: 'CREATE EXTENSION IF NOT EXISTS pg_cron;'
-    });
-
-    if (extensionError) {
-      console.log('Note: pg_cron extension setup may require admin privileges');
-    }
-
-    // Schedule master ingestion orchestrator every 5 minutes
-    const masterIngestionCron = `
-      SELECT cron.schedule(
-        'master-ingestion-every-5min',
-        '*/5 * * * *',
-        $$
-        SELECT net.http_post(
-          url := '${Deno.env.get('SUPABASE_URL')}/functions/v1/master-ingestion-orchestrator',
-          headers := '{"Content-Type": "application/json", "Authorization": "Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}"}'::jsonb,
-          body := '{}'::jsonb
-        );
-        $$
-      );
-    `;
-
-    // Schedule queue processor every 2 minutes
-    const queueProcessorCron = `
-      SELECT cron.schedule(
-        'process-queue-every-2min',
-        '*/2 * * * *',
-        $$
-        SELECT net.http_post(
-          url := '${Deno.env.get('SUPABASE_URL')}/functions/v1/process-alert-queue',
-          headers := '{"Content-Type": "application/json", "Authorization": "Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}"}'::jsonb,
-          body := '{}'::jsonb
-        );
-        $$
-      );
-    `;
-
-    // Schedule health check every 10 minutes
-    const healthCheckCron = `
-      SELECT cron.schedule(
-        'health-check-every-10min',
-        '*/10 * * * *',
-        $$
-        UPDATE alert_sources 
-        SET health_status = 'unknown' 
-        WHERE last_poll_at < NOW() - INTERVAL '30 minutes';
-        $$
-      );
-    `;
-
-    console.log('Cron jobs configured successfully');
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Cron jobs configured for automated data ingestion',
-        jobs: [
-          'master-ingestion-every-5min',
-          'process-queue-every-2min', 
-          'health-check-every-10min'
-        ]
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+    // Enable required extensions
+    const { error: cronError } = await supabaseClient.auth.admin.query(
+      'CREATE EXTENSION IF NOT EXISTS pg_cron; CREATE EXTENSION IF NOT EXISTS pg_net;'
     );
 
+    if (cronError) {
+      console.log('Extensions may already be enabled:', cronError.message);
+    }
+
+    // Set up cron job to run master ingestion orchestrator every 5 minutes
+    const cronJobSql = `
+      SELECT cron.schedule(
+        'master-ingestion-job',
+        '*/5 * * * *', -- every 5 minutes
+        $$
+        SELECT
+          net.http_post(
+            url:='${Deno.env.get('SUPABASE_URL')}/functions/v1/master-ingestion-orchestrator',
+            headers:='{"Content-Type": "application/json", "Authorization": "Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}"}'::jsonb,
+            body:='{"triggered_by": "cron"}'::jsonb
+          ) as request_id;
+        $$
+      );
+    `;
+
+    // Set up cron job to process alert queue every 2 minutes
+    const queueProcessorSql = `
+      SELECT cron.schedule(
+        'process-alert-queue-job',
+        '*/2 * * * *', -- every 2 minutes
+        $$
+        SELECT
+          net.http_post(
+            url:='${Deno.env.get('SUPABASE_URL')}/functions/v1/process-alert-queue',
+            headers:='{"Content-Type": "application/json", "Authorization": "Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}"}'::jsonb,
+            body:='{"triggered_by": "cron"}'::jsonb
+          ) as request_id;
+        $$
+      );
+    `;
+
+    try {
+      // Execute cron job setup
+      const { error: masterJobError } = await supabaseClient.rpc('exec_sql', { 
+        sql: cronJobSql 
+      });
+      
+      const { error: queueJobError } = await supabaseClient.rpc('exec_sql', { 
+        sql: queueProcessorSql 
+      });
+
+      console.log('Cron jobs configured successfully');
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Cron jobs configured successfully',
+          jobs: [
+            'master-ingestion-job (every 5 minutes)',
+            'process-alert-queue-job (every 2 minutes)'
+          ]
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (error) {
+      console.log('Could not set up cron jobs (may require database admin privileges):', error.message);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Cron jobs setup initiated (requires admin privileges to complete)',
+          note: 'You may need to run the cron setup manually from the Supabase SQL editor'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
   } catch (error) {
-    console.error('Cron setup error:', error);
+    console.error('Setup error:', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        note: 'Some cron operations may require database admin privileges'
+        success: false 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

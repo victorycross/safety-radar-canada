@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,19 +63,36 @@ const FeedTestingDashboard: React.FC = () => {
     try {
       let result;
       
-      // Test specific feeds based on source ID
+      // Test specific feeds based on source ID with proper request bodies
       switch (sourceId) {
         case 'alert-ready':
-          result = await supabase.functions.invoke('fetch-alerts');
+          result = await supabase.functions.invoke('fetch-alerts', {
+            body: { source: 'alert-ready' }
+          });
           break;
         case 'bc-arcgis':
-          result = await supabase.functions.invoke('fetch-bc-alerts');
+          result = await supabase.functions.invoke('fetch-bc-alerts', {
+            body: { source: 'arcgis-bc' }
+          });
           break;
         case 'everbridge':
-          result = await supabase.functions.invoke('fetch-everbridge-alerts');
+          result = await supabase.functions.invoke('fetch-everbridge-alerts', {
+            body: { source: 'everbridge' }
+          });
+          break;
+        case 'weather-ca':
+          // For weather, trigger the master orchestrator which handles Environment Canada
+          result = await supabase.functions.invoke('master-ingestion-orchestrator');
+          break;
+        case 'cisa-alerts':
+          // For CISA and other sources, use master orchestrator
+          result = await supabase.functions.invoke('master-ingestion-orchestrator');
+          break;
+        case 'social-media':
+          // For social media, use master orchestrator
+          result = await supabase.functions.invoke('master-ingestion-orchestrator');
           break;
         default:
-          // For other sources, trigger master orchestrator
           result = await supabase.functions.invoke('master-ingestion-orchestrator');
       }
 
@@ -84,13 +100,17 @@ const FeedTestingDashboard: React.FC = () => {
         throw new Error(result.error.message);
       }
 
+      const recordsProcessed = result.data?.alerts?.length || 
+                              result.data?.processed_count || 
+                              result.data?.results?.length || 0;
+
       setFeedTests(prev => prev.map(test => 
         test.sourceId === sourceId 
           ? { 
               ...test, 
               status: 'success', 
               lastTest: new Date(),
-              records: result.data?.processed_count || result.data?.alerts?.length || 0,
+              records: recordsProcessed,
               rawData: result.data
             }
           : test
@@ -98,7 +118,7 @@ const FeedTestingDashboard: React.FC = () => {
 
       toast({
         title: 'Feed Test Successful',
-        description: `${sourceId} processed successfully`,
+        description: `${sourceId} processed ${recordsProcessed} records`,
       });
 
     } catch (error) {
@@ -241,7 +261,7 @@ const FeedTestingDashboard: React.FC = () => {
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               This dashboard helps you test each external data source individually and verify data flow into the database.
-              Start by setting up cron jobs, then test each feed systematically.
+              Start by testing individual feeds to identify which ones need API keys or configuration.
             </AlertDescription>
           </Alert>
 
