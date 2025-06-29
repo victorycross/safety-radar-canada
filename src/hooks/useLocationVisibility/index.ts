@@ -1,24 +1,10 @@
+
 import { useState, useEffect, useCallback } from 'react';
+import { LocationVisibilityState, LocationVisibilityHookReturn } from './types';
+import { DEFAULT_PROVINCES, DEFAULT_INTERNATIONAL_HUBS } from './constants';
+import { getDefaultVisibility, loadFromLocalStorage, saveToLocalStorage, doKeysMatch } from './utils';
 
-interface LocationVisibilityState {
-  provinces: Record<string, boolean>;
-  internationalHubs: Record<string, boolean>;
-}
-
-const DEFAULT_PROVINCES = [
-  'ab', 'bc', 'mb', 'nb', 'nl', 'ns', 'on', 'pe', 'qc', 'sk', 'nt', 'nu', 'yt'
-];
-
-const DEFAULT_INTERNATIONAL_HUBS = [
-  'nyc', 'london', 'hk', 'singapore', 'tokyo', 'frankfurt', 'zurich', 'dubai', 'sydney', 'toronto-intl'
-];
-
-const getDefaultVisibility = (provinceIds?: string[], hubIds?: string[]): LocationVisibilityState => ({
-  provinces: Object.fromEntries((provinceIds || DEFAULT_PROVINCES).map(id => [id, true])),
-  internationalHubs: Object.fromEntries((hubIds || DEFAULT_INTERNATIONAL_HUBS).map(id => [id, true]))
-});
-
-export const useLocationVisibility = (actualProvinceIds?: string[], actualHubIds?: string[]) => {
+export const useLocationVisibility = (actualProvinceIds?: string[], actualHubIds?: string[]): LocationVisibilityHookReturn => {
   const [visibility, setVisibility] = useState<LocationVisibilityState>(() => 
     getDefaultVisibility(actualProvinceIds, actualHubIds)
   );
@@ -34,28 +20,18 @@ export const useLocationVisibility = (actualProvinceIds?: string[], actualHubIds
     if (actualProvinceIds || actualHubIds) {
       const newDefaultVisibility = getDefaultVisibility(actualProvinceIds, actualHubIds);
       
-      // Only update if we don't have saved data for these specific IDs
-      const saved = localStorage.getItem('locationVisibility');
+      const saved = loadFromLocalStorage();
       if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          // Check if saved data has the same keys as current data
-          const savedProvinceKeys = Object.keys(parsed.provinces || {});
-          const currentProvinceKeys = actualProvinceIds || DEFAULT_PROVINCES;
-          const keysMatch = savedProvinceKeys.length === currentProvinceKeys.length && 
-                          savedProvinceKeys.every(key => currentProvinceKeys.includes(key));
-          
-          if (keysMatch) {
-            setVisibility(parsed);
-            setPendingVisibility(parsed);
-            return;
-          }
-        } catch (error) {
-          console.error('Failed to parse saved location visibility:', error);
+        const currentProvinceKeys = actualProvinceIds || DEFAULT_PROVINCES;
+        const keysMatch = doKeysMatch(saved, currentProvinceKeys);
+        
+        if (keysMatch) {
+          setVisibility(saved);
+          setPendingVisibility(saved);
+          return;
         }
       }
       
-      // If no saved data or keys don't match, use new default
       setVisibility(newDefaultVisibility);
       setPendingVisibility(newDefaultVisibility);
     }
@@ -64,15 +40,10 @@ export const useLocationVisibility = (actualProvinceIds?: string[], actualHubIds
   // Load from localStorage on mount (fallback for when no actual IDs provided)
   useEffect(() => {
     if (!actualProvinceIds && !actualHubIds) {
-      const saved = localStorage.getItem('locationVisibility');
+      const saved = loadFromLocalStorage();
       if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setVisibility(parsed);
-          setPendingVisibility(parsed);
-        } catch (error) {
-          console.error('Failed to parse saved location visibility:', error);
-        }
+        setVisibility(saved);
+        setPendingVisibility(saved);
       }
     }
   }, [actualProvinceIds, actualHubIds]);
@@ -85,7 +56,6 @@ export const useLocationVisibility = (actualProvinceIds?: string[], actualHubIds
 
   const forceRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    // Simulate a brief loading state
     await new Promise(resolve => setTimeout(resolve, 300));
     setRefreshKey(prev => prev + 1);
     setIsRefreshing(false);
@@ -153,10 +123,9 @@ export const useLocationVisibility = (actualProvinceIds?: string[], actualHubIds
 
   const applyChanges = () => {
     setVisibility(pendingVisibility);
-    localStorage.setItem('locationVisibility', JSON.stringify(pendingVisibility));
-    // Force immediate refresh of all consuming components
+    saveToLocalStorage(pendingVisibility);
     setRefreshKey(prev => prev + 1);
-    return true; // Success
+    return true;
   };
 
   const cancelChanges = () => {
@@ -168,37 +137,16 @@ export const useLocationVisibility = (actualProvinceIds?: string[], actualHubIds
     setPendingVisibility(defaultState);
   };
 
-  const getVisibleProvincesCount = () => {
-    return Object.values(visibility.provinces).filter(Boolean).length;
-  };
+  // Utility functions
+  const getVisibleProvincesCount = () => Object.values(visibility.provinces).filter(Boolean).length;
+  const getTotalProvincesCount = () => Object.keys(visibility.provinces).length;
+  const getVisibleInternationalHubsCount = () => Object.values(visibility.internationalHubs).filter(Boolean).length;
+  const getTotalInternationalHubsCount = () => Object.keys(visibility.internationalHubs).length;
+  const getPendingVisibleProvincesCount = () => Object.values(pendingVisibility.provinces).filter(Boolean).length;
+  const getPendingVisibleInternationalHubsCount = () => Object.values(pendingVisibility.internationalHubs).filter(Boolean).length;
 
-  const getTotalProvincesCount = () => {
-    return Object.keys(visibility.provinces).length;
-  };
-
-  const getVisibleInternationalHubsCount = () => {
-    return Object.values(visibility.internationalHubs).filter(Boolean).length;
-  };
-
-  const getTotalInternationalHubsCount = () => {
-    return Object.keys(visibility.internationalHubs).length;
-  };
-
-  const getPendingVisibleProvincesCount = () => {
-    return Object.values(pendingVisibility.provinces).filter(Boolean).length;
-  };
-
-  const getPendingVisibleInternationalHubsCount = () => {
-    return Object.values(pendingVisibility.internationalHubs).filter(Boolean).length;
-  };
-
-  const isProvinceVisible = (provinceId: string) => {
-    return visibility.provinces[provinceId] ?? true;
-  };
-
-  const isInternationalHubVisible = (hubId: string) => {
-    return visibility.internationalHubs[hubId] ?? true;
-  };
+  const isProvinceVisible = (provinceId: string) => visibility.provinces[provinceId] ?? true;
+  const isInternationalHubVisible = (hubId: string) => visibility.internationalHubs[hubId] ?? true;
 
   const isPendingProvinceVisible = (provinceId: string) => {
     const result = pendingVisibility.provinces[provinceId] ?? true;
