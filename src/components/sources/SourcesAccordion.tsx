@@ -33,9 +33,10 @@ interface SourcesAccordionProps {
   sortBy: string;
   sortOrder: string;
   onSortingChange: (sortBy: any, sortOrder: any) => void;
-  onConfigure: (sourceId: string) => void;
-  onTest: (sourceId: string) => void;
+  onConfigure: (source: EnhancedSource) => void;
+  onTest: (source: EnhancedSource) => void;
   onRefreshData: () => void;
+  onAddSource: () => void;
 }
 
 const SourcesAccordion: React.FC<SourcesAccordionProps> = ({
@@ -53,7 +54,8 @@ const SourcesAccordion: React.FC<SourcesAccordionProps> = ({
   onSortingChange,
   onConfigure,
   onTest,
-  onRefreshData
+  onRefreshData,
+  onAddSource
 }) => {
   return (
     <Accordion 
@@ -168,8 +170,8 @@ const SourcesAccordion: React.FC<SourcesAccordionProps> = ({
                 <EnhancedSourceCard 
                   key={source.id} 
                   source={source}
-                  onConfigure={onConfigure}
-                  onTest={onTest}
+                  onConfigure={() => onConfigure(source)}
+                  onTest={() => onTest(source)}
                 />
               ))}
             </div>
@@ -202,22 +204,22 @@ const SourcesAccordion: React.FC<SourcesAccordionProps> = ({
                 <h3 className="text-lg font-medium">Source Management</h3>
                 <p className="text-muted-foreground">Add, configure, and manage data sources</p>
               </div>
-              <Button>
+              <Button onClick={onAddSource}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add New Source
               </Button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button variant="outline" className="h-20 flex-col gap-2" onClick={onAddSource}>
                 <Database className="h-6 w-6" />
                 <span>Database Sources</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button variant="outline" className="h-20 flex-col gap-2" onClick={onAddSource}>
                 <TrendingUp className="h-6 w-6" />
                 <span>API Endpoints</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button variant="outline" className="h-20 flex-col gap-2" onClick={onAddSource}>
                 <RefreshCw className="h-6 w-6" />
                 <span>Polling Services</span>
               </Button>

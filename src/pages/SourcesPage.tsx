@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -8,6 +7,9 @@ import SourcesPageHeader from "@/components/sources/SourcesPageHeader";
 import SourcesDataProvider from "@/components/sources/SourcesDataProvider";
 import SourcesAccordion from "@/components/sources/SourcesAccordion";
 import { useSourcesStatistics } from "@/components/sources/SourcesStatistics";
+import SourceConfigurationModal from "@/components/sources/SourceConfigurationModal";
+import AddSourceModal from "@/components/sources/AddSourceModal";
+import { useSourceConfiguration } from "@/hooks/useSourceConfiguration";
 
 const SourcesPage = () => {
   const { toast } = useToast();
@@ -24,20 +26,29 @@ const SourcesPage = () => {
     resetToDefault
   } = useSourcesState();
 
+  const {
+    isConfigModalOpen,
+    isAddModalOpen,
+    selectedSource,
+    openConfigModal,
+    closeConfigModal,
+    openAddModal,
+    closeAddModal,
+    saveConfiguration,
+    addNewSource,
+    testConnection
+  } = useSourceConfiguration();
+
   const handleConfigure = (sourceId: string) => {
     console.log('Configure source:', sourceId);
-    toast({
-      title: 'Configuration',
-      description: `Opening configuration for source: ${sourceId}`,
-    });
+    // This will be called by the SourcesAccordion component
+    // The actual modal opening is handled by the accordion's configure button
   };
 
   const handleTest = (sourceId: string) => {
     console.log('Test source:', sourceId);
-    toast({
-      title: 'Testing Connection',
-      description: `Testing connection for source: ${sourceId}`,
-    });
+    // This will be called by the SourcesAccordion component
+    // The actual testing is handled by the accordion's test button
   };
 
   return (
@@ -141,33 +152,49 @@ const SourcesPage = () => {
         }
 
         return (
-          <div className="space-y-6">
-            <SourcesPageHeader
-              autoRefresh={state.autoRefresh}
-              onToggleAutoRefresh={toggleAutoRefresh}
-              onExpandAll={expandAll}
-              onCollapseAll={collapseAll}
-              onReset={resetToDefault}
+          <>
+            <div className="space-y-6">
+              <SourcesPageHeader
+                autoRefresh={state.autoRefresh}
+                onToggleAutoRefresh={toggleAutoRefresh}
+                onExpandAll={expandAll}
+                onCollapseAll={collapseAll}
+                onReset={resetToDefault}
+              />
+
+              <SourcesAccordion
+                sources={sources}
+                filteredSources={filteredSources}
+                sortedSources={sortedSources}
+                stats={stats}
+                openSections={getOpenSections()}
+                onAccordionChange={handleAccordionChange}
+                filters={state.filters}
+                onFiltersChange={updateFilters}
+                onClearFilters={clearFilters}
+                sortBy={state.sortBy}
+                sortOrder={state.sortOrder}
+                onSortingChange={updateSorting}
+                onConfigure={openConfigModal}
+                onTest={testConnection}
+                onRefreshData={refreshData}
+                onAddSource={openAddModal}
+              />
+            </div>
+
+            <SourceConfigurationModal
+              source={selectedSource}
+              isOpen={isConfigModalOpen}
+              onClose={closeConfigModal}
+              onSave={saveConfiguration}
             />
 
-            <SourcesAccordion
-              sources={sources}
-              filteredSources={filteredSources}
-              sortedSources={sortedSources}
-              stats={stats}
-              openSections={getOpenSections()}
-              onAccordionChange={handleAccordionChange}
-              filters={state.filters}
-              onFiltersChange={updateFilters}
-              onClearFilters={clearFilters}
-              sortBy={state.sortBy}
-              sortOrder={state.sortOrder}
-              onSortingChange={updateSorting}
-              onConfigure={handleConfigure}
-              onTest={handleTest}
-              onRefreshData={refreshData}
+            <AddSourceModal
+              isOpen={isAddModalOpen}
+              onClose={closeAddModal}
+              onAdd={addNewSource}
             />
-          </div>
+          </>
         );
       }}
     </SourcesDataProvider>
