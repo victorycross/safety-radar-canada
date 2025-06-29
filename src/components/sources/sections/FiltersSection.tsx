@@ -8,11 +8,13 @@ import SourceFilters, { SourceFilter } from "@/components/sources/SourceFilters"
 interface FiltersSectionProps {
   filters: SourceFilter;
   onFiltersChange: (filters: SourceFilter) => void;
+  onClearFilters: () => void;
 }
 
 const FiltersSection: React.FC<FiltersSectionProps> = ({
   filters,
-  onFiltersChange
+  onFiltersChange,
+  onClearFilters
 }) => {
   const hasActiveFilters = filters.search || 
     filters.verificationStatus.length > 0 || 

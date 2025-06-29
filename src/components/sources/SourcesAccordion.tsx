@@ -2,7 +2,7 @@
 import React from 'react';
 import { Accordion } from "@/components/ui/accordion";
 import { EnhancedSource } from "@/components/sources/EnhancedSourceCard";
-import { SourceFilter } from "@/hooks/useSourcesState";
+import { SourceFilter } from "@/components/sources/SourceFilters";
 import { SourcesStats } from "./SourcesStatistics";
 import FeedTestingSection from "./sections/FeedTestingSection";
 import OverviewSection from "./sections/OverviewSection";
@@ -20,7 +20,7 @@ interface SourcesAccordionProps {
   openSections: string[];
   onAccordionChange: (value: string[]) => void;
   filters: SourceFilter;
-  onFiltersChange: (filters: Partial<SourceFilter>) => void;
+  onFiltersChange: (filters: SourceFilter) => void;
   onClearFilters: () => void;
   sortBy: string;
   sortOrder: string;

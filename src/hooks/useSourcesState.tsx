@@ -61,6 +61,19 @@ export const useSourcesState = () => {
     }));
   };
 
+  const clearFilters = () => {
+    setState(prev => ({
+      ...prev,
+      filters: {
+        search: '',
+        verificationStatus: [],
+        sourceTypes: [],
+        healthStatus: [],
+        lastUpdated: 'all'
+      }
+    }));
+  };
+
   const updateSorting = (sortBy: SourcesState['sortBy'], sortOrder: SourcesState['sortOrder']) => {
     setState(prev => ({ ...prev, sortBy, sortOrder }));
   };
@@ -110,6 +123,7 @@ export const useSourcesState = () => {
   return {
     state,
     updateFilters,
+    clearFilters,
     updateSorting,
     toggleAutoRefresh,
     setRefreshInterval,
@@ -120,3 +134,6 @@ export const useSourcesState = () => {
     resetToDefault
   };
 };
+
+// Export the SourceFilter type for other components
+export type { SourceFilter };
