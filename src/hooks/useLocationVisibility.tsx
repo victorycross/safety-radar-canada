@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 
 interface LocationVisibilityState {
@@ -54,23 +55,35 @@ export const useLocationVisibility = () => {
   }, []);
 
   const togglePendingProvince = (provinceId: string) => {
-    setPendingVisibility(prev => ({
-      ...prev,
-      provinces: {
-        ...prev.provinces,
-        [provinceId]: !prev.provinces[provinceId]
-      }
-    }));
+    console.log('Toggling province in hook:', provinceId);
+    setPendingVisibility(prev => {
+      const currentValue = prev.provinces[provinceId] ?? true;
+      const newValue = !currentValue;
+      console.log(`Province ${provinceId} changing from ${currentValue} to ${newValue}`);
+      return {
+        ...prev,
+        provinces: {
+          ...prev.provinces,
+          [provinceId]: newValue
+        }
+      };
+    });
   };
 
   const togglePendingInternationalHub = (hubId: string) => {
-    setPendingVisibility(prev => ({
-      ...prev,
-      internationalHubs: {
-        ...prev.internationalHubs,
-        [hubId]: !prev.internationalHubs[hubId]
-      }
-    }));
+    console.log('Toggling hub in hook:', hubId);
+    setPendingVisibility(prev => {
+      const currentValue = prev.internationalHubs[hubId] ?? true;
+      const newValue = !currentValue;
+      console.log(`Hub ${hubId} changing from ${currentValue} to ${newValue}`);
+      return {
+        ...prev,
+        internationalHubs: {
+          ...prev.internationalHubs,
+          [hubId]: newValue
+        }
+      };
+    });
   };
 
   const selectAllPendingProvinces = () => {
@@ -151,11 +164,15 @@ export const useLocationVisibility = () => {
   };
 
   const isPendingProvinceVisible = (provinceId: string) => {
-    return pendingVisibility.provinces[provinceId] ?? true;
+    const result = pendingVisibility.provinces[provinceId] ?? true;
+    console.log(`isPendingProvinceVisible(${provinceId}):`, result);
+    return result;
   };
 
   const isPendingInternationalHubVisible = (hubId: string) => {
-    return pendingVisibility.internationalHubs[hubId] ?? true;
+    const result = pendingVisibility.internationalHubs[hubId] ?? true;
+    console.log(`isPendingInternationalHubVisible(${hubId}):`, result);
+    return result;
   };
 
   const isFiltered = () => {
