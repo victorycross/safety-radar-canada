@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ interface FeedTest {
   records?: number;
   error?: string;
   rawData?: any;
+  details?: string;
 }
 
 const FeedTestingDashboard: React.FC = () => {
@@ -34,6 +36,7 @@ const FeedTestingDashboard: React.FC = () => {
   const [feedTests, setFeedTests] = useState<FeedTest[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedFeed, setSelectedFeed] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('feeds');
 
   // Initialize with known sources
   React.useEffect(() => {
@@ -56,12 +59,13 @@ const FeedTestingDashboard: React.FC = () => {
   const testIndividualFeed = async (sourceId: string) => {
     setFeedTests(prev => prev.map(test => 
       test.sourceId === sourceId 
-        ? { ...test, status: 'testing', error: undefined }
+        ? { ...test, status: 'testing', error: undefined, details: undefined }
         : test
     ));
 
     try {
       let result;
+      let details = '';
       
       // Test specific feeds based on source ID with proper request bodies
       switch (sourceId) {
@@ -69,31 +73,43 @@ const FeedTestingDashboard: React.FC = () => {
           result = await supabase.functions.invoke('fetch-alerts', {
             body: { source: 'alert-ready' }
           });
+          details = 'Alert Ready provides real-time emergency alerts from Alert Ready system';
           break;
         case 'bc-arcgis':
           result = await supabase.functions.invoke('fetch-bc-alerts', {
             body: { source: 'arcgis-bc' }
           });
+          details = 'BC ArcGIS provides emergency data from British Columbia ArcGIS services';
           break;
         case 'everbridge':
           result = await supabase.functions.invoke('fetch-everbridge-alerts', {
             body: { source: 'everbridge' }
           });
+          details = 'Everbridge requires API credentials for access to emergency notifications';
           break;
         case 'weather-ca':
-          // For weather, trigger the master orchestrator which handles Environment Canada
-          result = await supabase.functions.invoke('master-ingestion-orchestrator');
+          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
+            body: { source: 'weather-ca', test_mode: true }
+          });
+          details = 'Environment Canada Weather API requires API key for weather alerts and warnings';
           break;
         case 'cisa-alerts':
-          // For CISA and other sources, use master orchestrator
-          result = await supabase.functions.invoke('master-ingestion-orchestrator');
+          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
+            body: { source: 'cisa-alerts', test_mode: true }
+          });
+          details = 'CISA provides cybersecurity alerts and advisories - should work without API key';
           break;
         case 'social-media':
-          // For social media, use master orchestrator
-          result = await supabase.functions.invoke('master-ingestion-orchestrator');
+          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
+            body: { source: 'social-media', test_mode: true }
+          });
+          details = 'Social Media Monitoring requires API keys for Twitter, Facebook, etc.';
           break;
         default:
-          result = await supabase.functions.invoke('master-ingestion-orchestrator');
+          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
+            body: { source: sourceId, test_mode: true }
+          });
+          details = 'Generic feed test using master orchestrator';
       }
 
       if (result.error) {
@@ -102,7 +118,28 @@ const FeedTestingDashboard: React.FC = () => {
 
       const recordsProcessed = result.data?.alerts?.length || 
                               result.data?.processed_count || 
-                              result.data?.results?.length || 0;
+                              result.data?.results?.length || 
+                              result.data?.count || 0;
+
+      let statusMessage = '';
+      if (recordsProcessed === 0) {
+        switch (sourceId) {
+          case 'weather-ca':
+            statusMessage = 'Success but no records - likely needs Environment Canada API key';
+            break;
+          case 'cisa-alerts':
+            statusMessage = 'Success but no records - may need to verify CISA RSS feed endpoint';
+            break;
+          case 'social-media':
+            statusMessage = 'Success but no records - requires social media API keys (Twitter, Facebook, etc.)';
+            break;
+          case 'everbridge':
+            statusMessage = 'Success but no records - requires Everbridge API credentials';
+            break;
+          default:
+            statusMessage = 'Success but no records found';
+        }
+      }
 
       setFeedTests(prev => prev.map(test => 
         test.sourceId === sourceId 
@@ -111,18 +148,29 @@ const FeedTestingDashboard: React.FC = () => {
               status: 'success', 
               lastTest: new Date(),
               records: recordsProcessed,
-              rawData: result.data
+              rawData: result.data,
+              details: details + (statusMessage ? ` - ${statusMessage}` : '')
             }
           : test
       ));
 
       toast({
-        title: 'Feed Test Successful',
-        description: `${sourceId} processed ${recordsProcessed} records`,
+        title: recordsProcessed > 0 ? 'Feed Test Successful' : 'Feed Connected But No Data',
+        description: recordsProcessed > 0 
+          ? `${sourceId} processed ${recordsProcessed} records`
+          : statusMessage || `${sourceId} connected but returned no records`,
+        variant: recordsProcessed > 0 ? 'default' : 'destructive'
       });
 
     } catch (error) {
       console.error(`Feed test error for ${sourceId}:`, error);
+      
+      let errorDetails = '';
+      if (error.message.includes('non-2xx')) {
+        errorDetails = 'Edge function returned error - may need API configuration';
+      } else {
+        errorDetails = error.message;
+      }
       
       setFeedTests(prev => prev.map(test => 
         test.sourceId === sourceId 
@@ -130,14 +178,15 @@ const FeedTestingDashboard: React.FC = () => {
               ...test, 
               status: 'error', 
               lastTest: new Date(),
-              error: error.message
+              error: errorDetails,
+              details: `Error: ${errorDetails}`
             }
           : test
       ));
 
       toast({
         title: 'Feed Test Failed',
-        description: `Error testing ${sourceId}: ${error.message}`,
+        description: `Error testing ${sourceId}: ${errorDetails}`,
         variant: 'destructive',
       });
     }
@@ -225,6 +274,11 @@ const FeedTestingDashboard: React.FC = () => {
     }
   };
 
+  const handleViewDetails = (sourceId: string) => {
+    setSelectedFeed(sourceId);
+    setActiveTab('details');
+  };
+
   const selectedFeedData = feedTests.find(f => f.sourceId === selectedFeed);
 
   return (
@@ -261,11 +315,11 @@ const FeedTestingDashboard: React.FC = () => {
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               This dashboard helps you test each external data source individually and verify data flow into the database.
-              Start by testing individual feeds to identify which ones need API keys or configuration.
+              Feeds showing "success but no records" likely need API keys or configuration.
             </AlertDescription>
           </Alert>
 
-          <Tabs defaultValue="feeds" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList>
               <TabsTrigger value="feeds">Feed Testing</TabsTrigger>
               <TabsTrigger value="details">Feed Details</TabsTrigger>
@@ -305,13 +359,21 @@ const FeedTestingDashboard: React.FC = () => {
                         {feed.records !== undefined && (
                           <div className="flex justify-between items-center text-xs">
                             <span>Records:</span>
-                            <span>{feed.records}</span>
+                            <span className={feed.records === 0 ? 'text-orange-600' : 'text-green-600'}>
+                              {feed.records}
+                            </span>
                           </div>
                         )}
                         
                         {feed.error && (
                           <div className="text-xs text-red-600 mt-2 p-2 bg-red-50 rounded">
                             {feed.error}
+                          </div>
+                        )}
+
+                        {feed.records === 0 && feed.status === 'success' && (
+                          <div className="text-xs text-orange-600 mt-2 p-2 bg-orange-50 rounded">
+                            Connected but no data - may need API key
                           </div>
                         )}
                         
@@ -331,7 +393,7 @@ const FeedTestingDashboard: React.FC = () => {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => setSelectedFeed(feed.sourceId)}
+                            onClick={() => handleViewDetails(feed.sourceId)}
                           >
                             <Eye className="h-3 w-3" />
                           </Button>
@@ -360,7 +422,31 @@ const FeedTestingDashboard: React.FC = () => {
                           <span className="font-medium">Status:</span>
                           <p className="text-sm">{selectedFeedData.status}</p>
                         </div>
+                        <div>
+                          <span className="font-medium">Records Processed:</span>
+                          <p className="text-sm">{selectedFeedData.records || 0}</p>
+                        </div>
+                        {selectedFeedData.lastTest && (
+                          <div>
+                            <span className="font-medium">Last Test:</span>
+                            <p className="text-sm">{selectedFeedData.lastTest.toLocaleString()}</p>
+                          </div>
+                        )}
                       </div>
+
+                      {selectedFeedData.details && (
+                        <div>
+                          <span className="font-medium">Details:</span>
+                          <p className="text-sm text-muted-foreground mt-1">{selectedFeedData.details}</p>
+                        </div>
+                      )}
+
+                      {selectedFeedData.error && (
+                        <div>
+                          <span className="font-medium">Error:</span>
+                          <p className="text-sm text-red-600 mt-1">{selectedFeedData.error}</p>
+                        </div>
+                      )}
                       
                       {selectedFeedData.rawData && (
                         <div>
@@ -369,6 +455,28 @@ const FeedTestingDashboard: React.FC = () => {
                             {JSON.stringify(selectedFeedData.rawData, null, 2)}
                           </pre>
                         </div>
+                      )}
+
+                      {/* API Configuration Recommendations */}
+                      {selectedFeedData.records === 0 && selectedFeedData.status === 'success' && (
+                        <Alert>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertDescription>
+                            <strong>Configuration Needed:</strong>
+                            {selectedFeedData.sourceId === 'weather-ca' && (
+                              <span> This feed requires an Environment Canada API key to access weather data.</span>
+                            )}
+                            {selectedFeedData.sourceId === 'social-media' && (
+                              <span> This feed requires API keys for social media platforms (Twitter API, Facebook API, etc.).</span>
+                            )}
+                            {selectedFeedData.sourceId === 'everbridge' && (
+                              <span> This feed requires Everbridge API credentials (username, password, organization ID).</span>
+                            )}
+                            {selectedFeedData.sourceId === 'cisa-alerts' && (
+                              <span> This feed should work without API keys. The RSS endpoint may be temporarily unavailable.</span>
+                            )}
+                          </AlertDescription>
+                        </Alert>
                       )}
                     </div>
                   </CardContent>
