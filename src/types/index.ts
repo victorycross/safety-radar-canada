@@ -29,6 +29,26 @@ export interface Province {
   incidents: Incident[];
 }
 
+export interface GeospatialData {
+  id: string;
+  incident_id: string;
+  latitude: number | null;
+  longitude: number | null;
+  geohash: string | null;
+  affected_radius_km: number | null;
+  population_impact: number | null;
+  administrative_area: string | null;
+  country_code: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AlertCorrelation {
+  related_incident_id: string;
+  correlation_type: string;
+  confidence_score: number;
+}
+
 export interface Incident {
   id: string;
   title: string;
@@ -39,6 +59,15 @@ export interface Incident {
   source: IncidentSource;
   verificationStatus: VerificationStatus;
   recommendedAction?: string;
+  // Enhanced fields from new schema
+  confidenceScore?: number;
+  correlationId?: string;
+  rawPayload?: any;
+  dataSourceId?: string;
+  geographicScope?: string;
+  severityNumeric?: number;
+  geospatialData?: GeospatialData;
+  correlations?: AlertCorrelation[];
 }
 
 export interface User {

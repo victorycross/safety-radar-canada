@@ -57,7 +57,14 @@ export const useDataIngestion = () => {
       
       if (error) throw error;
       
-      setSources(data || []);
+      if (data) {
+        // Type assertion to ensure health_status matches our interface
+        const mappedSources: AlertSource[] = data.map(source => ({
+          ...source,
+          health_status: source.health_status as 'healthy' | 'degraded' | 'error' | 'unknown'
+        }));
+        setSources(mappedSources);
+      }
     } catch (err) {
       console.error('Error fetching alert sources:', err);
       setError('Failed to load alert sources');
