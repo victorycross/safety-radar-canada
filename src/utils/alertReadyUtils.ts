@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { UniversalAlert } from '@/types/alerts';
 import { normalizeAlert } from './sourceNormalizers';
@@ -29,7 +30,7 @@ export const fetchAlertReadyData = async (): Promise<UniversalAlert[]> => {
     if (error) throw new Error(error.message);
     
     if (data && Array.isArray(data.alerts)) {
-      // Normalize all alerts to universal format
+      // Normalize all alerts to universal format using consistent normalization
       return data.alerts.map((alert: any) => normalizeAlert(alert, 'alert-ready'));
     }
     

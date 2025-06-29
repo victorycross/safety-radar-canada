@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { UniversalAlert } from '@/types/alerts';
 import { fetchAlertReadyData } from '@/utils/alertReadyUtils';
+import { testNormalizationInDev } from '@/utils/normalizationConsistencyTest';
 
 export const useAlertReady = () => {
   const [alerts, setAlerts] = useState<UniversalAlert[]>([]);
@@ -17,6 +18,10 @@ export const useAlertReady = () => {
     try {
       const data = await fetchAlertReadyData();
       setAlerts(data);
+      
+      // Run normalization consistency test in development
+      testNormalizationInDev();
+      
     } catch (err) {
       console.error('Error fetching alerts:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch alerts');
