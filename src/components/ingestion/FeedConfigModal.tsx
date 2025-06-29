@@ -40,6 +40,16 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
 
   const getConfigDetails = (feedId: string) => {
     switch (feedId) {
+      case 'cse-cybersecurity':
+        return {
+          description: 'Canadian Cyber Security Centre (CSE) RSS feed for cybersecurity alerts',
+          apiKeyLabel: 'API Key (Optional)',
+          apiKeyPlaceholder: 'Usually not required for public RSS feeds',
+          endpointDefault: 'https://cyber.gc.ca/webservice/en/rss/alerts',
+          helpText: 'CSE RSS feed provides cybersecurity alerts with automatic geolocation classification. No authentication typically required for public feeds.',
+          pollIntervalDefault: '600',
+          pollIntervalNote: 'Recommended: 10 minutes (600 seconds) for cybersecurity alerts'
+        };
       case 'weather-ca-geocmet':
         return {
           description: 'Environment Canada GeoMet-OGC API for weather alerts in GeoJSON format',
@@ -184,9 +194,9 @@ const FeedConfigModal: React.FC<FeedConfigModalProps> = ({
               <div>
                 <Label htmlFor="pollInterval">
                   Poll Interval (seconds)
-                  {feedId === 'weather-ca-geocmet' && (
+                  {(feedId === 'weather-ca-geocmet' || feedId === 'cse-cybersecurity') && (
                     <Badge variant="secondary" className="ml-2 text-xs">
-                      5min recommended
+                      {feedId === 'cse-cybersecurity' ? '10min recommended' : '5min recommended'}
                     </Badge>
                   )}
                 </Label>

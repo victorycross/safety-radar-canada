@@ -313,6 +313,48 @@ export type Database = {
         }
         Relationships: []
       }
+      security_alerts_ingest: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          link: string | null
+          location: string | null
+          pub_date: string | null
+          raw_data: Json | null
+          source: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id: string
+          link?: string | null
+          location?: string | null
+          pub_date?: string | null
+          raw_data?: Json | null
+          source?: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          location?: string | null
+          pub_date?: string | null
+          raw_data?: Json | null
+          source?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       source_health_metrics: {
         Row: {
           created_at: string

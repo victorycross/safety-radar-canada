@@ -130,9 +130,11 @@ async function processSource(source: AlertSource, supabaseClient: any) {
   try {
     console.log(`Fetching data from: ${source.api_endpoint}`);
     
-    // Use specialized processing for GeoMet-OGC API
+    // Use specialized processing for different source types
     if (source.source_type === 'weather-geocmet') {
       return await processGeoMetSource(source, supabaseClient);
+    } else if (source.source_type === 'security-rss') {
+      return await processSecurityRSSSource(source, supabaseClient);
     }
     
     // ... keep existing code for other source types
@@ -211,6 +213,198 @@ async function processSource(source: AlertSource, supabaseClient: any) {
   }
 }
 
+async function processSecurityRSSSource(source: AlertSource, supabaseClient: any) {
+  const startTime = Date.now();
+  let retryCount = 0;
+  const maxRetries = 3;
+  const baseDelay = 1000; // 1 second
+  
+  while (retryCount <= maxRetries) {
+    try {
+      console.log(`Attempting CSE RSS fetch (attempt ${retryCount + 1}/${maxRetries + 1})`);
+      
+      const response = await fetch(source.api_endpoint, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Security-Intelligence-Platform/1.0',
+          'Accept': 'application/rss+xml, application/xml, text/xml'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const rssText = await response.text();
+      console.log(`Received RSS data: ${rssText.length} characters`);
+      
+      // Process and save security alerts
+      const processedCount = await processSecurityAlerts(rssText, supabaseClient);
+      
+      const responseTime = Date.now() - startTime;
+      
+      // Record successful health metric
+      await recordHealthMetric(supabaseClient, {
+        source_id: source.id,
+        response_time_ms: responseTime,
+        success: true,
+        records_processed: processedCount,
+        http_status_code: response.status
+      });
+      
+      return {
+        source_name: source.name,
+        success: true,
+        records_processed: processedCount,
+        response_time_ms: responseTime
+      };
+      
+    } catch (error) {
+      console.error(`CSE RSS attempt ${retryCount + 1} failed:`, error);
+      
+      if (retryCount === maxRetries) {
+        // Final attempt failed, record failure
+        const responseTime = Date.now() - startTime;
+        await recordHealthMetric(supabaseClient, {
+          source_id: source.id,
+          response_time_ms: responseTime,
+          success: false,
+          error_message: `Failed after ${maxRetries + 1} attempts: ${error.message}`,
+          records_processed: 0
+        });
+        throw error;
+      }
+      
+      // Wait before retry with exponential backoff
+      const delay = baseDelay * Math.pow(2, retryCount);
+      console.log(`Waiting ${delay}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      retryCount++;
+    }
+  }
+}
+
+async function processSecurityAlerts(rssText: string, supabaseClient: any): Promise<number> {
+  // Parse RSS/XML data
+  const items = await parseRSSItems(rssText);
+  
+  if (!items || items.length === 0) {
+    console.log('No RSS items found');
+    return 0;
+  }
+  
+  const alerts = [];
+  
+  for (const item of items) {
+    try {
+      // Extract GUID/ID
+      let id = item.guid || item.id;
+      if (!id && item.link) {
+        // Fallback: use link as ID if no GUID
+        id = item.link;
+      }
+      if (!id) {
+        // Fallback: generate ID from title and pubDate
+        id = `cse_${Date.now()}_${Math.random()}`;
+      }
+      
+      // Classify location based on content
+      const location = classifyLocation(item.title, item.description);
+      
+      const alert = {
+        id: id,
+        title: item.title || 'Untitled Alert',
+        pub_date: item.pubDate ? new Date(item.pubDate).toISOString() : null,
+        summary: item.description || item.summary || null,
+        link: item.link || null,
+        source: 'CSE',
+        category: 'cybersecurity',
+        location: location,
+        raw_data: item,
+        updated_at: new Date().toISOString()
+      };
+      
+      alerts.push(alert);
+    } catch (error) {
+      console.error('Error processing security alert item:', error, item);
+    }
+  }
+  
+  if (alerts.length === 0) {
+    console.log('No valid security alerts to process');
+    return 0;
+  }
+  
+  // Use upsert to handle duplicates (only insert where id not already exists)
+  const { error: insertError } = await supabaseClient
+    .from('security_alerts_ingest')
+    .upsert(alerts, { onConflict: 'id' });
+  
+  if (insertError) {
+    console.error('Failed to insert security alerts:', insertError);
+    throw new Error(`Failed to save security alerts: ${insertError.message}`);
+  }
+  
+  console.log(`Successfully processed ${alerts.length} security alerts`);
+  return alerts.length;
+}
+
+function classifyLocation(title: string, description: string): string {
+  const content = `${title || ''} ${description || ''}`.toLowerCase();
+  
+  // Canada-specific terms
+  const canadianTerms = [
+    'canada', 'canadian', 'ontario', 'quebec', 'british columbia', 'alberta',
+    'manitoba', 'saskatchewan', 'nova scotia', 'new brunswick', 'newfoundland',
+    'prince edward island', 'northwest territories', 'nunavut', 'yukon',
+    'toronto', 'montreal', 'vancouver', 'calgary', 'ottawa', 'edmonton',
+    'cse', 'cccs', 'cyber.gc.ca', 'government of canada', 'gc.ca'
+  ];
+  
+  const hasCanadianTerms = canadianTerms.some(term => content.includes(term));
+  
+  return hasCanadianTerms ? 'Canada' : 'Global';
+}
+
+async function parseRSSItems(rssText: string): Promise<any[]> {
+  const items: any[] = [];
+  
+  // Extract RSS items
+  const itemMatches = rssText.match(/<item[^>]*>[\s\S]*?<\/item>/gi);
+  
+  if (!itemMatches) {
+    console.log('No RSS items found in response');
+    return items;
+  }
+  
+  for (const itemMatch of itemMatches) {
+    const item: any = {};
+    
+    // Extract common RSS fields
+    const titleMatch = itemMatch.match(/<title[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i) ||
+                      itemMatch.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const descMatch = itemMatch.match(/<description[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/description>/i) ||
+                     itemMatch.match(/<description[^>]*>([\s\S]*?)<\/description>/i);
+    const linkMatch = itemMatch.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
+    const pubDateMatch = itemMatch.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i);
+    const guidMatch = itemMatch.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
+    
+    if (titleMatch) item.title = titleMatch[1].trim();
+    if (descMatch) item.description = descMatch[1].trim();
+    if (linkMatch) item.link = linkMatch[1].trim();
+    if (pubDateMatch) item.pubDate = pubDateMatch[1].trim();
+    if (guidMatch) item.guid = guidMatch[1].trim();
+    
+    // Only add items that have at least a title
+    if (item.title) {
+      items.push(item);
+    }
+  }
+  
+  return items;
+}
+
+// ... keep existing code (processGeoMetSource function)
 async function processGeoMetSource(source: AlertSource, supabaseClient: any) {
   const startTime = Date.now();
   let retryCount = 0;
@@ -335,6 +529,7 @@ function getAcceptHeader(sourceType: string): string {
     case 'weather-geocmet':
       return 'application/json, application/geo+json, application/xml, text/xml';
     case 'security':
+    case 'security-rss':
     case 'policy':
       return 'application/rss+xml, application/xml, text/xml';
     default:
@@ -439,7 +634,7 @@ function calculateConfidenceScore(item: any, source: AlertSource): number {
   let score = 0.5; // Base score
   
   // Increase confidence for official sources
-  if (['weather', 'weather-geocmet', 'emergency'].includes(source.source_type)) {
+  if (['weather', 'weather-geocmet', 'emergency', 'security-rss'].includes(source.source_type)) {
     score += 0.3;
   }
   
