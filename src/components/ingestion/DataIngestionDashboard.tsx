@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,7 +54,7 @@ const DataIngestionDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Control Panel */}
+      {/* Enhanced Control Panel */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -64,6 +63,19 @@ const DataIngestionDashboard: React.FC = () => {
               Data Ingestion Control Panel
             </span>
             <div className="flex space-x-2">
+              <Button
+                onClick={async () => {
+                  // First trigger ingestion
+                  await triggerIngestion();
+                  // Then process the queue
+                  setTimeout(() => processQueue(), 2000);
+                }}
+                disabled={loading}
+                size="sm"
+              >
+                <RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Full Cycle Test
+              </Button>
               <Button
                 onClick={triggerIngestion}
                 disabled={loading}
@@ -111,6 +123,16 @@ const DataIngestionDashboard: React.FC = () => {
               <p className="text-2xl font-bold text-purple-600">{Math.round(overallHealthPercent)}%</p>
               <p className="text-sm text-purple-700">Overall Health</p>
             </div>
+          </div>
+          {/* Add testing instructions */}
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-medium text-blue-900 mb-2">Testing Instructions:</h4>
+            <ol className="text-sm text-blue-800 space-y-1">
+              <li>1. Use "Full Cycle Test" to trigger ingestion and process queue automatically</li>
+              <li>2. Monitor the queue status and source health metrics below</li>
+              <li>3. Check individual sources for detailed health information</li>
+              <li>4. Use the Feed Testing Dashboard above for granular testing</li>
+            </ol>
           </div>
         </CardContent>
       </Card>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 export interface SourceFilter {
@@ -41,6 +40,10 @@ const DEFAULT_SOURCES_STATE: SourcesState = {
 
 export const useSourcesState = () => {
   const [state, setState] = useState<SourcesState>(DEFAULT_SOURCES_STATE);
+  const [openSections, setOpenSections] = useState<string[]>([
+    'feed-testing', // Add this as default open
+    'overview'
+  ]);
 
   // Load from localStorage on mount
   useEffect(() => {

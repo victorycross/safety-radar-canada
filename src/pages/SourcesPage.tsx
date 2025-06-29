@@ -21,6 +21,7 @@ import { useSourcesState } from "@/hooks/useSourcesState";
 import SourceFilters from "@/components/sources/SourceFilters";
 import EnhancedSourceCard, { EnhancedSource } from "@/components/sources/EnhancedSourceCard";
 import SourceAnalytics from "@/components/sources/SourceAnalytics";
+import FeedTestingDashboard from "@/components/ingestion/FeedTestingDashboard";
 
 const SourcesPage = () => {
   const { 
@@ -288,6 +289,22 @@ const SourcesPage = () => {
         onValueChange={handleAccordionChange}
         className="space-y-4"
       >
+        {/* Add Feed Testing Dashboard as first section */}
+        <AccordionItem value="feed-testing" className="border rounded-lg px-6">
+          <AccordionTrigger className="text-lg font-semibold">
+            <div className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Feed Testing & Validation
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                Phase 1
+              </Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pt-4">
+            <FeedTestingDashboard />
+          </AccordionContent>
+        </AccordionItem>
+
         {/* Overview & Statistics */}
         <AccordionItem value="overview" className="border rounded-lg px-6">
           <AccordionTrigger className="text-lg font-semibold">
