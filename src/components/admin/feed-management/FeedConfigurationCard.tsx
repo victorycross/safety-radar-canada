@@ -165,7 +165,6 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
               <Switch
                 checked={feed.is_active}
                 onCheckedChange={handleToggleActive}
-                size="sm"
               />
               <span className="text-xs text-muted-foreground">
                 {feed.is_active ? 'Active' : 'Inactive'}
