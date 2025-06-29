@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSupabaseDataContext } from "@/context/SupabaseDataProvider";
@@ -10,12 +9,17 @@ import { ArrowLeft, AlertTriangle, Users } from "lucide-react";
 import IncidentForm from "@/components/forms/IncidentForm";
 
 const ProvinceDetailPage = () => {
-  const { provinceId } = useParams<{ provinceId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { provinces, incidents, getProvinceById, getIncidentsByProvince } = useSupabaseDataContext();
   
-  const province = provinceId ? getProvinceById(provinceId) : undefined;
-  const provinceIncidents = provinceId ? getIncidentsByProvince(provinceId) : [];
+  console.log('Route ID:', id);
+  console.log('Available provinces:', provinces.map(p => ({ id: p.id, name: p.name })));
+  
+  const province = id ? getProvinceById(id) : undefined;
+  const provinceIncidents = id ? getIncidentsByProvince(id) : [];
+
+  console.log('Found province:', province);
 
   if (!province) {
     return (
@@ -30,12 +34,21 @@ const ProvinceDetailPage = () => {
             <CardDescription>The requested province information could not be found.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => navigate("/")}>Return to Dashboard</Button>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Province ID: {id || 'Not provided'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Available provinces: {provinces.length}
+              </p>
+            </div>
+            <Button onClick={() => navigate("/")} className="mt-4">Return to Dashboard</Button>
           </CardContent>
         </Card>
       </div>
     );
   }
+  
   
   const getAlertBadge = (alertLevel: AlertLevel) => {
     switch (alertLevel) {

@@ -95,8 +95,11 @@ const CompactLocationCard = ({
     </div>
   );
 
-  if (linkTo) {
-    return <Link to={linkTo}>{cardContent}</Link>;
+  // Use the provided linkTo or default to /province/:id
+  const finalLinkTo = linkTo || `/province/${id}`;
+
+  if (finalLinkTo) {
+    return <Link to={finalLinkTo}>{cardContent}</Link>;
   }
 
   return cardContent;
