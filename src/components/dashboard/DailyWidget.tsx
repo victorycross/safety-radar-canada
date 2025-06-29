@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { AlertLevel } from "@/types";
-import { useSecurity } from "@/context/SecurityContext";
+import { useSupabaseDataContext } from "@/context/SupabaseDataProvider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Label } from "../ui/label";
 import { Button } from "../ui/button";
@@ -10,7 +10,7 @@ import { CheckCircle } from "lucide-react";
 import { toast } from "../ui/use-toast";
 
 const DailyWidget = () => {
-  const { provinces } = useSecurity();
+  const { provinces } = useSupabaseDataContext();
   const [selectedProvince, setSelectedProvince] = useState(provinces[0]?.id || "");
   const [checkInStatus, setCheckInStatus] = useState<"idle" | "success" | "loading">("idle");
   
@@ -20,13 +20,13 @@ const DailyWidget = () => {
   const getStatusColor = (alertLevel: AlertLevel) => {
     switch (alertLevel) {
       case AlertLevel.SEVERE:
-        return "bg-danger";
+        return "bg-red-500";
       case AlertLevel.WARNING:
-        return "bg-warning";
+        return "bg-yellow-500";
       case AlertLevel.NORMAL:
-        return "bg-success";
+        return "bg-green-500";
       default:
-        return "bg-muted";
+        return "bg-gray-500";
     }
   };
   
