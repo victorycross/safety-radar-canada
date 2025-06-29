@@ -1,22 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { UniversalAlert } from '@/types/alerts';
+import { normalizeAlert } from '@/utils/sourceNormalizers';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface EverbridgeAlert {
-  id: string;
-  title: string;
-  type: string;
-  status: string;
-  severity: string;
-  location: string;
-  description: string;
-  updated: string;
-  url?: string;
-}
-
 export const useEverbridgeAlerts = () => {
-  const [alerts, setAlerts] = useState<EverbridgeAlert[]>([]);
+  const [alerts, setAlerts] = useState<UniversalAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -33,7 +23,8 @@ export const useEverbridgeAlerts = () => {
       if (error) throw new Error(error.message);
       
       if (data && Array.isArray(data.alerts)) {
-        setAlerts(data.alerts);
+        const normalizedAlerts = data.alerts.map((alert: any) => normalizeAlert(alert, 'everbridge'));
+        setAlerts(normalizedAlerts);
       } else {
         setAlerts([]);
       }

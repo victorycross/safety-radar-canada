@@ -2,11 +2,11 @@
 import React from 'react';
 import { AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import EnhancedAlertCard from './EnhancedAlertCard';
-import { AlertItem } from '@/utils/alertReadyUtils';
+import UniversalAlertCard from '@/components/alerts/UniversalAlertCard';
+import { UniversalAlert } from '@/types/alerts';
 
 interface AlertsListProps {
-  alerts: AlertItem[];
+  alerts: UniversalAlert[];
   loading: boolean;
   error: string | null;
   fetchAlerts: () => void;
@@ -50,7 +50,7 @@ const AlertsList = ({ alerts, loading, error, fetchAlerts, activeView }: AlertsL
   return (
     <div className="space-y-4">
       {alerts.map((alert) => (
-        <EnhancedAlertCard key={alert.id} alert={alert} />
+        <UniversalAlertCard key={alert.id} alert={alert} />
       ))}
     </div>
   );

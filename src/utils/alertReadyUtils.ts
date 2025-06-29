@@ -1,4 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
+import { UniversalAlert } from '@/types/alerts';
+import { normalizeAlert } from './sourceNormalizers';
 
 export interface AlertItem {
   id: string;
@@ -18,7 +20,7 @@ export interface AlertItem {
   author?: string;
 }
 
-export const fetchAlertReadyData = async (): Promise<AlertItem[]> => {
+export const fetchAlertReadyData = async (): Promise<UniversalAlert[]> => {
   try {
     const { data, error } = await supabase.functions.invoke('fetch-alerts', {
       body: { source: 'alert-ready' }
@@ -27,7 +29,8 @@ export const fetchAlertReadyData = async (): Promise<AlertItem[]> => {
     if (error) throw new Error(error.message);
     
     if (data && Array.isArray(data.alerts)) {
-      return data.alerts;
+      // Normalize all alerts to universal format
+      return data.alerts.map((alert: any) => normalizeAlert(alert, 'alert-ready'));
     }
     
     return [];
@@ -59,7 +62,6 @@ export const formatAlertDate = (dateString: string) => {
   try {
     const date = new Date(dateString);
     
-    // Check if the date is valid
     if (isNaN(date.getTime())) {
       console.warn('Invalid date string:', dateString);
       return 'Invalid date';
@@ -81,30 +83,30 @@ export const formatAlertDate = (dateString: string) => {
 export const getSeverityBadge = (severity: string) => {
   switch (severity) {
     case 'Extreme':
-      return { color: 'bg-danger', text: 'Extreme' };
+      return { color: 'bg-red-600 text-white', text: 'Extreme' };
     case 'Severe':
-      return { color: 'bg-danger/80', text: 'Severe' };
+      return { color: 'bg-red-500 text-white', text: 'Severe' };
     case 'Moderate':
-      return { color: 'bg-warning', text: 'Moderate' };
+      return { color: 'bg-orange-500 text-white', text: 'Moderate' };
     case 'Minor':
-      return { color: 'bg-warning/70', text: 'Minor' };
+      return { color: 'bg-yellow-500 text-black', text: 'Minor' };
     default:
-      return { color: 'bg-muted', text: 'Unknown' };
+      return { color: 'bg-gray-500 text-white', text: 'Unknown' };
   }
 };
 
 export const getUrgencyBadge = (urgency: string) => {
   switch (urgency) {
     case 'Immediate':
-      return { color: 'bg-danger/90', text: 'Immediate' };
+      return { color: 'bg-red-600 text-white', text: 'Immediate' };
     case 'Expected':
-      return { color: 'bg-warning/90', text: 'Expected' };
+      return { color: 'bg-orange-500 text-white', text: 'Expected' };
     case 'Future':
-      return { color: 'bg-secondary', text: 'Future' };
+      return { color: 'bg-blue-500 text-white', text: 'Future' };
     case 'Past':
-      return { color: 'bg-muted', text: 'Past' };
+      return { color: 'bg-gray-500 text-white', text: 'Past' };
     default:
-      return { color: 'bg-muted', text: 'Unknown' };
+      return { color: 'bg-gray-400 text-white', text: 'Unknown' };
   }
 };
 

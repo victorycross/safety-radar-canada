@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { BCAlertsItem, fetchBCAlertsData } from '@/utils/bcAlertsUtils';
+import { UniversalAlert } from '@/types/alerts';
+import { fetchBCAlertsData } from '@/utils/bcAlertsUtils';
 
 export const useBCAlerts = () => {
-  const [alerts, setAlerts] = useState<BCAlertsItem[]>([]);
+  const [alerts, setAlerts] = useState<UniversalAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();

@@ -2,11 +2,11 @@
 import React from 'react';
 import { AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import BCAlertsCard from './BCAlertsCard';
-import { BCAlertsItem } from '@/utils/bcAlertsUtils';
+import UniversalAlertCard from '@/components/alerts/UniversalAlertCard';
+import { UniversalAlert } from '@/types/alerts';
 
 interface BCAlertsListProps {
-  alerts: BCAlertsItem[];
+  alerts: UniversalAlert[];
   loading: boolean;
   error: string | null;
   fetchAlerts: () => void;
@@ -24,7 +24,7 @@ const BCAlertslist = ({ alerts, loading, error, fetchAlerts }: BCAlertsListProps
   if (error) {
     return (
       <div className="text-center py-8">
-        <AlertTriangle className="h-12 w-12 text-warning mx-auto mb-2" />
+        <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-2" />
         <p className="text-lg font-medium">Error loading BC alerts</p>
         <p className="text-muted-foreground">{error}</p>
         <Button onClick={fetchAlerts} className="mt-4">Try Again</Button>
@@ -36,10 +36,8 @@ const BCAlertslist = ({ alerts, loading, error, fetchAlerts }: BCAlertsListProps
     return (
       <div className="text-center py-8 border-2 border-dashed rounded-lg">
         <Info className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-        <p className="text-lg font-medium">No active alerts in British Columbia</p>
-        <p className="text-muted-foreground">
-          There are currently no active emergency alerts for BC
-        </p>
+        <p className="text-lg font-medium">No BC alerts found</p>
+        <p className="text-muted-foreground">There are currently no active BC emergency alerts</p>
       </div>
     );
   }
@@ -47,7 +45,7 @@ const BCAlertslist = ({ alerts, loading, error, fetchAlerts }: BCAlertsListProps
   return (
     <div className="space-y-4">
       {alerts.map((alert) => (
-        <BCAlertsCard key={alert.id} alert={alert} />
+        <UniversalAlertCard key={alert.id} alert={alert} />
       ))}
     </div>
   );

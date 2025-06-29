@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { AlertItem, fetchAlertReadyData } from '@/utils/alertReadyUtils';
+import { UniversalAlert } from '@/types/alerts';
+import { fetchAlertReadyData } from '@/utils/alertReadyUtils';
 
 export const useAlertReady = () => {
-  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [alerts, setAlerts] = useState<UniversalAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
