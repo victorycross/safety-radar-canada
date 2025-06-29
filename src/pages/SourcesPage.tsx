@@ -3,12 +3,14 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useSourcesState } from "@/hooks/useSourcesState";
+import { useToast } from "@/hooks/use-toast";
 import SourcesPageHeader from "@/components/sources/SourcesPageHeader";
 import SourcesDataProvider from "@/components/sources/SourcesDataProvider";
 import SourcesAccordion from "@/components/sources/SourcesAccordion";
 import { useSourcesStatistics } from "@/components/sources/SourcesStatistics";
 
 const SourcesPage = () => {
+  const { toast } = useToast();
   const { 
     state, 
     updateFilters, 
@@ -24,10 +26,18 @@ const SourcesPage = () => {
 
   const handleConfigure = (sourceId: string) => {
     console.log('Configure source:', sourceId);
+    toast({
+      title: 'Configuration',
+      description: `Opening configuration for source: ${sourceId}`,
+    });
   };
 
   const handleTest = (sourceId: string) => {
     console.log('Test source:', sourceId);
+    toast({
+      title: 'Testing Connection',
+      description: `Testing connection for source: ${sourceId}`,
+    });
   };
 
   return (
