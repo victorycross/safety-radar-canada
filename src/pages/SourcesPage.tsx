@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
@@ -152,7 +153,7 @@ const SourcesPage = () => {
         }
 
         return (
-          <>
+          <div className="container mx-auto px-4 py-6">
             <div className="space-y-6">
               <SourcesPageHeader
                 autoRefresh={state.autoRefresh}
@@ -194,7 +195,7 @@ const SourcesPage = () => {
               onClose={closeAddModal}
               onAdd={addNewSource}
             />
-          </>
+          </div>
         );
       }}
     </SourcesDataProvider>

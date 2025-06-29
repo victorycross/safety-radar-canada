@@ -15,6 +15,7 @@ import NotFound from '@/pages/NotFound';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import AuthPage from '@/components/auth/AuthPage';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import MainLayout from '@/components/layout/MainLayout';
 import { SupabaseDataProvider } from '@/context/SupabaseDataProvider';
 
 function App() {
@@ -29,7 +30,9 @@ function App() {
               path="/employees" 
               element={
                 <ProtectedRoute requireAuth>
-                  <EmployeesPage />
+                  <MainLayout>
+                    <EmployeesPage />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -37,7 +40,9 @@ function App() {
               path="/province/:id" 
               element={
                 <ProtectedRoute requireAuth>
-                  <ProvinceDetailPage />
+                  <MainLayout>
+                    <ProvinceDetailPage />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -45,7 +50,9 @@ function App() {
               path="/incidents" 
               element={
                 <ProtectedRoute requireAuth>
-                  <IncidentsPage />
+                  <MainLayout>
+                    <IncidentsPage />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -53,7 +60,9 @@ function App() {
               path="/report" 
               element={
                 <ProtectedRoute requiredRole="power_user">
-                  <ReportPage />
+                  <MainLayout>
+                    <ReportPage />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -61,7 +70,9 @@ function App() {
               path="/analytics" 
               element={
                 <ProtectedRoute requireAuth>
-                  <AnalyticsPage />
+                  <MainLayout>
+                    <AnalyticsPage />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -69,7 +80,9 @@ function App() {
               path="/sources" 
               element={
                 <ProtectedRoute requiredRole="admin">
-                  <SourcesPage />
+                  <MainLayout>
+                    <SourcesPage />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -77,7 +90,9 @@ function App() {
               path="/admin" 
               element={
                 <ProtectedRoute requiredRole="admin">
-                  <AdminPage />
+                  <MainLayout>
+                    <AdminPage />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -85,7 +100,9 @@ function App() {
               path="/alert-ready" 
               element={
                 <ProtectedRoute requireAuth>
-                  <AlertReadyPage />
+                  <MainLayout>
+                    <AlertReadyPage />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
@@ -93,7 +110,9 @@ function App() {
               path="/widgets" 
               element={
                 <ProtectedRoute requireAuth>
-                  <WidgetPage />
+                  <MainLayout>
+                    <WidgetPage />
+                  </MainLayout>
                 </ProtectedRoute>
               } 
             />
