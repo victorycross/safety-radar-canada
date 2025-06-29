@@ -158,6 +158,44 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_history: {
+        Row: {
+          change_reason: string | null
+          changed_by: string | null
+          created_at: string
+          employee_count: number
+          id: string
+          previous_count: number | null
+          province_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string
+          employee_count: number
+          id?: string
+          previous_count?: number | null
+          province_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string
+          employee_count?: number
+          id?: string
+          previous_count?: number | null
+          province_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_history_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geospatial_data: {
         Row: {
           administrative_area: string | null

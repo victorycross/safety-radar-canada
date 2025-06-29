@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OverviewTab from './OverviewTab';
 import RequirementsTab from './RequirementsTab';
 import TechnicalTab from './TechnicalTab';
+import EmployeeManagementTab from './EmployeeManagementTab';
 
 interface AdminTabsProps {
   activeTab: string;
@@ -13,14 +14,19 @@ interface AdminTabsProps {
 const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="employees">Employee Data</TabsTrigger>
         <TabsTrigger value="requirements">Business Requirements</TabsTrigger>
         <TabsTrigger value="technical">Technical Specs</TabsTrigger>
       </TabsList>
       
       <TabsContent value="overview" className="space-y-4">
         <OverviewTab />
+      </TabsContent>
+      
+      <TabsContent value="employees" className="space-y-4">
+        <EmployeeManagementTab />
       </TabsContent>
       
       <TabsContent value="requirements" className="space-y-4">
