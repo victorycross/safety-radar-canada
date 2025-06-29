@@ -54,6 +54,16 @@ const LocationVisibilitySettings = ({ provinces, internationalHubs }: LocationVi
     resetToDefault();
   };
 
+  const handleProvinceToggle = (provinceId: string) => {
+    console.log('Toggling province:', provinceId);
+    togglePendingProvince(provinceId);
+  };
+
+  const handleInternationalHubToggle = (hubId: string) => {
+    console.log('Toggling hub:', hubId);
+    togglePendingInternationalHub(hubId);
+  };
+
   const pendingProvincesCount = getPendingVisibleProvincesCount();
   const pendingHubsCount = getPendingVisibleInternationalHubsCount();
 
@@ -109,21 +119,28 @@ const LocationVisibilitySettings = ({ provinces, internationalHubs }: LocationVi
             </div>
             
             <div className="space-y-3 max-h-60 overflow-y-auto border rounded-md p-3">
-              {provinces.map((province) => (
-                <div key={province.id} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={`province-${province.id}`}
-                    checked={isPendingProvinceVisible(province.id)}
-                    onCheckedChange={() => togglePendingProvince(province.id)}
-                  />
-                  <label
-                    htmlFor={`province-${province.id}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
-                  >
-                    {province.name} ({province.code})
-                  </label>
-                </div>
-              ))}
+              {provinces.map((province) => {
+                const isChecked = isPendingProvinceVisible(province.id);
+                return (
+                  <div key={province.id} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={`province-${province.id}`}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => {
+                        console.log(`Province ${province.id} checked:`, checked);
+                        handleProvinceToggle(province.id);
+                      }}
+                    />
+                    <label
+                      htmlFor={`province-${province.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                      onClick={() => handleProvinceToggle(province.id)}
+                    >
+                      {province.name} ({province.code})
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -147,21 +164,28 @@ const LocationVisibilitySettings = ({ provinces, internationalHubs }: LocationVi
             </div>
             
             <div className="space-y-3 max-h-60 overflow-y-auto border rounded-md p-3">
-              {internationalHubs.map((hub) => (
-                <div key={hub.id} className="flex items-center space-x-3">
-                  <Checkbox
-                    id={`hub-${hub.id}`}
-                    checked={isPendingInternationalHubVisible(hub.id)}
-                    onCheckedChange={() => togglePendingInternationalHub(hub.id)}
-                  />
-                  <label
-                    htmlFor={`hub-${hub.id}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
-                  >
-                    {hub.name}, {hub.country}
-                  </label>
-                </div>
-              ))}
+              {internationalHubs.map((hub) => {
+                const isChecked = isPendingInternationalHubVisible(hub.id);
+                return (
+                  <div key={hub.id} className="flex items-center space-x-3">
+                    <Checkbox
+                      id={`hub-${hub.id}`}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => {
+                        console.log(`Hub ${hub.id} checked:`, checked);
+                        handleInternationalHubToggle(hub.id);
+                      }}
+                    />
+                    <label
+                      htmlFor={`hub-${hub.id}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                      onClick={() => handleInternationalHubToggle(hub.id)}
+                    >
+                      {hub.name}, {hub.country}
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
