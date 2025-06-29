@@ -1,58 +1,104 @@
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Index from '@/pages/Index';
+import EmployeesPage from '@/pages/EmployeesPage';
+import ProvinceDetailPage from '@/pages/ProvinceDetailPage';
+import IncidentsPage from '@/pages/IncidentsPage';
+import ReportPage from '@/pages/ReportPage';
+import AnalyticsPage from '@/pages/AnalyticsPage';
+import SourcesPage from '@/pages/SourcesPage';
+import AdminPage from '@/pages/AdminPage';
+import AlertReadyPage from '@/pages/AlertReadyPage';
+import WidgetPage from '@/pages/WidgetPage';
+import NotFound from '@/pages/NotFound';
+import { AuthProvider } from '@/components/auth/AuthProvider';
+import AuthPage from '@/components/auth/AuthPage';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { SupabaseDataProvider } from "./context/SupabaseDataProvider";
-import { SecurityProvider } from "./context/SecurityContext";
-
-// Import layout
-import MainLayout from "./components/layout/MainLayout";
-
-// Import pages
-import HomePage from "./pages/HomePage";
-import IncidentsPage from "./pages/IncidentsPage";
-import ReportPage from "./pages/ReportPage";
-import SourcesPage from "./pages/SourcesPage";
-import EmployeesPage from "./pages/EmployeesPage";
-import WidgetPage from "./pages/WidgetPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import ProvinceDetailPage from "./pages/ProvinceDetailPage";
-import AlertReadyPage from "./pages/AlertReadyPage";
-import AdminPage from "./pages/AdminPage";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <SupabaseDataProvider>
-        <SecurityProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<HomePage />} />
-                <Route path="incidents" element={<IncidentsPage />} />
-                <Route path="report" element={<ReportPage />} />
-                <Route path="sources" element={<SourcesPage />} />
-                <Route path="analytics" element={<AnalyticsPage />} />
-                <Route path="employees" element={<EmployeesPage />} />
-                <Route path="widget" element={<WidgetPage />} />
-                <Route path="province/:provinceId" element={<ProvinceDetailPage />} />
-                <Route path="alert-ready" element={<AlertReadyPage />} />
-                <Route path="admin" element={<AdminPage />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </SecurityProvider>
-      </SupabaseDataProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route 
+            path="/employees" 
+            element={
+              <ProtectedRoute requireAuth>
+                <EmployeesPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/province/:id" 
+            element={
+              <ProtectedRoute requireAuth>
+                <ProvinceDetailPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/incidents" 
+            element={
+              <ProtectedRoute requireAuth>
+                <IncidentsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/report" 
+            element={
+              <ProtectedRoute requiredRole="power_user">
+                <ReportPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/analytics" 
+            element={
+              <ProtectedRoute requireAuth>
+                <AnalyticsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/sources" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <SourcesPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/alert-ready" 
+            element={
+              <ProtectedRoute requireAuth>
+                <AlertReadyPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/widgets" 
+            element={
+              <ProtectedRoute requireAuth>
+                <WidgetPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
+}
 
 export default App;

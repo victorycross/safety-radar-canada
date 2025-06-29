@@ -6,20 +6,12 @@ import { TestTube, Plus, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { updateEmployeeLocation } from '@/services/cityService';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 const TestingSampleData = () => {
   const [loading, setLoading] = useState(false);
   const [sampleDataCreated, setSampleDataCreated] = useState(false);
-  const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
-
-  // Check authentication status on component mount
-  React.useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setAuthStatus(session ? 'authenticated' : 'unauthenticated');
-    };
-    checkAuth();
-  }, []);
+  const { user, isPowerUserOrAdmin } = useAuth();
 
   const sampleData = [
     { cityName: 'Toronto', homeBase: 1250, current: 1180, traveling: 70 },
@@ -104,10 +96,10 @@ const TestingSampleData = () => {
   };
 
   const createSampleTravelRecords = async () => {
-    if (authStatus !== 'authenticated') {
+    if (!isPowerUserOrAdmin()) {
       toast({
-        title: 'Authentication Required',
-        description: 'You need to be logged in to create travel records due to Row Level Security policies.',
+        title: 'Insufficient Permissions',
+        description: 'You need Power User or Admin privileges to create travel records.',
         variant: 'destructive'
       });
       return;
@@ -165,29 +157,6 @@ const TestingSampleData = () => {
     }
   };
 
-  const signInAsTestUser = async () => {
-    try {
-      // For testing purposes, we'll create a temporary session
-      // In a real app, you'd have proper authentication
-      const { data, error } = await supabase.auth.signInAnonymously();
-      
-      if (error) throw error;
-      
-      setAuthStatus('authenticated');
-      toast({
-        title: 'Signed In',
-        description: 'You are now authenticated and can create travel records',
-      });
-    } catch (error) {
-      console.error('Auth error:', error);
-      toast({
-        title: 'Authentication Failed',
-        description: 'Could not sign in for testing',
-        variant: 'destructive'
-      });
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -200,22 +169,22 @@ const TestingSampleData = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {authStatus === 'unauthenticated' && (
+        {!user && (
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="h-4 w-4 text-yellow-600" />
               <h4 className="font-medium text-yellow-800">Authentication Required</h4>
             </div>
             <p className="text-sm text-yellow-700 mb-3">
-              Travel records require authentication due to Row Level Security policies. 
-              Employee location data can be created without authentication.
+              Most features require authentication due to Row Level Security policies. 
+              Please sign in to access all functionality.
             </p>
             <Button 
-              onClick={signInAsTestUser}
+              onClick={() => window.location.href = '/auth'}
               size="sm"
               variant="outline"
             >
-              Sign In for Testing
+              Go to Sign In
             </Button>
           </div>
         )}
@@ -255,21 +224,21 @@ const TestingSampleData = () => {
           <div className="space-y-3">
             <h4 className="font-medium">Travel Records</h4>
             <p className="text-sm text-muted-foreground">
-              Creates sample employee travel records
+              Creates sample employee travel records (Power User+ required)
             </p>
             <div className="flex items-center gap-2">
               <Button
                 onClick={createSampleTravelRecords}
-                disabled={loading || authStatus !== 'authenticated'}
+                disabled={loading || !isPowerUserOrAdmin()}
                 size="sm"
                 variant="outline"
               >
                 <RefreshCw className="h-4 w-4 mr-1" />
                 Add Travel Records
               </Button>
-              {authStatus === 'authenticated' && (
+              {isPowerUserOrAdmin() && (
                 <Badge variant="secondary" className="text-xs">
-                  Authenticated
+                  Authorized
                 </Badge>
               )}
             </div>
