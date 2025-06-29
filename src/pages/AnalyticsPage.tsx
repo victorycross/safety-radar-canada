@@ -209,7 +209,7 @@ const AnalyticsPage = () => {
                 Data source reliability and metrics
               </span>
             </div>
-          </AccordionContent>
+          </AccordionTrigger>
           <AccordionContent className="px-6 pb-6">
             <div className="text-center py-8 text-muted-foreground">
               <p>Source performance analytics coming soon...</p>
