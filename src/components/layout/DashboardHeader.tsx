@@ -14,9 +14,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import LocationVisibilitySettings from '@/components/map/LocationVisibilitySettings';
+import SimpleLocationFilter from '@/components/map/SimpleLocationFilter';
+import { useSimpleLocationFilter } from '@/hooks/useSimpleLocationFilter';
 import { Link } from 'react-router-dom';
 
 interface DashboardHeaderProps {
@@ -38,6 +38,24 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   provinces,
   internationalHubs
 }) => {
+  const provinceIds = provinces.map(p => p.id);
+  const hubIds = internationalHubs.map(h => h.id);
+  
+  const {
+    isProvinceVisible,
+    isHubVisible,
+    toggleProvince,
+    toggleHub,
+    showAllProvinces,
+    hideAllProvinces,
+    showAllHubs,
+    hideAllHubs,
+    resetFilters,
+    visibleProvinceCount,
+    visibleHubCount,
+    hasFilters
+  } = useSimpleLocationFilter(provinceIds, hubIds);
+
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -63,7 +81,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             )}
             
             <Badge variant="outline" className="text-xs">
-              {visibleProvincesCount}/{totalProvinces} Provinces
+              {visibleProvinceCount + visibleHubCount}/{totalProvinces + internationalHubs.length} Locations
             </Badge>
           </div>
         </div>
@@ -80,9 +98,21 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <span>Refresh</span>
           </Button>
 
-          <LocationVisibilitySettings 
+          <SimpleLocationFilter
             provinces={provinces}
             internationalHubs={internationalHubs}
+            isProvinceVisible={isProvinceVisible}
+            isHubVisible={isHubVisible}
+            onToggleProvince={toggleProvince}
+            onToggleHub={toggleHub}
+            onShowAllProvinces={showAllProvinces}
+            onHideAllProvinces={hideAllProvinces}
+            onShowAllHubs={showAllHubs}
+            onHideAllHubs={hideAllHubs}
+            onResetFilters={resetFilters}
+            visibleProvinceCount={visibleProvinceCount}
+            visibleHubCount={visibleHubCount}
+            hasFilters={hasFilters}
           />
 
           <DropdownMenu>

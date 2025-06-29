@@ -11,6 +11,7 @@ interface GridHeaderProps {
   isFiltered: boolean;
   visibleCount: number;
   totalCount: number;
+  filterComponent?: React.ReactNode;
 }
 
 const GridHeader = ({
@@ -19,10 +20,11 @@ const GridHeader = ({
   onRefresh,
   isFiltered,
   visibleCount,
-  totalCount
+  totalCount,
+  filterComponent
 }: GridHeaderProps) => {
   return (
-    <CardHeader>
+    <CardHeader className="pb-4">
       <CardTitle className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -40,7 +42,7 @@ const GridHeader = ({
             {isFiltered && (
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Filter className="h-4 w-4" />
-                <span>Filtered View</span>
+                <span>Filtered</span>
               </div>
             )}
           </div>
@@ -51,6 +53,11 @@ const GridHeader = ({
             </span>
           </div>
         </div>
+        {filterComponent && (
+          <div className="flex items-center gap-2">
+            {filterComponent}
+          </div>
+        )}
       </CardTitle>
     </CardHeader>
   );

@@ -2,10 +2,10 @@
 import React from 'react';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { Card, CardContent } from '@/components/ui/card';
-import { useLocationVisibility } from '@/hooks/useLocationVisibility';
+import { useSimpleLocationFilter } from '@/hooks/useSimpleLocationFilter';
 import { fallbackProvinces } from './data';
 import GridHeader from './GridHeader';
-import ProvinceCard from './ProvinceCard';
+import CompactLocationCard from '../CompactLocationCard';
 import Legend from './Legend';
 
 const CanadianProvincesGrid = () => {
@@ -18,43 +18,72 @@ const CanadianProvincesGrid = () => {
   const actualProvinceIds = displayProvinces.map(p => p.id);
   
   const {
-    getVisibleProvincesCount,
-    getTotalProvincesCount,
     isProvinceVisible,
-    isFiltered,
-    refreshKey,
-    isRefreshing,
-    forceRefresh
-  } = useLocationVisibility(actualProvinceIds);
+    toggleProvince,
+    showAllProvinces,
+    hideAllProvinces,
+    resetFilters,
+    visibleProvinceCount,
+    totalProvinces,
+    hasFilters
+  } = useSimpleLocationFilter(actualProvinceIds, []);
   
-  // Filter provinces based on visibility settings (key prop forces re-render)
+  // Filter provinces based on visibility settings
   const visibleProvinces = displayProvinces.filter(province => isProvinceVisible(province.id));
 
-  const visibleCount = getVisibleProvincesCount();
-  const totalCount = getTotalProvincesCount();
-  const filtered = isFiltered();
+  const handleRefresh = () => {
+    // Force re-render by resetting the component
+    window.location.reload();
+  };
 
   return (
-    <Card key={refreshKey} className="bg-white rounded-lg shadow-sm">
+    <Card className="bg-white rounded-lg shadow-sm">
       <GridHeader
-        refreshKey={refreshKey}
-        isRefreshing={isRefreshing}
-        onRefresh={forceRefresh}
-        isFiltered={filtered}
-        visibleCount={visibleCount}
-        totalCount={totalCount}
+        refreshKey={0}
+        isRefreshing={false}
+        onRefresh={handleRefresh}
+        isFiltered={hasFilters}
+        visibleCount={visibleProvinceCount}
+        totalCount={totalProvinces}
+        filterComponent={
+          <div className="flex gap-2">
+            {hasFilters && (
+              <button 
+                onClick={resetFilters}
+                className="text-xs text-blue-600 hover:text-blue-800 underline"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        }
       />
       
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mb-6">
           {visibleProvinces.map((province) => (
-            <ProvinceCard key={province.id} province={province} />
+            <CompactLocationCard
+              key={province.id}
+              id={province.id}
+              name={province.name}
+              code={province.code}
+              alertLevel={province.alertLevel}
+              employeeCount={province.employeeCount}
+              emoji={province.id === 'bc' ? '🏔️' : province.id === 'ab' ? '🛢️' : province.id === 'on' ? '🏙️' : '🍁'}
+              linkTo={`/province/${province.id}`}
+            />
           ))}
         </div>
 
         {visibleProvinces.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No provinces selected. Use the "Customize View" button to show locations.</p>
+            <p className="text-muted-foreground">No provinces match the current filters.</p>
+            <button 
+              onClick={resetFilters}
+              className="text-blue-600 hover:text-blue-800 underline mt-2"
+            >
+              Show all provinces
+            </button>
           </div>
         )}
 

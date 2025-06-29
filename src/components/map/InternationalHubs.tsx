@@ -2,9 +2,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { AlertLevel } from '@/types';
-import { Circle, Filter, RefreshCw } from 'lucide-react';
-import { useLocationVisibility } from '@/hooks/useLocationVisibility';
+import { Filter, RefreshCw } from 'lucide-react';
+import { useSimpleLocationFilter } from '@/hooks/useSimpleLocationFilter';
 import { Button } from '../ui/button';
+import CompactLocationCard from './CompactLocationCard';
 
 interface InternationalHub {
   id: string;
@@ -18,16 +19,6 @@ interface InternationalHub {
 }
 
 const InternationalHubs = () => {
-  const {
-    getVisibleInternationalHubsCount,
-    getTotalInternationalHubsCount,
-    isInternationalHubVisible,
-    isFiltered,
-    refreshKey,
-    isRefreshing,
-    forceRefresh
-  } = useLocationVisibility();
-
   const internationalHubs: InternationalHub[] = [
     {
       id: 'nyc',
@@ -131,136 +122,108 @@ const InternationalHubs = () => {
     }
   ];
 
-  const getAlertColor = (alertLevel: AlertLevel) => {
-    switch (alertLevel) {
-      case AlertLevel.SEVERE:
-        return 'bg-danger hover:bg-danger/90';
-      case AlertLevel.WARNING:
-        return 'bg-warning hover:bg-warning/90';
-      case AlertLevel.NORMAL:
-        return 'bg-success hover:bg-success/90';
-      default:
-        return 'bg-muted hover:bg-muted/90';
-    }
-  };
-
-  const getAlertBadge = (alertLevel: AlertLevel) => {
-    switch (alertLevel) {
-      case AlertLevel.SEVERE:
-        return <Badge className="bg-danger text-white text-xs">High Risk</Badge>;
-      case AlertLevel.WARNING:
-        return <Badge className="bg-warning text-white text-xs">Caution</Badge>;
-      case AlertLevel.NORMAL:
-        return <Badge className="bg-success text-white text-xs">Safe</Badge>;
-      default:
-        return <Badge className="bg-muted text-xs">Unknown</Badge>;
-    }
-  };
+  const hubIds = internationalHubs.map(h => h.id);
+  
+  const {
+    isHubVisible,
+    resetFilters,
+    visibleHubCount,
+    totalHubs,
+    hasFilters
+  } = useSimpleLocationFilter([], hubIds);
 
   const handleHubClick = (hub: InternationalHub) => {
-    // For now, just log the click - in a real app this would navigate to a detailed view
     console.log(`Clicked on ${hub.name}:`, hub);
   };
 
-  const visibleHubs = internationalHubs.filter(hub => isInternationalHubVisible(hub.id));
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
-  const visibleCount = getVisibleInternationalHubsCount();
-  const totalCount = getTotalInternationalHubsCount();
-  const filtered = isFiltered();
+  const visibleHubs = internationalHubs.filter(hub => isHubVisible(hub.id));
 
   return (
-    <Card key={refreshKey} className="bg-white rounded-lg shadow-sm">
-      <CardHeader>
+    <Card className="bg-white rounded-lg shadow-sm">
+      <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold">Major International Financial Hubs</h2>
+              <h2 className="text-xl font-bold">International Financial Hubs</h2>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={forceRefresh}
-                disabled={isRefreshing}
+                onClick={handleRefresh}
                 className="gap-1 h-8"
                 title="Refresh view"
               >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className="h-4 w-4" />
               </Button>
-              {filtered && (
+              {hasFilters && (
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Filter className="h-4 w-4" />
-                  <span>Filtered View</span>
+                  <span>Filtered</span>
                 </div>
               )}
             </div>
             <div className="flex items-center gap-4 mt-1">
               <p className="text-sm text-muted-foreground">Security status for key financial services locations</p>
               <span className="text-sm font-medium">
-                Showing {visibleCount} of {totalCount} locations
+                Showing {visibleHubCount} of {totalHubs} locations
               </span>
             </div>
           </div>
+          {hasFilters && (
+            <button 
+              onClick={resetFilters}
+              className="text-xs text-blue-600 hover:text-blue-800 underline"
+            >
+              Clear Filters
+            </button>
+          )}
         </CardTitle>
       </CardHeader>
       
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mb-6">
           {visibleHubs.map((hub) => (
-            <div 
+            <CompactLocationCard
               key={hub.id}
+              id={hub.id}
+              name={hub.name}
+              country={hub.country}
+              alertLevel={hub.alertLevel}
+              travelWarnings={hub.travelWarnings}
+              localIncidents={hub.localIncidents}
+              emoji={hub.flag}
               onClick={() => handleHubClick(hub)}
-              className={`
-                ${getAlertColor(hub.alertLevel)} 
-                rounded-lg p-4 transition-all duration-300 ease-in-out 
-                hover:scale-105 hover:shadow-lg cursor-pointer
-                flex flex-col items-center justify-center space-y-2
-                min-h-[140px] group
-              `}
-              title={`${hub.name}, ${hub.country} - ${hub.travelWarnings} travel warnings, ${hub.localIncidents} local incidents`}
-            >
-              <div className="text-3xl mb-1">{hub.flag}</div>
-              <Circle 
-                size={36} 
-                className="text-white/80 group-hover:text-white transition-colors duration-200"
-              />
-              <div className="text-center">
-                <div className="text-white font-bold text-sm">
-                  {hub.name}
-                </div>
-                <div className="text-white/90 text-xs">
-                  {hub.country}
-                </div>
-              </div>
-              <div className="mt-1">
-                {getAlertBadge(hub.alertLevel)}
-              </div>
-              
-              {/* Quick stats */}
-              <div className="text-white/80 text-xs text-center mt-1">
-                <div>{hub.travelWarnings} warnings</div>
-                <div>{hub.localIncidents} incidents</div>
-              </div>
-            </div>
+            />
           ))}
         </div>
 
         {visibleHubs.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No international hubs selected. Use the "Customize View" button to show locations.</p>
+            <p className="text-muted-foreground">No international hubs match the current filters.</p>
+            <button 
+              onClick={resetFilters}
+              className="text-blue-600 hover:text-blue-800 underline mt-2"
+            >
+              Show all hubs
+            </button>
           </div>
         )}
 
         {/* Legend */}
         <div className="flex items-center justify-center space-x-6 pt-4 border-t">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-success"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
             <span className="text-sm">Safe</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-warning"></div>
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
             <span className="text-sm">Caution</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-danger"></div>
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
             <span className="text-sm">High Risk</span>
           </div>
         </div>
