@@ -36,7 +36,6 @@ export interface BaseIncident {
 }
 
 export interface Incident extends BaseIncident {
-  timestamp: Date;
   recommendedAction?: string;
   rawPayload?: any;
   dataSourceId?: string;
