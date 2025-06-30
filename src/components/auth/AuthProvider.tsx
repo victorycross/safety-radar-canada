@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { logSecurityEvent, SecurityEvents } from '@/utils/securityAudit';
 
 export type AppRole = 'admin' | 'power_user' | 'regular_user';
 
@@ -63,8 +64,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setTimeout(() => {
             fetchUserRoles(session.user.id);
           }, 0);
+          
+          // Log successful authentication
+          if (event === 'SIGNED_IN') {
+            logSecurityEvent({
+              action: SecurityEvents.LOGIN_SUCCESS,
+              new_values: { user_id: session.user.id, email: session.user.email }
+            });
+          }
         } else {
           setUserRoles([]);
+          
+          // Log logout
+          if (event === 'SIGNED_OUT') {
+            logSecurityEvent({
+              action: SecurityEvents.LOGOUT
+            });
+          }
         }
         
         setLoading(false);
@@ -87,11 +103,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        // Log failed login attempt
+        logSecurityEvent({
+          action: SecurityEvents.LOGIN_FAILURE,
+          new_values: { email, error: error.message }
+        });
+      }
+      
+      return { error };
+    } catch (error: any) {
+      logSecurityEvent({
+        action: SecurityEvents.LOGIN_FAILURE,
+        new_values: { email, error: error.message }
+      });
+      return { error };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
