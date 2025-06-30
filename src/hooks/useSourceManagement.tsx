@@ -46,7 +46,12 @@ export const useSourceManagement = () => {
       if (error) throw error;
 
       console.log('Fetched sources:', data);
-      setSources(data || []);
+      // Type assertion to ensure compatibility
+      const typedSources = (data || []).map(source => ({
+        ...source,
+        health_status: source.health_status as 'healthy' | 'degraded' | 'error' | 'unknown'
+      }));
+      setSources(typedSources);
     } catch (err) {
       console.error('Error fetching sources:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch sources');
@@ -172,12 +177,16 @@ export const useSourceManagement = () => {
     try {
       console.log('Testing source connection:', source.name);
       
-      // Simulate connection test
+      // Simulate connection test with AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
       const startTime = Date.now();
       const response = await fetch(source.api_endpoint, {
         method: 'HEAD',
-        timeout: 10000
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       const responseTime = Date.now() - startTime;
 
       const success = response.ok;

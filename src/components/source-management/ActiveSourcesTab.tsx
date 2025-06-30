@@ -140,7 +140,6 @@ const ActiveSourcesTab = () => {
                     <Switch
                       checked={source.is_active}
                       onCheckedChange={(checked) => toggleSourceStatus(source.id, checked)}
-                      size="sm"
                     />
                   </div>
                 </div>
