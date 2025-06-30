@@ -1,4 +1,3 @@
-
 import React from 'react';
 import DashboardContent from '@/components/dashboard/DashboardContent';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
@@ -13,6 +12,7 @@ const Index = () => {
     internationalHubs,
     alertProvinces, 
     visibleAlertProvinces,
+    alertHubs,
     metrics, 
     loading, 
     error, 
@@ -30,6 +30,7 @@ const Index = () => {
     provincesCount: provinces.length,
     hubsCount: internationalHubs.length,
     alertProvincesCount: alertProvinces.length,
+    alertHubsCount: alertHubs?.length || 0,
     loading,
     hubsLoading
   });
@@ -76,7 +77,9 @@ const Index = () => {
       totalProvinces={provinces.length}
       displayProvinces={displayProvinces}
       internationalHubs={internationalHubs}
+      alertHubs={alertHubs}
       incidentsCount={metrics.incidentsCount}
+      metrics={metrics}
       onRefresh={combinedRefresh}
       onRefreshHubs={refreshHubData}
       loading={loading}

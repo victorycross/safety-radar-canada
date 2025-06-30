@@ -3,7 +3,7 @@ import React from 'react';
 import DashboardHeader from '@/components/layout/DashboardHeader';
 import CriticalAlertsHero from '@/components/dashboard/CriticalAlertsHero';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
-import { Province, InternationalHub } from '@/types/dashboard';
+import { Province, InternationalHub, DashboardMetrics } from '@/types/dashboard';
 
 interface DashboardContentProps {
   alertProvinces: Province[];
@@ -12,7 +12,9 @@ interface DashboardContentProps {
   totalProvinces: number;
   displayProvinces: Province[];
   internationalHubs: InternationalHub[];
+  alertHubs?: InternationalHub[];
   incidentsCount: number;
+  metrics: DashboardMetrics;
   onRefresh: () => void;
   onRefreshHubs?: () => void;
   loading: boolean;
@@ -26,7 +28,9 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   totalProvinces,
   displayProvinces,
   internationalHubs,
+  alertHubs = [],
   incidentsCount,
+  metrics,
   onRefresh,
   onRefreshHubs,
   loading,
@@ -35,7 +39,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader
-        alertCount={alertProvinces.length}
+        alertCount={alertProvinces.length + alertHubs.length}
         visibleProvincesCount={visibleProvincesCount}
         totalProvinces={totalProvinces}
         onRefresh={onRefresh}
@@ -49,6 +53,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
         <CriticalAlertsHero
           alertProvinces={alertProvinces}
           visibleAlertProvinces={visibleAlertProvinces}
+          alertHubs={alertHubs}
           loading={loading}
         />
 
@@ -61,6 +66,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
           internationalHubs={internationalHubs}
           hubsLoading={hubsLoading}
           onRefreshHubs={onRefreshHubs}
+          metrics={metrics}
         />
       </div>
     </div>
