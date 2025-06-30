@@ -4,6 +4,8 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { logSecurityEvent, SecurityEvents } from '@/utils/securityAudit';
 import { logger } from '@/utils/logger';
+import { useChromeCompatibleAuth } from '@/hooks/useChromeCompatibleAuth';
+import { getBrowserInfo, detectChromeIssues } from '@/utils/browserUtils';
 
 export type AppRole = 'admin' | 'power_user' | 'regular_user';
 
@@ -31,20 +33,40 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const { isChrome } = getBrowserInfo();
+  const { user, session, loading } = useChromeCompatibleAuth();
   const [userRoles, setUserRoles] = useState<AppRole[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  logger.debug('AuthProvider: Component initialized');
+  logger.debug('AuthProvider: Component initialized', { isChrome });
+
+  // Set up Chrome-specific issue detection
+  useEffect(() => {
+    if (isChrome) {
+      detectChromeIssues();
+      logger.chrome('Chrome-specific monitoring enabled');
+    }
+  }, [isChrome]);
 
   const fetchUserRoles = async (userId: string) => {
     try {
       logger.debug('AuthProvider: Fetching user roles for', userId);
-      const { data, error } = await supabase
+      
+      // Chrome-specific timeout for role fetching
+      const roleTimeout = isChrome ? 8000 : 5000;
+      
+      const rolePromise = supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
+        
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Role fetch timeout')), roleTimeout)
+      );
+      
+      const { data, error } = await Promise.race([
+        rolePromise,
+        timeoutPromise
+      ]) as any;
       
       if (error) {
         logger.warn('AuthProvider: Error fetching user roles:', error);
@@ -52,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      const roles = data?.map(r => r.role as AppRole) || [];
+      const roles = data?.map((r: any) => r.role as AppRole) || [];
       logger.debug('AuthProvider: User roles fetched:', roles);
       setUserRoles(roles);
     } catch (error) {
@@ -62,91 +84,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    let mounted = true;
-    logger.debug('AuthProvider: useEffect starting');
-
-    // Initialize auth state
-    const initializeAuth = async () => {
-      try {
-        logger.debug('AuthProvider: Initializing auth state');
-        
-        // Get initial session
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          logger.error('AuthProvider: Error getting session:', error);
-          if (mounted) {
-            setLoading(false);
-          }
-          return;
-        }
-        
-        if (mounted) {
-          logger.debug('AuthProvider: Setting initial session', { hasSession: !!initialSession });
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-          
-          if (initialSession?.user) {
-            await fetchUserRoles(initialSession.user.id);
-          }
-          
-          logger.debug('AuthProvider: Auth initialization complete');
-          setLoading(false);
-        }
-      } catch (error) {
-        logger.error('AuthProvider: Error initializing auth:', error);
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        logger.debug('AuthProvider: Auth state changed', { event, hasSession: !!session });
-
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchUserRoles(session.user.id);
-          
-          // Log successful authentication
-          if (event === 'SIGNED_IN') {
-            await logSecurityEvent({
-              action: SecurityEvents.LOGIN_SUCCESS,
-              new_values: { user_id: session.user.id, email: session.user.email }
-            });
-          }
-        } else {
-          setUserRoles([]);
-          
-          // Log logout
-          if (event === 'SIGNED_OUT') {
-            await logSecurityEvent({
-              action: SecurityEvents.LOGOUT
-            });
-          }
-        }
-      }
-    );
-
-    // Initialize auth
-    initializeAuth();
-
-    return () => {
-      logger.debug('AuthProvider: Cleaning up');
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (user) {
+      logger.chrome('User detected, fetching roles', { userId: user.id });
+      fetchUserRoles(user.id);
+    } else {
+      setUserRoles([]);
+    }
+  }, [user]);
 
   const signIn = async (email: string, password: string) => {
     try {
       logger.debug('AuthProvider: Attempting sign in');
+      logger.chrome('Chrome sign in attempt', { email });
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -154,11 +104,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         logger.warn('AuthProvider: Sign in failed:', error.message);
-        // Log failed login attempt
         await logSecurityEvent({
           action: SecurityEvents.LOGIN_FAILURE,
           new_values: { email, error: error.message }
         });
+      } else {
+        logger.chrome('Chrome sign in successful');
       }
       
       return { error };
@@ -174,6 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     logger.debug('AuthProvider: Attempting sign up');
+    logger.chrome('Chrome sign up attempt', { email });
+    
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -186,11 +139,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     });
+    
+    if (!error) {
+      logger.chrome('Chrome sign up successful');
+    }
+    
     return { error };
   };
 
   const signOut = async () => {
     logger.debug('AuthProvider: Signing out');
+    logger.chrome('Chrome sign out');
     await supabase.auth.signOut();
   };
 
@@ -222,7 +181,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   logger.debug('AuthProvider: Rendering with state', { 
     hasUser: !!user, 
     loading, 
-    rolesCount: userRoles.length 
+    rolesCount: userRoles.length,
+    isChrome
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
