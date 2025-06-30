@@ -1,15 +1,22 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RefreshCw, Users, AlertTriangle, MapPin, Plus, Settings } from 'lucide-react';
 import { useHubData } from '@/hooks/useHubData';
+import { useBulkHubOperations } from '@/hooks/useBulkHubOperations';
 import { AlertLevel } from '@/types';
 import { Link } from 'react-router-dom';
+import BulkHubOperations from './BulkHubOperations';
+import HubBulkActions from './HubBulkActions';
+import HubNotificationSettings from '@/components/hub/HubNotificationSettings';
 
 const HubManagementTab = () => {
   const { hubs, incidents, loading, metrics, refreshData } = useHubData();
+  const { performBulkUpdate, exportHubData } = useBulkHubOperations();
+  const [selectedHub, setSelectedHub] = useState<string | null>(null);
 
   const getAlertLevelColor = (level: AlertLevel) => {
     switch (level) {
@@ -31,6 +38,19 @@ const HubManagementTab = () => {
       default:
         return 'Safe';
     }
+  };
+
+  const handleBulkUpdate = async (hubIds: string[], updates: any) => {
+    const result = await performBulkUpdate(hubIds, updates);
+    if (result.success) {
+      refreshData();
+    }
+    return result;
+  };
+
+  const handleNotificationUpdate = async (hubId: string, settings: any) => {
+    // In real implementation, this would save to database
+    console.log('Updating notification settings for hub:', hubId, settings);
   };
 
   if (loading) {
@@ -113,122 +133,169 @@ const HubManagementTab = () => {
         </Card>
       </div>
 
-      {/* Hubs Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>International Hubs</span>
-            <Badge variant="outline">{hubs.length}</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {hubs.map((hub) => (
-              <div key={hub.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <span className="text-2xl">{hub.flagEmoji}</span>
-                  <div>
-                    <h3 className="font-medium">{hub.name}</h3>
-                    <p className="text-sm text-gray-600">{hub.country} • {hub.code}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                  <div className="text-center">
-                    <div className="text-sm font-bold">{hub.employeeCount}</div>
-                    <div className="text-xs text-gray-600">Employees</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-bold">{hub.localIncidents}</div>
-                    <div className="text-xs text-gray-600">Incidents</div>
-                  </div>
-                  <Badge
-                    variant="secondary"
-                    className={`${getAlertLevelColor(hub.alertLevel)} text-white`}
-                  >
-                    {getAlertLevelText(hub.alertLevel)}
-                  </Badge>
-                  <div className="flex items-center space-x-2">
-                    <Link to={`/hub/${hub.id}`}>
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
-                    </Link>
-                    <Button variant="ghost" size="sm">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Hub Overview</TabsTrigger>
+          <TabsTrigger value="bulk-operations">Bulk Operations</TabsTrigger>
+          <TabsTrigger value="bulk-actions">Bulk Actions</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        </TabsList>
 
-          {hubs.length === 0 && (
-            <div className="text-center py-8">
-              <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No International Hubs</h3>
-              <p className="text-gray-600 mb-4">No international hubs are currently configured.</p>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add First Hub
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Recent Hub Incidents */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Recent Hub Incidents</span>
-            <Badge variant="outline">{incidents.length}</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {incidents.length > 0 ? (
-            <div className="space-y-4">
-              {incidents.slice(0, 5).map((incident) => {
-                const hub = hubs.find(h => h.id === incident.hubId);
-                return (
-                  <div key={incident.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="text-sm font-medium text-gray-900">
-                            {hub?.flagEmoji} {hub?.name}
-                          </span>
-                          <Badge
-                            variant="secondary"
-                            className={`${getAlertLevelColor(incident.alertLevel)} text-white text-xs`}
-                          >
-                            {getAlertLevelText(incident.alertLevel)}
-                          </Badge>
-                        </div>
-                        <h3 className="font-medium text-gray-900">{incident.title}</h3>
-                        {incident.description && (
-                          <p className="text-sm text-gray-600 mt-1">{incident.description}</p>
-                        )}
-                        <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                          <span>Source: {incident.source}</span>
-                          <span>Status: {incident.verificationStatus}</span>
-                          <span>{new Date(incident.timestamp).toLocaleDateString()}</span>
-                        </div>
+        <TabsContent value="overview" className="space-y-4">
+          {/* Individual Hubs Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>International Hubs</span>
+                <Badge variant="outline">{hubs.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {hubs.map((hub) => (
+                  <div key={hub.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <span className="text-2xl">{hub.flagEmoji}</span>
+                      <div>
+                        <h3 className="font-medium">{hub.name}</h3>
+                        <p className="text-sm text-gray-600">{hub.country} • {hub.code}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div className="text-center">
+                        <div className="text-sm font-bold">{hub.employeeCount}</div>
+                        <div className="text-xs text-gray-600">Employees</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-bold">{hub.localIncidents}</div>
+                        <div className="text-xs text-gray-600">Incidents</div>
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className={`${getAlertLevelColor(hub.alertLevel)} text-white`}
+                      >
+                        {getAlertLevelText(hub.alertLevel)}
+                      </Badge>
+                      <div className="flex items-center space-x-2">
+                        <Link to={`/hub/${hub.id}`}>
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </Link>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setSelectedHub(selectedHub === hub.id ? null : hub.id)}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+
+              {hubs.length === 0 && (
+                <div className="text-center py-8">
+                  <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No International Hubs</h3>
+                  <p className="text-gray-600 mb-4">No international hubs are currently configured.</p>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add First Hub
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Recent Hub Incidents */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Recent Hub Incidents</span>
+                <Badge variant="outline">{incidents.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {incidents.length > 0 ? (
+                <div className="space-y-4">
+                  {incidents.slice(0, 5).map((incident) => {
+                    const hub = hubs.find(h => h.id === incident.hubId);
+                    return (
+                      <div key={incident.id} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <span className="text-sm font-medium text-gray-900">
+                                {hub?.flagEmoji} {hub?.name}
+                              </span>
+                              <Badge
+                                variant="secondary"
+                                className={`${getAlertLevelColor(incident.alertLevel)} text-white text-xs`}
+                              >
+                                {getAlertLevelText(incident.alertLevel)}
+                              </Badge>
+                            </div>
+                            <h3 className="font-medium text-gray-900">{incident.title}</h3>
+                            {incident.description && (
+                              <p className="text-sm text-gray-600 mt-1">{incident.description}</p>
+                            )}
+                            <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                              <span>Source: {incident.source}</span>
+                              <span>Status: {incident.verificationStatus}</span>
+                              <span>{new Date(incident.timestamp).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Recent Incidents</h3>
+                  <p className="text-gray-600">No hub incidents have been recorded.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="bulk-operations" className="space-y-4">
+          <BulkHubOperations
+            hubs={hubs}
+            onBulkUpdate={handleBulkUpdate}
+            onRefresh={refreshData}
+          />
+        </TabsContent>
+
+        <TabsContent value="bulk-actions" className="space-y-4">
+          <HubBulkActions onImportComplete={refreshData} />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          {selectedHub ? (
+            <HubNotificationSettings
+              hub={hubs.find(h => h.id === selectedHub)!}
+              onSettingsUpdate={handleNotificationUpdate}
+            />
           ) : (
-            <div className="text-center py-8">
-              <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Recent Incidents</h3>
-              <p className="text-gray-600">No hub incidents have been recorded.</p>
-            </div>
+            <Card>
+              <CardContent className="py-8">
+                <div className="text-center">
+                  <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Hub</h3>
+                  <p className="text-gray-600">Choose a hub from the overview tab to configure its notification settings.</p>
+                </div>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
