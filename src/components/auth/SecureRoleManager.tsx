@@ -36,13 +36,40 @@ const SecureRoleManager: React.FC = () => {
         new_values: { target_email: email, role: selectedRole, action: 'assign' }
       });
 
-      // Use the assign_user_role function
-      const { error } = await supabase.rpc('assign_user_role', {
-        _user_email: email,
-        _role: selectedRole
-      });
+      // For admin role, use the existing make_user_admin function
+      if (selectedRole === 'admin') {
+        const { error } = await supabase.rpc('make_user_admin', {
+          _user_email: email
+        });
+        if (error) throw error;
+      } else {
+        // For other roles, we need to get the user ID first and insert directly
+        // First check if user exists by querying profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .single();
 
-      if (error) throw error;
+        if (profileError || !profileData) {
+          throw new Error('User not found. Please ensure the user has signed up.');
+        }
+
+        // Insert the role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: profileData.id,
+            role: selectedRole
+          });
+
+        if (roleError) {
+          // If it's a duplicate role, that's okay
+          if (!roleError.message.includes('duplicate')) {
+            throw roleError;
+          }
+        }
+      }
 
       toast({
         title: 'Role Assigned',
@@ -81,11 +108,23 @@ const SecureRoleManager: React.FC = () => {
         new_values: { target_email: email, role: selectedRole, action: 'remove' }
       });
 
-      // Use the remove_user_role function
-      const { error } = await supabase.rpc('remove_user_role', {
-        _user_email: email,
-        _role: selectedRole
-      });
+      // Get user ID from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (profileError || !profileData) {
+        throw new Error('User not found');
+      }
+
+      // Remove the role
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', profileData.id)
+        .eq('role', selectedRole);
 
       if (error) throw error;
 
