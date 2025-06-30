@@ -97,23 +97,30 @@ const SystemDiagnostics: React.FC = () => {
       });
     }
 
-    // Table Structure Validation
-    const tables = ['provinces', 'incidents', 'alert_sources', 'user_roles', 'security_audit_log'];
-    for (const table of tables) {
+    // Table Structure Validation with proper typing
+    const tableChecks = [
+      { name: 'provinces', query: () => supabase.from('provinces').select('*').limit(1) },
+      { name: 'incidents', query: () => supabase.from('incidents').select('*').limit(1) },
+      { name: 'alert_sources', query: () => supabase.from('alert_sources').select('*').limit(1) },
+      { name: 'user_roles', query: () => supabase.from('user_roles').select('*').limit(1) },
+      { name: 'security_audit_log', query: () => supabase.from('security_audit_log').select('*').limit(1) }
+    ];
+
+    for (const tableCheck of tableChecks) {
       try {
-        const { error } = await supabase.from(table).select('*').limit(1);
+        const { error } = await tableCheck.query();
         diagnosticResults.push({
-          name: `Table: ${table}`,
+          name: `Table: ${tableCheck.name}`,
           status: error ? 'fail' : 'pass',
-          message: error ? `Table ${table} not accessible` : `Table ${table} accessible`,
+          message: error ? `Table ${tableCheck.name} not accessible` : `Table ${tableCheck.name} accessible`,
           details: error ? [error.message] : ['Table structure valid'],
           category: 'database'
         });
       } catch (error) {
         diagnosticResults.push({
-          name: `Table: ${table}`,
+          name: `Table: ${tableCheck.name}`,
           status: 'fail',
-          message: `Table ${table} error`,
+          message: `Table ${tableCheck.name} error`,
           details: [error instanceof Error ? error.message : 'Unknown table error'],
           category: 'database'
         });
