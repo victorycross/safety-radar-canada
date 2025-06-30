@@ -11,6 +11,8 @@ import EmployeesPage from '@/pages/EmployeesPage';
 import WidgetPage from '@/pages/WidgetPage';
 import AuthPage from '@/pages/AuthPage';
 import DiagnosticsPage from '@/pages/DiagnosticsPage';
+import HubsPage from '@/pages/HubsPage';
+import HubDetailPage from '@/pages/HubDetailPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { Navigate } from 'react-router-dom';
@@ -154,6 +156,8 @@ const AppContent = () => {
             <Route path="/employees" element={<EmployeesPage />} />
             <Route path="/widgets" element={<WidgetPage />} />
             <Route path="/diagnostics" element={<DiagnosticsPage />} />
+            <Route path="/hubs" element={<HubsPage />} />
+            <Route path="/hub/:hubId" element={<HubDetailPage />} />
             <Route path="/auth" element={<Navigate to="/" replace />} />
           </Routes>
         </MainLayout>
@@ -181,6 +185,8 @@ const AppContent = () => {
           <Route path="/employees" element={<EmployeesPage />} />
           <Route path="/widgets" element={<WidgetPage />} />
           <Route path="/diagnostics" element={<DiagnosticsPage />} />
+          <Route path="/hubs" element={<HubsPage />} />
+          <Route path="/hub/:hubId" element={<HubDetailPage />} />
         </Routes>
       </main>
     </div>

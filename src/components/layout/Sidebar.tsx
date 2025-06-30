@@ -12,7 +12,8 @@ import {
   Users,
   Settings,
   Database,
-  Stethoscope
+  Stethoscope,
+  Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,7 @@ const Sidebar = () => {
     { name: 'Incidents', href: '/incidents', icon: Activity },
     { name: 'Report', href: '/report', icon: FileText },
     { name: 'Employees', href: '/employees', icon: Users },
+    { name: 'International Hubs', href: '/hubs', icon: Globe },
     { name: 'Source Management', href: '/source-management', icon: Database },
     { name: 'Widgets', href: '/widgets', icon: Settings },
     { name: 'Diagnostics', href: '/diagnostics', icon: Stethoscope },
