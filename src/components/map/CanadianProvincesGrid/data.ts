@@ -1,15 +1,16 @@
 
 import { AlertLevel } from '@/types';
 import { Province } from '@/types/dashboard';
-import { provinceCodeToIdMap, provinceNames } from '@/services/provinceMapping';
+import { provinceNames } from '@/services/provinceMapping';
 
-// Create fallback provinces with proper UUID structure
+// Note: This fallback data is now only used as a last resort
+// The actual province data should come from the database via syncProvinceData()
 export const fallbackProvinces: Province[] = Object.entries(provinceNames).map(([code, name]) => ({
-  id: provinceCodeToIdMap[code],
+  id: `fallback-${code}`, // Fallback ID pattern
   name,
   code: code.toUpperCase(),
   alertLevel: AlertLevel.NORMAL,
-  employeeCount: 0 // Removed hardcoded employee counts
+  employeeCount: 0
 }));
 
 export const provinceEmojis = {

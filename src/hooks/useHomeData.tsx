@@ -11,6 +11,7 @@ export const useHomeData = (): DashboardData => {
   const { provinces: supabaseProvinces, incidents, loading: supabaseLoading, refreshData } = useSupabaseDataContext();
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   logger.debug('useHomeData: Hook called', {
     supabaseProvincesCount: supabaseProvinces?.length || 0,
@@ -22,15 +23,23 @@ export const useHomeData = (): DashboardData => {
   useEffect(() => {
     const loadProvinceData = async () => {
       setLoading(true);
+      setError(null);
+      
       try {
         const syncedProvinces = await syncProvinceData();
         setProvinces(syncedProvinces);
-        logger.info('useHomeData: Province data synced', {
+        
+        logger.info('useHomeData: Province data loaded successfully', {
           provincesCount: syncedProvinces.length,
-          source: supabaseProvinces?.length > 0 ? 'Supabase' : 'Fallback'
+          hasSupabaseData: supabaseProvinces && supabaseProvinces.length > 0
         });
+        
       } catch (error) {
-        logger.error('useHomeData: Error syncing province data', error);
+        logger.error('useHomeData: Error loading province data', error);
+        setError(error instanceof Error ? error.message : 'Failed to load province data');
+        
+        // Set empty array on error to prevent further issues
+        setProvinces([]);
       } finally {
         setLoading(false);
       }
@@ -87,6 +96,7 @@ export const useHomeData = (): DashboardData => {
     visibleAlertProvinces,
     metrics,
     loading: loading || supabaseLoading,
+    error,
     refreshData
   };
 };
