@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,18 +45,21 @@ export const useSourceManagement = () => {
       if (error) throw error;
 
       console.log('Fetched sources:', data);
-      // Type assertion to ensure compatibility
+      // Type assertion to ensure compatibility with strict typing
       const typedSources = (data || []).map(source => ({
         ...source,
-        health_status: source.health_status as 'healthy' | 'degraded' | 'error' | 'unknown'
+        health_status: (['healthy', 'degraded', 'error', 'unknown'].includes(source.health_status) 
+          ? source.health_status 
+          : 'unknown') as 'healthy' | 'degraded' | 'error' | 'unknown'
       }));
       setSources(typedSources);
     } catch (err) {
       console.error('Error fetching sources:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch sources');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch sources';
+      setError(errorMessage);
       toast({
         title: 'Error',
-        description: 'Failed to fetch sources',
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -286,6 +288,8 @@ export const useSourceManagement = () => {
     
     try {
       await Promise.all([fetchSources(), fetchHealthMetrics()]);
+    } catch (err) {
+      console.error('Error refreshing data:', err);
     } finally {
       setLoading(false);
     }
