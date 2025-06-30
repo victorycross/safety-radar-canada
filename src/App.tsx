@@ -1,126 +1,49 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
-import EmployeesPage from '@/pages/EmployeesPage';
-import ProvinceDetailPage from '@/pages/ProvinceDetailPage';
-import IncidentsPage from '@/pages/IncidentsPage';
-import ReportPage from '@/pages/ReportPage';
-import AnalyticsPage from '@/pages/AnalyticsPage';
-import SourcesPage from '@/pages/SourcesPage';
 import AdminPage from '@/pages/AdminPage';
-import AlertReadyPage from '@/pages/AlertReadyPage';
-import WidgetPage from '@/pages/WidgetPage';
-import NotFound from '@/pages/NotFound';
+import UnifiedSourceManagementPage from "./pages/UnifiedSourceManagementPage";
+import EmployeeDataPage from "./pages/EmployeeDataPage";
+import WeatherAlertsPage from "./pages/WeatherAlertsPage";
+import SecurityAlertsPage from "./pages/SecurityAlertsPage";
+import TravelIntegrationPage from "./pages/TravelIntegrationPage";
+import BCSeismicAlertsPage from "./pages/BCSeismicAlertsPage";
+import EverbridgeAlertsPage from "./pages/EverbridgeAlertsPage";
+import DataIngestionPage from "./pages/DataIngestionPage";
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { TooltipProvider, Toaster } from 'react-tooltip';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import AuthPage from '@/components/auth/AuthPage';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
 import { SupabaseDataProvider } from '@/context/SupabaseDataProvider';
+import { Navigate } from 'react-router-dom';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <AuthProvider>
-      <SupabaseDataProvider>
+    <QueryClient client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
         <Router>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route 
-              path="/employees" 
-              element={
-                <ProtectedRoute requireAuth>
-                  <MainLayout>
-                    <EmployeesPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/province/:id" 
-              element={
-                <ProtectedRoute requireAuth>
-                  <MainLayout>
-                    <ProvinceDetailPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/incidents" 
-              element={
-                <ProtectedRoute requireAuth>
-                  <MainLayout>
-                    <IncidentsPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/report" 
-              element={
-                <ProtectedRoute requiredRole="power_user">
-                  <MainLayout>
-                    <ReportPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/analytics" 
-              element={
-                <ProtectedRoute requireAuth>
-                  <MainLayout>
-                    <AnalyticsPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/sources" 
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <MainLayout>
-                    <SourcesPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <MainLayout>
-                    <AdminPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/alert-ready" 
-              element={
-                <ProtectedRoute requireAuth>
-                  <MainLayout>
-                    <AlertReadyPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/widgets" 
-              element={
-                <ProtectedRoute requireAuth>
-                  <MainLayout>
-                    <WidgetPage />
-                  </MainLayout>
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/source-management" element={<UnifiedSourceManagementPage />} />
+            <Route path="/sources" element={<Navigate to="/source-management" replace />} />
+            <Route path="/alert-ready" element={<AlertReadyPage />} />
+            <Route path="/employee-data" element={<EmployeeDataPage />} />
+            <Route path="/weather-alerts" element={<WeatherAlertsPage />} />
+            <Route path="/security-alerts" element={<SecurityAlertsPage />} />
+            <Route path="/travel-integration" element={<TravelIntegrationPage />} />
+            <Route path="/bc-alerts" element={<BCSeismicAlertsPage />} />
+            <Route path="/everbridge-alerts" element={<EverbridgeAlertsPage />} />
+            <Route path="/data-ingestion" element={<DataIngestionPage />} />
           </Routes>
         </Router>
-      </SupabaseDataProvider>
-    </AuthProvider>
+      </TooltipProvider>
+    </QueryClient>
   );
 }
 
