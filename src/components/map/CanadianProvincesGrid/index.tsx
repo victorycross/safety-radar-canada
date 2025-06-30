@@ -8,24 +8,20 @@ import GridHeader from './GridHeader';
 import CompactLocationCard from '../CompactLocationCard';
 import Legend from './Legend';
 import { Province } from '@/types/dashboard';
-import { SupabaseProvince } from '@/types/supabase-types';
+import { AlertLevel } from '@/types';
 import { logger } from '@/utils/logger';
 
 const CanadianProvincesGrid = () => {
   const { provinces: supabaseProvinces } = useSupabaseDataContext();
 
-  // Transform Supabase provinces to match our interface with proper property mapping
+  // Use supabase provinces if available, otherwise fallback
   const transformedProvinces: Province[] = supabaseProvinces?.length > 0 
-    ? supabaseProvinces.map((province: SupabaseProvince) => ({
+    ? supabaseProvinces.map((province: Province) => ({
         id: province.id,
         name: province.name,
         code: province.code,
-        alertLevel: (province.alert_level === 'normal' || 
-                    province.alert_level === 'warning' || 
-                    province.alert_level === 'severe') 
-                   ? province.alert_level 
-                   : 'normal',
-        employeeCount: province.employee_count || 0
+        alertLevel: province.alertLevel,
+        employeeCount: province.employeeCount || 0
       }))
     : fallbackProvinces;
 
@@ -84,7 +80,7 @@ const CanadianProvincesGrid = () => {
               id={province.id}
               name={province.name}
               code={province.code}
-              alertLevel={province.alertLevel}
+              alertLevel={province.alertLevel as AlertLevel}
               employeeCount={province.employeeCount}
               emoji={province.id === 'bc' ? '🏔️' : province.id === 'ab' ? '🛢️' : province.id === 'on' ? '🏙️' : '🍁'}
               linkTo={`/province/${province.id}`}

@@ -2,7 +2,7 @@
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
 import { Province, InternationalHub, DashboardData } from '@/types/dashboard';
-import { SupabaseProvince } from '@/types/supabase-types';
+import { AlertLevel } from '@/types';
 import { logger } from '@/utils/logger';
 
 export const useHomeData = (): DashboardData => {
@@ -30,33 +30,29 @@ export const useHomeData = (): DashboardData => {
 
   // Fallback provinces data - only used if no Supabase data
   const fallbackProvinces: Province[] = [
-    { id: 'ab', name: 'Alberta', code: 'AB', alertLevel: 'normal', employeeCount: 15420 },
-    { id: 'bc', name: 'British Columbia', code: 'BC', alertLevel: 'normal', employeeCount: 23150 },
-    { id: 'mb', name: 'Manitoba', code: 'MB', alertLevel: 'normal', employeeCount: 5890 },
-    { id: 'nb', name: 'New Brunswick', code: 'NB', alertLevel: 'normal', employeeCount: 3420 },
-    { id: 'nl', name: 'Newfoundland and Labrador', code: 'NL', alertLevel: 'normal', employeeCount: 2180 },
-    { id: 'ns', name: 'Nova Scotia', code: 'NS', alertLevel: 'normal', employeeCount: 4350 },
-    { id: 'on', name: 'Ontario', code: 'ON', alertLevel: 'normal', employeeCount: 45200 },
-    { id: 'pe', name: 'Prince Edward Island', code: 'PE', alertLevel: 'normal', employeeCount: 890 },
-    { id: 'qc', name: 'Quebec', code: 'QC', alertLevel: 'normal', employeeCount: 32100 },
-    { id: 'sk', name: 'Saskatchewan', code: 'SK', alertLevel: 'normal', employeeCount: 4750 },
-    { id: 'nt', name: 'Northwest Territories', code: 'NT', alertLevel: 'normal', employeeCount: 220 },
-    { id: 'nu', name: 'Nunavut', code: 'NU', alertLevel: 'normal', employeeCount: 180 },
-    { id: 'yt', name: 'Yukon', code: 'YT', alertLevel: 'normal', employeeCount: 150 }
+    { id: 'ab', name: 'Alberta', code: 'AB', alertLevel: AlertLevel.NORMAL, employeeCount: 15420 },
+    { id: 'bc', name: 'British Columbia', code: 'BC', alertLevel: AlertLevel.NORMAL, employeeCount: 23150 },
+    { id: 'mb', name: 'Manitoba', code: 'MB', alertLevel: AlertLevel.NORMAL, employeeCount: 5890 },
+    { id: 'nb', name: 'New Brunswick', code: 'NB', alertLevel: AlertLevel.NORMAL, employeeCount: 3420 },
+    { id: 'nl', name: 'Newfoundland and Labrador', code: 'NL', alertLevel: AlertLevel.NORMAL, employeeCount: 2180 },
+    { id: 'ns', name: 'Nova Scotia', code: 'NS', alertLevel: AlertLevel.NORMAL, employeeCount: 4350 },
+    { id: 'on', name: 'Ontario', code: 'ON', alertLevel: AlertLevel.NORMAL, employeeCount: 45200 },
+    { id: 'pe', name: 'Prince Edward Island', code: 'PE', alertLevel: AlertLevel.NORMAL, employeeCount: 890 },
+    { id: 'qc', name: 'Quebec', code: 'QC', alertLevel: AlertLevel.NORMAL, employeeCount: 32100 },
+    { id: 'sk', name: 'Saskatchewan', code: 'SK', alertLevel: AlertLevel.NORMAL, employeeCount: 4750 },
+    { id: 'nt', name: 'Northwest Territories', code: 'NT', alertLevel: AlertLevel.NORMAL, employeeCount: 220 },
+    { id: 'nu', name: 'Nunavut', code: 'NU', alertLevel: AlertLevel.NORMAL, employeeCount: 180 },
+    { id: 'yt', name: 'Yukon', code: 'YT', alertLevel: AlertLevel.NORMAL, employeeCount: 150 }
   ];
 
-  // Transform Supabase data to match our interface, with proper property mapping
+  // Use supabase provinces if available, otherwise fallback
   const provinces: Province[] = supabaseProvinces?.length > 0 
-    ? supabaseProvinces.map((province: SupabaseProvince) => ({
+    ? supabaseProvinces.map((province: Province) => ({
         id: province.id,
         name: province.name,
         code: province.code,
-        alertLevel: (province.alert_level === 'normal' || 
-                    province.alert_level === 'warning' || 
-                    province.alert_level === 'severe') 
-                   ? province.alert_level 
-                   : 'normal',
-        employeeCount: province.employee_count || 0
+        alertLevel: province.alertLevel,
+        employeeCount: province.employeeCount || 0
       }))
     : fallbackProvinces;
 
@@ -72,7 +68,7 @@ export const useHomeData = (): DashboardData => {
   
   // Get provinces with severe or warning statuses
   const alertProvinces = provinces.filter(province => 
-    province.alertLevel === 'severe' || province.alertLevel === 'warning'
+    province.alertLevel === AlertLevel.SEVERE || province.alertLevel === AlertLevel.WARNING
   );
 
   // Filter alert provinces based on visibility for display purposes

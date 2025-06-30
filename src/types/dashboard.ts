@@ -1,9 +1,11 @@
 
+import { AlertLevel } from './index';
+
 export interface Province {
   id: string;
   name: string;
   code: string;
-  alertLevel: 'normal' | 'warning' | 'severe';
+  alertLevel: AlertLevel;
   employeeCount: number;
   coordinates?: {
     lat: number;
