@@ -9,6 +9,7 @@ import { useHubData } from '@/hooks/useHubData';
 import { useBulkHubOperations } from '@/hooks/useBulkHubOperations';
 import { AlertLevel } from '@/types';
 import { Link } from 'react-router-dom';
+import { InternationalHub } from '@/types/dashboard';
 import BulkHubOperations from './BulkHubOperations';
 import HubBulkActions from './HubBulkActions';
 import HubNotificationSettings from '@/components/hub/HubNotificationSettings';
@@ -40,12 +41,11 @@ const HubManagementTab = () => {
     }
   };
 
-  const handleBulkUpdate = async (hubIds: string[], updates: any) => {
+  const handleBulkUpdate = async (hubIds: string[], updates: Partial<InternationalHub>) => {
     const result = await performBulkUpdate(hubIds, updates);
     if (result.success) {
       refreshData();
     }
-    return result;
   };
 
   const handleNotificationUpdate = async (hubId: string, settings: any) => {
