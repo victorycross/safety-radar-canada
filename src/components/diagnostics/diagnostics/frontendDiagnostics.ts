@@ -9,7 +9,7 @@ export const runFrontendDiagnostics = async (): Promise<DiagnosticResult[]> => {
       { name: 'Router', status: window.location ? 'pass' : 'fail' },
       { name: 'Local Storage', status: typeof localStorage !== 'undefined' ? 'pass' : 'fail' },
       { name: 'Console API', status: typeof console !== 'undefined' ? 'pass' : 'fail' },
-      { name: 'React State', status: typeof React !== 'undefined' ? 'pass' : 'fail' }
+      { name: 'DOM API', status: typeof document !== 'undefined' ? 'pass' : 'fail' }
     ];
 
     componentChecks.forEach(check => {
