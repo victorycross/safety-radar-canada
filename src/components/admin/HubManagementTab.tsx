@@ -40,11 +40,24 @@ const HubManagementTab = () => {
     );
   }
 
+  // Ensure all required DashboardMetrics properties are provided
+  const hubMetrics = {
+    ...metrics,
+    totalProvinces: metrics.totalProvinces || 0,
+    visibleProvincesCount: metrics.visibleProvincesCount || 0,
+    alertProvincesCount: metrics.alertProvincesCount || 0,
+    incidentsCount: metrics.incidentsCount || 0,
+    employeesCount: metrics.employeesCount || 0,
+    totalHubs: metrics.totalHubs || hubs.length,
+    alertHubsCount: metrics.alertHubsCount || 0,
+    hubEmployeesCount: metrics.hubEmployeesCount || 0
+  };
+
   return (
     <div className="space-y-6">
       <HubManagementHeader onRefresh={refreshData} />
       
-      <HubMetricsCards metrics={metrics} />
+      <HubMetricsCards metrics={hubMetrics} />
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-4">

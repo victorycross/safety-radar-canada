@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Settings } from 'lucide-react';
 import { InternationalHub } from '@/types/dashboard';
 import { HubNotificationSettings } from '@/types/hubNotifications';
-import HubNotificationSettings from '@/components/hub/HubNotificationSettings';
+import HubNotificationSettingsComponent from '@/components/hub/HubNotificationSettings';
 
 interface HubNotificationTabProps {
   selectedHub: string | null;
@@ -21,7 +21,7 @@ const HubNotificationTab: React.FC<HubNotificationTabProps> = ({
     const hub = hubs.find(h => h.id === selectedHub);
     if (hub) {
       return (
-        <HubNotificationSettings
+        <HubNotificationSettingsComponent
           hub={hub}
           onSettingsUpdate={onSettingsUpdate}
         />

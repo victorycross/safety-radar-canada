@@ -18,7 +18,7 @@ const HubMetricsCards: React.FC<HubMetricsCardsProps> = ({ metrics }) => {
         <CardContent>
           <div className="flex items-center space-x-2">
             <MapPin className="h-5 w-5 text-blue-600" />
-            <span className="text-2xl font-bold">{metrics.totalHubs}</span>
+            <span className="text-2xl font-bold">{metrics.totalHubs || 0}</span>
           </div>
         </CardContent>
       </Card>
@@ -30,7 +30,7 @@ const HubMetricsCards: React.FC<HubMetricsCardsProps> = ({ metrics }) => {
         <CardContent>
           <div className="flex items-center space-x-2">
             <AlertTriangle className="h-5 w-5 text-red-600" />
-            <span className="text-2xl font-bold">{metrics.alertHubsCount}</span>
+            <span className="text-2xl font-bold">{metrics.alertHubsCount || 0}</span>
           </div>
         </CardContent>
       </Card>
@@ -42,7 +42,7 @@ const HubMetricsCards: React.FC<HubMetricsCardsProps> = ({ metrics }) => {
         <CardContent>
           <div className="flex items-center space-x-2">
             <Users className="h-5 w-5 text-green-600" />
-            <span className="text-2xl font-bold">{metrics.hubEmployeesCount}</span>
+            <span className="text-2xl font-bold">{metrics.hubEmployeesCount || 0}</span>
           </div>
         </CardContent>
       </Card>
@@ -54,7 +54,7 @@ const HubMetricsCards: React.FC<HubMetricsCardsProps> = ({ metrics }) => {
         <CardContent>
           <div className="flex items-center space-x-2">
             <AlertTriangle className="h-5 w-5 text-yellow-600" />
-            <span className="text-2xl font-bold">{metrics.totalIncidents}</span>
+            <span className="text-2xl font-bold">{metrics.incidentsCount || 0}</span>
           </div>
         </CardContent>
       </Card>
