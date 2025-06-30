@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
 import AdminPage from '@/pages/AdminPage';
@@ -23,31 +23,20 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import Header from '@/components/layout/Header';
 import { logSecurityEvent, SecurityEvents } from '@/utils/securityAudit';
 
-// Create query client outside component to prevent recreation on re-renders
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 3,
-      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+// Move QueryClient outside component to prevent recreation
+const queryClient = new QueryClient();
 
-// Security headers configuration - memoized to prevent recreation
-const SECURITY_META_TAGS = [
-  {
-    name: 'Content-Security-Policy',
-    content: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.ipify.org https://*.supabase.co"
-  },
-  { name: 'X-Content-Type-Options', content: 'nosniff' },
-  { name: 'X-Frame-Options', content: 'DENY' },
-  { name: 'X-XSS-Protection', content: '1; mode=block' },
-  { name: 'Referrer-Policy', content: 'strict-origin-when-cross-origin' }
-] as const;
-
+// Security headers configuration - moved outside to prevent recreation
 const setSecurityHeaders = () => {
-  SECURITY_META_TAGS.forEach(({ name, content }) => {
+  const securityHeaders = [
+    { name: 'Content-Security-Policy', content: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.ipify.org https://*.supabase.co" },
+    { name: 'X-Content-Type-Options', content: 'nosniff' },
+    { name: 'X-Frame-Options', content: 'DENY' },
+    { name: 'X-XSS-Protection', content: '1; mode=block' },
+    { name: 'Referrer-Policy', content: 'strict-origin-when-cross-origin' }
+  ];
+
+  securityHeaders.forEach(({ name, content }) => {
     if (!document.querySelector(`meta[name="${name}"]`)) {
       const meta = document.createElement('meta');
       meta.name = name;
@@ -57,20 +46,8 @@ const setSecurityHeaders = () => {
   });
 };
 
-// Loading component
-const LoadingSpinner = React.memo(() => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-      <p className="text-muted-foreground">Loading...</p>
-    </div>
-  </div>
-));
-
-LoadingSpinner.displayName = 'LoadingSpinner';
-
-// Common routes configuration
-const CommonRoutes = React.memo(() => (
+// Common routes component to avoid duplication
+const AppRoutes = () => (
   <>
     <Route path="/" element={<Index />} />
     <Route path="/admin" element={<AdminPage />} />
@@ -84,9 +61,7 @@ const CommonRoutes = React.memo(() => (
     <Route path="/widgets" element={<WidgetPage />} />
     <Route path="/diagnostics" element={<DiagnosticsPage />} />
   </>
-));
-
-CommonRoutes.displayName = 'CommonRoutes';
+);
 
 const AppContent = () => {
   const { user, loading, isAdmin } = useAuth();
@@ -96,7 +71,7 @@ const AppContent = () => {
   useEffect(() => {
     console.log('AppContent: useEffect triggered');
     
-    // Set security headers once
+    // Set security headers
     setSecurityHeaders();
 
     // Log admin access
@@ -108,13 +83,17 @@ const AppContent = () => {
     }
   }, [user, isAdmin]);
 
-  // Memoize admin check result
-  const userIsAdmin = useMemo(() => isAdmin(), [isAdmin]);
-
   // Show loading state while auth is being determined
   if (loading) {
     console.log('AppContent: Showing loading state');
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   console.log('AppContent: Auth loading complete, rendering routes');
@@ -125,7 +104,7 @@ const AppContent = () => {
     return (
       <MainLayout>
         <Routes>
-          <CommonRoutes />
+          <AppRoutes />
           <Route path="/auth" element={<Navigate to="/" replace />} />
         </Routes>
       </MainLayout>
@@ -141,14 +120,14 @@ const AppContent = () => {
       <main className="container mx-auto px-4 py-6">
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
-          <CommonRoutes />
+          <AppRoutes />
         </Routes>
       </main>
     </div>
   );
 };
 
-const App = React.memo(() => {
+function App() {
   console.log('App: Component render started');
   
   return (
@@ -167,9 +146,7 @@ const App = React.memo(() => {
       </QueryClientProvider>
     </ErrorBoundary>
   );
-});
-
-App.displayName = 'App';
+}
 
 console.log('App: Component defined');
 
