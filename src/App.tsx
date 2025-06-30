@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
 import AdminPage from '@/pages/AdminPage';
@@ -24,30 +23,70 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import Header from '@/components/layout/Header';
 import { logSecurityEvent, SecurityEvents } from '@/utils/securityAudit';
 
-const queryClient = new QueryClient();
+// Create query client outside component to prevent recreation on re-renders
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
-// Security headers configuration
+// Security headers configuration - memoized to prevent recreation
+const SECURITY_META_TAGS = [
+  {
+    name: 'Content-Security-Policy',
+    content: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.ipify.org https://*.supabase.co"
+  },
+  { name: 'X-Content-Type-Options', content: 'nosniff' },
+  { name: 'X-Frame-Options', content: 'DENY' },
+  { name: 'X-XSS-Protection', content: '1; mode=block' },
+  { name: 'Referrer-Policy', content: 'strict-origin-when-cross-origin' }
+] as const;
+
 const setSecurityHeaders = () => {
-  // Add security meta tags if not already present
-  const addMetaTag = (name: string, content: string) => {
+  SECURITY_META_TAGS.forEach(({ name, content }) => {
     if (!document.querySelector(`meta[name="${name}"]`)) {
       const meta = document.createElement('meta');
       meta.name = name;
       meta.content = content;
       document.head.appendChild(meta);
     }
-  };
-
-  // Content Security Policy
-  addMetaTag('Content-Security-Policy', 
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.ipify.org https://*.supabase.co");
-  
-  // Additional security headers
-  addMetaTag('X-Content-Type-Options', 'nosniff');
-  addMetaTag('X-Frame-Options', 'DENY');
-  addMetaTag('X-XSS-Protection', '1; mode=block');
-  addMetaTag('Referrer-Policy', 'strict-origin-when-cross-origin');
+  });
 };
+
+// Loading component
+const LoadingSpinner = React.memo(() => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+));
+
+LoadingSpinner.displayName = 'LoadingSpinner';
+
+// Common routes configuration
+const CommonRoutes = React.memo(() => (
+  <>
+    <Route path="/" element={<Index />} />
+    <Route path="/admin" element={<AdminPage />} />
+    <Route path="/source-management" element={<UnifiedSourceManagementPage />} />
+    <Route path="/sources" element={<Navigate to="/source-management" replace />} />
+    <Route path="/alert-ready" element={<AlertReadyPage />} />
+    <Route path="/analytics" element={<AnalyticsPage />} />
+    <Route path="/incidents" element={<IncidentsPage />} />
+    <Route path="/report" element={<ReportPage />} />
+    <Route path="/employees" element={<EmployeesPage />} />
+    <Route path="/widgets" element={<WidgetPage />} />
+    <Route path="/diagnostics" element={<DiagnosticsPage />} />
+  </>
+));
+
+CommonRoutes.displayName = 'CommonRoutes';
 
 const AppContent = () => {
   const { user, loading, isAdmin } = useAuth();
@@ -57,7 +96,7 @@ const AppContent = () => {
   useEffect(() => {
     console.log('AppContent: useEffect triggered');
     
-    // Set security headers
+    // Set security headers once
     setSecurityHeaders();
 
     // Log admin access
@@ -69,17 +108,13 @@ const AppContent = () => {
     }
   }, [user, isAdmin]);
 
+  // Memoize admin check result
+  const userIsAdmin = useMemo(() => isAdmin(), [isAdmin]);
+
   // Show loading state while auth is being determined
   if (loading) {
     console.log('AppContent: Showing loading state');
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   console.log('AppContent: Auth loading complete, rendering routes');
@@ -90,17 +125,7 @@ const AppContent = () => {
     return (
       <MainLayout>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/source-management" element={<UnifiedSourceManagementPage />} />
-          <Route path="/sources" element={<Navigate to="/source-management" replace />} />
-          <Route path="/alert-ready" element={<AlertReadyPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/incidents" element={<IncidentsPage />} />
-          <Route path="/report" element={<ReportPage />} />
-          <Route path="/employees" element={<EmployeesPage />} />
-          <Route path="/widgets" element={<WidgetPage />} />
-          <Route path="/diagnostics" element={<DiagnosticsPage />} />
+          <CommonRoutes />
           <Route path="/auth" element={<Navigate to="/" replace />} />
         </Routes>
       </MainLayout>
@@ -116,24 +141,14 @@ const AppContent = () => {
       <main className="container mx-auto px-4 py-6">
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/" element={<Index />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/source-management" element={<UnifiedSourceManagementPage />} />
-          <Route path="/sources" element={<Navigate to="/source-management" replace />} />
-          <Route path="/alert-ready" element={<AlertReadyPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/incidents" element={<IncidentsPage />} />
-          <Route path="/report" element={<ReportPage />} />
-          <Route path="/employees" element={<EmployeesPage />} />
-          <Route path="/widgets" element={<WidgetPage />} />
-          <Route path="/diagnostics" element={<DiagnosticsPage />} />
+          <CommonRoutes />
         </Routes>
       </main>
     </div>
   );
 };
 
-function App() {
+const App = React.memo(() => {
   console.log('App: Component render started');
   
   return (
@@ -152,7 +167,9 @@ function App() {
       </QueryClientProvider>
     </ErrorBoundary>
   );
-}
+});
+
+App.displayName = 'App';
 
 console.log('App: Component defined');
 
