@@ -42,6 +42,7 @@ export const useAllAlertSources = () => {
       
       switch (source.source_type) {
         case 'rss':
+        case 'security-rss':
           // Fetch from security_alerts_ingest table for RSS feeds
           const { data: rssData, error: rssError } = await supabase
             .from('security_alerts_ingest')
@@ -55,15 +56,17 @@ export const useAllAlertSources = () => {
             id: alert.id,
             title: alert.title,
             summary: alert.summary,
-            description: alert.summary || 'No description available',
+            description: alert.summary || alert.title,
             link: alert.link,
             pubDate: alert.pub_date,
             category: alert.category,
             source: alert.source,
-            location: alert.location
-          }, 'rss'));
+            location: alert.location,
+            raw_data: alert.raw_data
+          }, source.source_type));
 
         case 'weather':
+        case 'weather-geocmet':
           // Fetch from weather_alerts_ingest table
           const { data: weatherData, error: weatherError } = await supabase
             .from('weather_alerts_ingest')
@@ -75,24 +78,19 @@ export const useAllAlertSources = () => {
           
           return (weatherData || []).map(alert => normalizeAlert({
             id: alert.id,
+            title: alert.description?.split('.')[0] || 'Weather Alert',
             description: alert.description,
             severity: alert.severity,
             event_type: alert.event_type,
             onset: alert.onset,
             expires: alert.expires,
-            geometry_coordinates: alert.geometry_coordinates
-          }, 'weather'));
+            geometry_coordinates: alert.geometry_coordinates,
+            raw_data: alert.raw_data
+          }, source.source_type));
 
         default:
-          // For other sources, try to fetch via edge functions
-          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
-            body: { source: source.source_type, test_mode: true }
-          });
-          
-          if (result.error) throw new Error(result.error.message);
-          
-          const alerts = result.data?.alerts || result.data?.results || [];
-          return alerts.map((alert: any) => normalizeAlert(alert, source.source_type));
+          console.log(`No specific handler for source type: ${source.source_type}`);
+          return [];
       }
     } catch (err) {
       console.error(`Error fetching alerts from ${source.name}:`, err);
@@ -114,10 +112,21 @@ export const useAllAlertSources = () => {
         allAlerts.push(...sourceAlerts);
       }
       
-      // Sort alerts by published date (most recent first)
-      allAlerts.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
+      // Filter out test data and sort by published date
+      const validAlerts = allAlerts.filter(alert => {
+        const isValidAlert = alert.title !== 'Untitled Alert' && 
+                            alert.description !== 'No description available' &&
+                            !alert.title.toLowerCase().includes('test') &&
+                            alert.title.trim().length > 0;
+        return isValidAlert;
+      });
       
-      setAlerts(allAlerts);
+      validAlerts.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
+      
+      setAlerts(validAlerts);
+      
+      console.log(`Filtered ${validAlerts.length} valid alerts from ${allAlerts.length} total`);
+      
     } catch (err) {
       console.error('Error fetching all alerts:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch alerts');
