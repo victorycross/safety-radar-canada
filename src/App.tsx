@@ -48,23 +48,6 @@ const setSecurityHeaders = () => {
   });
 };
 
-// Common routes component to avoid duplication
-const AppRoutes = () => (
-  <>
-    <Route path="/" element={<Index />} />
-    <Route path="/admin" element={<AdminPage />} />
-    <Route path="/source-management" element={<UnifiedSourceManagementPage />} />
-    <Route path="/sources" element={<Navigate to="/source-management" replace />} />
-    <Route path="/alert-ready" element={<AlertReadyPage />} />
-    <Route path="/analytics" element={<AnalyticsPage />} />
-    <Route path="/incidents" element={<IncidentsPage />} />
-    <Route path="/report" element={<ReportPage />} />
-    <Route path="/employees" element={<EmployeesPage />} />
-    <Route path="/widgets" element={<WidgetPage />} />
-    <Route path="/diagnostics" element={<DiagnosticsPage />} />
-  </>
-);
-
 const AppContent = () => {
   const { user, loading, isAdmin } = useAuth();
 
@@ -106,7 +89,17 @@ const AppContent = () => {
     return (
       <MainLayout>
         <Routes>
-          <AppRoutes />
+          <Route path="/" element={<Index />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/source-management" element={<UnifiedSourceManagementPage />} />
+          <Route path="/sources" element={<Navigate to="/source-management" replace />} />
+          <Route path="/alert-ready" element={<AlertReadyPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/incidents" element={<IncidentsPage />} />
+          <Route path="/report" element={<ReportPage />} />
+          <Route path="/employees" element={<EmployeesPage />} />
+          <Route path="/widgets" element={<WidgetPage />} />
+          <Route path="/diagnostics" element={<DiagnosticsPage />} />
           <Route path="/auth" element={<Navigate to="/" replace />} />
         </Routes>
       </MainLayout>
@@ -122,7 +115,17 @@ const AppContent = () => {
       <main className="container mx-auto px-4 py-6">
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
-          <AppRoutes />
+          <Route path="/" element={<Index />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/source-management" element={<UnifiedSourceManagementPage />} />
+          <Route path="/sources" element={<Navigate to="/source-management" replace />} />
+          <Route path="/alert-ready" element={<AlertReadyPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/incidents" element={<IncidentsPage />} />
+          <Route path="/report" element={<ReportPage />} />
+          <Route path="/employees" element={<EmployeesPage />} />
+          <Route path="/widgets" element={<WidgetPage />} />
+          <Route path="/diagnostics" element={<DiagnosticsPage />} />
         </Routes>
       </main>
     </div>
