@@ -16,6 +16,12 @@ export enum IncidentSource {
   MANUAL = 'manual'
 }
 
+export enum VerificationStatus {
+  VERIFIED = 'verified',
+  UNVERIFIED = 'unverified',
+  PENDING = 'pending'
+}
+
 export interface BaseIncident {
   id: string;
   title: string;
@@ -24,7 +30,41 @@ export interface BaseIncident {
   source: IncidentSource;
   timestamp: string;
   provinceId: string;
-  verificationStatus: 'verified' | 'unverified' | 'pending';
+  verificationStatus: VerificationStatus;
   confidenceScore?: number;
   correlationId?: string;
+}
+
+export interface Incident extends BaseIncident {
+  timestamp: Date;
+  recommendedAction?: string;
+  // Enhanced fields from new schema
+  rawPayload?: any;
+  dataSourceId?: string;
+  geographicScope?: string;
+  severityNumeric?: number;
+  geospatialData?: any;
+  correlations?: any[];
+}
+
+export interface Province {
+  id: string;
+  name: string;
+  code: string;
+  alertLevel: AlertLevel;
+  employeeCount: number;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface User {
+  id: string;
+  email?: string;
+  full_name?: string;
+  isAuthorized?: boolean;
+  role?: string;
 }

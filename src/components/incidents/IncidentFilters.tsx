@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { AlertLevel, IncidentSource, VerificationStatus } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -47,12 +46,12 @@ const IncidentFilters: React.FC<IncidentFiltersProps> = ({
 
   const sourceOptions = [
     { value: IncidentSource.POLICE, label: 'Police' },
-    { value: IncidentSource.GLOBAL_SECURITY, label: 'Global Security' },
-    { value: IncidentSource.US_SOC, label: 'US SOC' },
+    { value: IncidentSource.GOVERNMENT, label: 'Government' },
+    { value: IncidentSource.CYBERSECURITY, label: 'Cybersecurity' },
     { value: IncidentSource.EVERBRIDGE, label: 'Everbridge' },
-    { value: IncidentSource.NEWS, label: 'News' },
-    { value: IncidentSource.CROWDSOURCED, label: 'Crowdsourced' },
-    { value: IncidentSource.EMPLOYEE, label: 'Employee' }
+    { value: IncidentSource.WEATHER, label: 'Weather' },
+    { value: IncidentSource.TRAVEL, label: 'Travel' },
+    { value: IncidentSource.MANUAL, label: 'Manual' }
   ];
 
   const handleCheckboxChange = (value: string, field: string, checked: boolean) => {

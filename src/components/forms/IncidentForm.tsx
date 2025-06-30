@@ -20,7 +20,7 @@ const IncidentForm: React.FC<IncidentFormProps> = ({ isAuthorized = false }) => 
   const [description, setDescription] = useState('');
   const [provinceId, setProvinceId] = useState('');
   const [alertLevel, setAlertLevel] = useState<AlertLevel>(AlertLevel.WARNING);
-  const [source, setSource] = useState<IncidentSource>(IncidentSource.GLOBAL_SECURITY);
+  const [source, setSource] = useState<IncidentSource>(IncidentSource.GOVERNMENT);
   const [recommendedAction, setRecommendedAction] = useState('');
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,7 +41,7 @@ const IncidentForm: React.FC<IncidentFormProps> = ({ isAuthorized = false }) => 
     } else {
       reportIncident({
         ...incidentData,
-        source: IncidentSource.EMPLOYEE,
+        source: IncidentSource.MANUAL,
       });
     }
     
@@ -50,7 +50,7 @@ const IncidentForm: React.FC<IncidentFormProps> = ({ isAuthorized = false }) => 
     setDescription('');
     setProvinceId('');
     setAlertLevel(AlertLevel.WARNING);
-    setSource(IncidentSource.GLOBAL_SECURITY);
+    setSource(IncidentSource.GOVERNMENT);
     setRecommendedAction('');
   };
   
@@ -143,11 +143,11 @@ const IncidentForm: React.FC<IncidentFormProps> = ({ isAuthorized = false }) => 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={IncidentSource.POLICE}>Police</SelectItem>
-                    <SelectItem value={IncidentSource.GLOBAL_SECURITY}>Global Security</SelectItem>
-                    <SelectItem value={IncidentSource.US_SOC}>US Security Operations Centre</SelectItem>
+                    <SelectItem value={IncidentSource.GOVERNMENT}>Government</SelectItem>
+                    <SelectItem value={IncidentSource.CYBERSECURITY}>Cybersecurity</SelectItem>
                     <SelectItem value={IncidentSource.EVERBRIDGE}>Everbridge</SelectItem>
-                    <SelectItem value={IncidentSource.NEWS}>News Source</SelectItem>
-                    <SelectItem value={IncidentSource.CROWDSOURCED}>Crowdsourced</SelectItem>
+                    <SelectItem value={IncidentSource.WEATHER}>Weather</SelectItem>
+                    <SelectItem value={IncidentSource.TRAVEL}>Travel</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -98,7 +98,7 @@ const EnhancedIncidentForm: React.FC<EnhancedIncidentFormProps> = ({
         description: formData.description,
         provinceId: formData.provinceId,
         alertLevel: formData.alertLevel || AlertLevel.WARNING,
-        source: IncidentSource.EMPLOYEE,
+        source: IncidentSource.MANUAL,
         verificationStatus: VerificationStatus.UNVERIFIED,
         contactInfo: formData.contactInfo,
         anonymous: formData.anonymous || false,
