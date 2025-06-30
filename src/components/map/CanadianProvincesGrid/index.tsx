@@ -1,31 +1,25 @@
 
 import React from 'react';
-import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSimpleLocationFilter } from '@/hooks/useSimpleLocationFilter';
-import { fallbackProvinces } from './data';
 import GridHeader from './GridHeader';
 import CompactLocationCard from '../CompactLocationCard';
 import Legend from './Legend';
-import { Province } from '@/types/dashboard';
-import { AlertLevel } from '@/types';
+import { useHomeData } from '@/hooks/useHomeData';
+import { getProvinceCodeFromId } from '@/services/provinceMapping';
+import { provinceEmojis } from './data';
 import { logger } from '@/utils/logger';
 
 const CanadianProvincesGrid = () => {
-  const { provinces: supabaseProvinces } = useSupabaseDataContext();
+  const { provinces, loading } = useHomeData();
 
-  // Use supabase provinces if available, otherwise fallback
-  const transformedProvinces: Province[] = supabaseProvinces?.length > 0 
-    ? supabaseProvinces
-    : fallbackProvinces;
-
-  logger.debug('CanadianProvincesGrid: Using data source', {
-    source: supabaseProvinces?.length > 0 ? 'Supabase' : 'Fallback',
-    provincesCount: transformedProvinces.length
+  logger.debug('CanadianProvincesGrid: Using synced data', {
+    provincesCount: provinces.length,
+    loading
   });
   
   // Extract actual province IDs for the hook
-  const actualProvinceIds = transformedProvinces.map(p => p.id);
+  const actualProvinceIds = provinces.map(p => p.id);
   
   const {
     isProvinceVisible,
@@ -36,18 +30,36 @@ const CanadianProvincesGrid = () => {
   } = useSimpleLocationFilter(actualProvinceIds, []);
   
   // Filter provinces based on visibility settings
-  const visibleProvinces = transformedProvinces.filter(province => isProvinceVisible(province.id));
+  const visibleProvinces = provinces.filter(province => isProvinceVisible(province.id));
 
   const handleRefresh = () => {
-    // Force re-render by resetting the component
+    // Force re-render by reloading the page
     window.location.reload();
   };
+
+  const getEmojiForProvince = (provinceId: string): string => {
+    const code = getProvinceCodeFromId(provinceId);
+    if (code && provinceEmojis[code as keyof typeof provinceEmojis]) {
+      return provinceEmojis[code as keyof typeof provinceEmojis];
+    }
+    return '🍁'; // Default Canadian flag emoji
+  };
+
+  if (loading) {
+    return (
+      <Card className="bg-white rounded-lg shadow-sm">
+        <CardContent className="p-6">
+          <div className="text-center">Loading provinces...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-white rounded-lg shadow-sm">
       <GridHeader
         refreshKey={0}
-        isRefreshing={false}
+        isRefreshing={loading}
         onRefresh={handleRefresh}
         isFiltered={hasFilters}
         visibleCount={visibleProvinceCount}
@@ -76,7 +88,7 @@ const CanadianProvincesGrid = () => {
               code={province.code}
               alertLevel={province.alertLevel}
               employeeCount={province.employeeCount}
-              emoji={province.id === 'bc' ? '🏔️' : province.id === 'ab' ? '🛢️' : province.id === 'on' ? '🏙️' : '🍁'}
+              emoji={getEmojiForProvince(province.id)}
               linkTo={`/province/${province.id}`}
             />
           ))}

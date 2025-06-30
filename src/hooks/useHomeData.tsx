@@ -4,16 +4,41 @@ import { useLocationVisibility } from '@/hooks/useLocationVisibility';
 import { Province, InternationalHub, DashboardData } from '@/types/dashboard';
 import { AlertLevel } from '@/types';
 import { logger } from '@/utils/logger';
+import { syncProvinceData } from '@/services/provinceMapping';
+import { useEffect, useState } from 'react';
 
 export const useHomeData = (): DashboardData => {
-  const { provinces: supabaseProvinces, incidents, loading, refreshData } = useSupabaseDataContext();
+  const { provinces: supabaseProvinces, incidents, loading: supabaseLoading, refreshData } = useSupabaseDataContext();
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [loading, setLoading] = useState(true);
   
   logger.debug('useHomeData: Hook called', {
     supabaseProvincesCount: supabaseProvinces?.length || 0,
     incidentsCount: incidents?.length || 0,
-    loading
+    supabaseLoading
   });
-  
+
+  // Sync province data when component mounts or when supabase data changes
+  useEffect(() => {
+    const loadProvinceData = async () => {
+      setLoading(true);
+      try {
+        const syncedProvinces = await syncProvinceData();
+        setProvinces(syncedProvinces);
+        logger.info('useHomeData: Province data synced', {
+          provincesCount: syncedProvinces.length,
+          source: supabaseProvinces?.length > 0 ? 'Supabase' : 'Fallback'
+        });
+      } catch (error) {
+        logger.error('useHomeData: Error syncing province data', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProvinceData();
+  }, [supabaseProvinces]);
+
   // International hubs data - consolidated here
   const internationalHubs: InternationalHub[] = [
     { id: 'nyc', name: 'New York', country: 'United States' },
@@ -27,31 +52,6 @@ export const useHomeData = (): DashboardData => {
     { id: 'sydney', name: 'Sydney', country: 'Australia' },
     { id: 'toronto-intl', name: 'Toronto Financial District', country: 'Canada' }
   ];
-
-  // Fallback provinces data - only used if no Supabase data, with no dummy employee counts
-  const fallbackProvinces: Province[] = [
-    { id: 'ab', name: 'Alberta', code: 'AB', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'bc', name: 'British Columbia', code: 'BC', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'mb', name: 'Manitoba', code: 'MB', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'nb', name: 'New Brunswick', code: 'NB', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'nl', name: 'Newfoundland and Labrador', code: 'NL', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'ns', name: 'Nova Scotia', code: 'NS', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'on', name: 'Ontario', code: 'ON', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'pe', name: 'Prince Edward Island', code: 'PE', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'qc', name: 'Quebec', code: 'QC', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'sk', name: 'Saskatchewan', code: 'SK', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'nt', name: 'Northwest Territories', code: 'NT', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'nu', name: 'Nunavut', code: 'NU', alertLevel: AlertLevel.NORMAL, employeeCount: 0 },
-    { id: 'yt', name: 'Yukon', code: 'YT', alertLevel: AlertLevel.NORMAL, employeeCount: 0 }
-  ];
-
-  // Use supabase provinces if available, otherwise fallback
-  const provinces: Province[] = supabaseProvinces?.length > 0 ? supabaseProvinces : fallbackProvinces;
-
-  logger.info('useHomeData: Using data source', {
-    source: supabaseProvinces?.length > 0 ? 'Supabase' : 'Fallback',
-    provincesCount: provinces.length
-  });
   
   // Extract actual province IDs for the hook
   const actualProvinceIds = provinces.map(p => p.id);
@@ -86,7 +86,7 @@ export const useHomeData = (): DashboardData => {
     alertProvinces,
     visibleAlertProvinces,
     metrics,
-    loading,
+    loading: loading || supabaseLoading,
     refreshData
   };
 };

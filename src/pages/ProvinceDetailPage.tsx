@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSupabaseDataContext } from "@/context/SupabaseDataProvider";
@@ -7,21 +8,45 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertTriangle, Users } from "lucide-react";
 import IncidentForm from "@/components/forms/IncidentForm";
+import { getProvinceCodeFromId, provinceNames } from "@/services/provinceMapping";
+import { useHomeData } from "@/hooks/useHomeData";
 
 const ProvinceDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { provinces, incidents, getProvinceById, getIncidentsByProvince } = useSupabaseDataContext();
+  const { incidents, getIncidentsByProvince } = useSupabaseDataContext();
+  const { provinces, loading } = useHomeData();
   
   console.log('Route ID:', id);
   console.log('Available provinces:', provinces.map(p => ({ id: p.id, name: p.name })));
   
-  const province = id ? getProvinceById(id) : undefined;
+  // Find province by ID using the synced data
+  const province = id ? provinces.find(p => p.id === id) : undefined;
   const provinceIncidents = id ? getIncidentsByProvince(id) : [];
 
   console.log('Found province:', province);
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={() => navigate(-1)}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+        </Button>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading Province Details...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
   if (!province) {
+    // Try to get province code from ID for better error messaging
+    const provinceCode = id ? getProvinceCodeFromId(id) : null;
+    const provinceName = provinceCode ? provinceNames[provinceCode as keyof typeof provinceNames] : null;
+    
     return (
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => navigate(-1)}>
@@ -31,13 +56,23 @@ const ProvinceDetailPage = () => {
         <Card>
           <CardHeader>
             <CardTitle>Province Not Found</CardTitle>
-            <CardDescription>The requested province information could not be found.</CardDescription>
+            <CardDescription>
+              {provinceName 
+                ? `Province ${provinceName} data is not available yet.`
+                : 'The requested province information could not be found.'
+              }
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
                 Province ID: {id || 'Not provided'}
               </p>
+              {provinceCode && (
+                <p className="text-sm text-muted-foreground">
+                  Province Code: {provinceCode.toUpperCase()}
+                </p>
+              )}
               <p className="text-sm text-muted-foreground">
                 Available provinces: {provinces.length}
               </p>
@@ -48,7 +83,6 @@ const ProvinceDetailPage = () => {
       </div>
     );
   }
-  
   
   const getAlertBadge = (alertLevel: AlertLevel) => {
     switch (alertLevel) {
