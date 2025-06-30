@@ -1,4 +1,3 @@
-
 import { UniversalAlert } from '@/types/alerts';
 
 // Enhanced normalization that handles various RSS and alert formats
@@ -127,6 +126,41 @@ export const normalizeAlert = (alert: any, sourceType: string): UniversalAlert =
       latitude: parseFloat(alert.latitude),
       longitude: parseFloat(alert.longitude)
     } : undefined)
+  };
+};
+
+// Batch normalization function
+export const normalizeAlertBatch = (alerts: any[], sourceType: string): {
+  normalizedAlerts: UniversalAlert[];
+  errors: string[];
+  stats: {
+    total: number;
+    successful: number;
+    failed: number;
+  };
+} => {
+  const normalizedAlerts: UniversalAlert[] = [];
+  const errors: string[] = [];
+  
+  alerts.forEach((alert, index) => {
+    try {
+      const normalized = normalizeAlert(alert, sourceType);
+      normalizedAlerts.push(normalized);
+    } catch (error) {
+      const errorMsg = `Failed to normalize alert ${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      errors.push(errorMsg);
+      console.error(errorMsg, alert);
+    }
+  });
+  
+  return {
+    normalizedAlerts,
+    errors,
+    stats: {
+      total: alerts.length,
+      successful: normalizedAlerts.length,
+      failed: errors.length
+    }
   };
 };
 
