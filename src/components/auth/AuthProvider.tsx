@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -70,6 +69,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         logger.warn('AuthProvider: Error fetching user roles:', error);
+        // Log potential security event for role fetch failures
+        await logSecurityEvent({
+          action: SecurityEvents.SUSPICIOUS_ACTIVITY,
+          new_values: { 
+            type: 'role_fetch_failure', 
+            user_id: userId,
+            error: error.message 
+          }
+        });
         setUserRoles([]);
         return;
       }
@@ -97,6 +105,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logger.debug('AuthProvider: Attempting sign in');
       logger.chrome('Chrome sign in attempt', { email });
       
+      // Enhanced input validation
+      if (!email || !password) {
+        const error = new Error('Email and password are required');
+        await logSecurityEvent({
+          action: SecurityEvents.LOGIN_FAILURE,
+          new_values: { email, error: error.message }
+        });
+        return { error };
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        const error = new Error('Invalid email format');
+        await logSecurityEvent({
+          action: SecurityEvents.LOGIN_FAILURE,
+          new_values: { email, error: error.message }
+        });
+        return { error };
+      }
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -110,6 +139,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       } else {
         logger.chrome('Chrome sign in successful');
+        await logSecurityEvent({
+          action: SecurityEvents.LOGIN_SUCCESS,
+          new_values: { email }
+        });
       }
       
       return { error };
@@ -124,32 +157,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    logger.debug('AuthProvider: Attempting sign up');
-    logger.chrome('Chrome sign up attempt', { email });
-    
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName || email
-        }
+    try {
+      logger.debug('AuthProvider: Attempting sign up');
+      logger.chrome('Chrome sign up attempt', { email });
+      
+      // Enhanced input validation
+      if (!email || !password) {
+        return { error: new Error('Email and password are required') };
       }
-    });
-    
-    if (!error) {
-      logger.chrome('Chrome sign up successful');
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return { error: new Error('Invalid email format') };
+      }
+
+      // Password strength validation
+      if (password.length < 8) {
+        return { error: new Error('Password must be at least 8 characters long') };
+      }
+      
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName || email
+          }
+        }
+      });
+      
+      if (!error) {
+        logger.chrome('Chrome sign up successful');
+        await logSecurityEvent({
+          action: SecurityEvents.LOGIN_SUCCESS,
+          new_values: { email, type: 'signup' }
+        });
+      }
+      
+      return { error };
+    } catch (error: any) {
+      logger.error('AuthProvider: Sign up error:', error);
+      return { error };
     }
-    
-    return { error };
   };
 
   const signOut = async () => {
     logger.debug('AuthProvider: Signing out');
     logger.chrome('Chrome sign out');
+    
+    await logSecurityEvent({
+      action: SecurityEvents.LOGOUT,
+      new_values: { user_id: user?.id }
+    });
+    
     await supabase.auth.signOut();
   };
 
