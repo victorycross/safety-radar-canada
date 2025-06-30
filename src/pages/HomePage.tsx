@@ -14,6 +14,7 @@ const HomePage = () => {
     internationalHubs,
     alertProvinces,
     visibleAlertProvinces,
+    alertHubs,
     metrics,
     loading,
     refreshData
@@ -47,7 +48,9 @@ const HomePage = () => {
       totalProvinces={metrics.totalProvinces}
       displayProvinces={displayProvinces}
       internationalHubs={internationalHubs}
+      alertHubs={alertHubs}
       incidentsCount={metrics.incidentsCount}
+      metrics={metrics}
       onRefresh={refreshData}
       loading={loading}
     />
