@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/components/auth/AuthProvider';
 import UserMenu from '@/components/auth/UserMenu';
 import { Button } from '@/components/ui/button';

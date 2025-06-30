@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
@@ -10,6 +9,7 @@ import IncidentsPage from '@/pages/IncidentsPage';
 import ReportPage from '@/pages/ReportPage';
 import EmployeesPage from '@/pages/EmployeesPage';
 import WidgetPage from '@/pages/WidgetPage';
+import AuthPage from '@/pages/AuthPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { Navigate } from 'react-router-dom';
@@ -98,6 +98,7 @@ const AppContent = () => {
           <Route path="/report" element={<ReportPage />} />
           <Route path="/employees" element={<EmployeesPage />} />
           <Route path="/widgets" element={<WidgetPage />} />
+          <Route path="/auth" element={<Navigate to="/" replace />} />
         </Routes>
       </MainLayout>
     );
@@ -105,12 +106,13 @@ const AppContent = () => {
 
   console.log('AppContent: User not authenticated, rendering without MainLayout');
 
-  // If user is not authenticated, use the original layout with header
+  // If user is not authenticated, show auth page for auth route, otherwise show public content
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-6">
         <Routes>
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="/" element={<Index />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/source-management" element={<UnifiedSourceManagementPage />} />

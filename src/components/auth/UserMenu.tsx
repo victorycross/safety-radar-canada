@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useAuth } from './AuthProvider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,79 +10,40 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from './AuthProvider';
-import { User, LogOut, Settings, Shield } from 'lucide-react';
+import { User, LogOut, Settings } from 'lucide-react';
 
 const UserMenu = () => {
-  const { user, userRoles, signOut, isAdmin, isPowerUserOrAdmin } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
 
-  if (!user) {
-    return null;
-  }
-
-  const roleColors = {
-    admin: 'bg-red-100 text-red-800',
-    power_user: 'bg-blue-100 text-blue-800',
-    regular_user: 'bg-green-100 text-green-800'
-  };
-
-  const roleNames = {
-    admin: 'Admin',
-    power_user: 'Power User',
-    regular_user: 'User'
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center gap-2">
+        <Button variant="outline" size="sm" className="flex items-center gap-2">
           <User className="h-4 w-4" />
-          <span className="hidden md:inline">{user.email}</span>
+          {user?.email}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium">{user.email}</p>
-            <div className="flex flex-wrap gap-1">
-              {userRoles.map(role => (
-                <Badge 
-                  key={role} 
-                  variant="secondary" 
-                  className={`text-xs ${roleColors[role]}`}
-                >
-                  {roleNames[role]}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </DropdownMenuLabel>
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
-        {isPowerUserOrAdmin() && (
-          <>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Management</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
-        
+        <DropdownMenuItem disabled>
+          <User className="mr-2 h-4 w-4" />
+          {user?.email}
+        </DropdownMenuItem>
         {isAdmin() && (
-          <>
-            <DropdownMenuItem>
-              <Shield className="mr-2 h-4 w-4" />
-              <span>Admin Panel</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
+          <DropdownMenuItem disabled>
+            <Settings className="mr-2 h-4 w-4" />
+            Administrator
+          </DropdownMenuItem>
         )}
-        
-        <DropdownMenuItem onClick={signOut} className="text-red-600">
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Sign out</span>
+          Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
