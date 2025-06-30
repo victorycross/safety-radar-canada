@@ -39,4 +39,5 @@ export interface DashboardData {
   metrics: DashboardMetrics;
   loading: boolean;
   error?: string | null;
+  refreshData: () => void;
 }

@@ -1,7 +1,6 @@
 
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
-import { AlertLevel } from '@/types';
 import { Province, InternationalHub, DashboardData } from '@/types/dashboard';
 import { logger } from '@/utils/logger';
 

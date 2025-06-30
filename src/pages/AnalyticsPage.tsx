@@ -19,19 +19,19 @@ const AnalyticsPage = () => {
   // Mock data for now - will be replaced with real data in Phase 3
   const mockChartData: AnalyticsChartData = {
     incidentsByAlertLevel: [
-      { name: 'Normal', value: 45, fill: '#22c55e' },
-      { name: 'Warning', value: 12, fill: '#f59e0b' },
-      { name: 'Severe', value: 3, fill: '#ef4444' }
+      { name: 'Normal', value: 45, fill: '#22c55e', color: '#22c55e' },
+      { name: 'Warning', value: 12, fill: '#f59e0b', color: '#f59e0b' },
+      { name: 'Severe', value: 3, fill: '#ef4444', color: '#ef4444' }
     ],
     incidentsBySource: [
-      { name: 'Weather Alerts', value: 25, fill: '#3b82f6' },
-      { name: 'Security Feeds', value: 20, fill: '#8b5cf6' },
-      { name: 'Manual Reports', value: 15, fill: '#06b6d4' }
+      { name: 'Weather Alerts', value: 25, fill: '#3b82f6', color: '#3b82f6' },
+      { name: 'Security Feeds', value: 20, fill: '#8b5cf6', color: '#8b5cf6' },
+      { name: 'Manual Reports', value: 15, fill: '#06b6d4', color: '#06b6d4' }
     ],
     provincesByAlertLevel: [
-      { name: 'Normal', value: 10, fill: '#22c55e' },
-      { name: 'Warning', value: 2, fill: '#f59e0b' },
-      { name: 'Severe', value: 1, fill: '#ef4444' }
+      { name: 'Normal', value: 10, fill: '#22c55e', color: '#22c55e' },
+      { name: 'Warning', value: 2, fill: '#f59e0b', color: '#f59e0b' },
+      { name: 'Severe', value: 1, fill: '#ef4444', color: '#ef4444' }
     ],
     trendsOverTime: []
   };
