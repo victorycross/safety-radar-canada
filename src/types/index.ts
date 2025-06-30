@@ -38,7 +38,6 @@ export interface BaseIncident {
 export interface Incident extends BaseIncident {
   timestamp: Date;
   recommendedAction?: string;
-  // Enhanced fields from new schema
   rawPayload?: any;
   dataSourceId?: string;
   geographicScope?: string;

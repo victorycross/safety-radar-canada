@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AlertLevel, IncidentSource, VerificationStatus } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ const IncidentFilters: React.FC<IncidentFiltersProps> = ({
     { value: IncidentSource.EVERBRIDGE, label: 'Everbridge' },
     { value: IncidentSource.WEATHER, label: 'Weather' },
     { value: IncidentSource.TRAVEL, label: 'Travel' },
+    { value: IncidentSource.BC_ALERTS, label: 'BC Alerts' },
     { value: IncidentSource.MANUAL, label: 'Manual' }
   ];
 
