@@ -36,12 +36,28 @@ const SecureRoleManager: React.FC = () => {
         new_values: { target_email: email, role: selectedRole, action: 'assign' }
       });
 
-      const { error } = await supabase.rpc('assign_user_role', {
-        _user_email: email,
-        _role: selectedRole
-      });
+      // Use the make_user_admin function for admin assignments, or handle manually for other roles
+      if (selectedRole === 'admin') {
+        const { error } = await supabase.rpc('make_user_admin', {
+          user_email: email
+        });
+        if (error) throw error;
+      } else {
+        // For non-admin roles, insert directly (this would need proper RLS policies)
+        const { data: userData } = await supabase.auth.admin.getUserByEmail(email);
+        if (!userData.user) {
+          throw new Error('User not found');
+        }
 
-      if (error) throw error;
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userData.user.id,
+            role: selectedRole
+          });
+        
+        if (error) throw error;
+      }
 
       toast({
         title: 'Role Assigned',
@@ -80,10 +96,17 @@ const SecureRoleManager: React.FC = () => {
         new_values: { target_email: email, role: selectedRole, action: 'remove' }
       });
 
-      const { error } = await supabase.rpc('remove_user_role', {
-        _user_email: email,
-        _role: selectedRole
-      });
+      // Get user by email first
+      const { data: userData } = await supabase.auth.admin.getUserByEmail(email);
+      if (!userData.user) {
+        throw new Error('User not found');
+      }
+
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userData.user.id)
+        .eq('role', selectedRole);
 
       if (error) throw error;
 

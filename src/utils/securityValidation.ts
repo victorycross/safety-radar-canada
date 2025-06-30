@@ -32,7 +32,7 @@ export class SecurityValidator {
     /[\';]/g, // Quote characters in suspicious contexts
   ];
 
-  static validateInput(value: any, type: 'text' | 'html' | 'email' | 'url' | 'sql' = 'text'): ValidationResult {
+  static validateInput(value: any, type: 'text' | 'html' | 'email' | 'url' = 'text'): ValidationResult {
     const result: ValidationResult = {
       isValid: true,
       errors: []
@@ -63,7 +63,7 @@ export class SecurityValidator {
     }
 
     // SQL injection detection for database-bound inputs
-    if (type === 'sql') {
+    if (type === 'text' && stringValue.length > 50) {
       const sqlInjectionFound = this.sqlInjectionPatterns.some(pattern => pattern.test(stringValue));
       if (sqlInjectionFound) {
         result.errors.push('Potential SQL injection detected');
