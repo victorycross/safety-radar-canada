@@ -8,6 +8,7 @@ import GridHeader from './GridHeader';
 import CompactLocationCard from '../CompactLocationCard';
 import Legend from './Legend';
 import { Province } from '@/types/dashboard';
+import { SupabaseProvince } from '@/types/supabase-types';
 import { logger } from '@/utils/logger';
 
 const CanadianProvincesGrid = () => {
@@ -15,7 +16,7 @@ const CanadianProvincesGrid = () => {
 
   // Transform Supabase provinces to match our interface with proper property mapping
   const transformedProvinces: Province[] = supabaseProvinces?.length > 0 
-    ? supabaseProvinces.map(province => ({
+    ? supabaseProvinces.map((province: SupabaseProvince) => ({
         id: province.id,
         name: province.name,
         code: province.code,
@@ -23,7 +24,7 @@ const CanadianProvincesGrid = () => {
                     province.alert_level === 'warning' || 
                     province.alert_level === 'severe') 
                    ? province.alert_level 
-                   : 'normal' as 'normal' | 'warning' | 'severe',
+                   : 'normal',
         employeeCount: province.employee_count || 0
       }))
     : fallbackProvinces;

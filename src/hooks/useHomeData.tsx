@@ -2,6 +2,7 @@
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
 import { Province, InternationalHub, DashboardData } from '@/types/dashboard';
+import { SupabaseProvince } from '@/types/supabase-types';
 import { logger } from '@/utils/logger';
 
 export const useHomeData = (): DashboardData => {
@@ -46,7 +47,7 @@ export const useHomeData = (): DashboardData => {
 
   // Transform Supabase data to match our interface, with proper property mapping
   const provinces: Province[] = supabaseProvinces?.length > 0 
-    ? supabaseProvinces.map(province => ({
+    ? supabaseProvinces.map((province: SupabaseProvince) => ({
         id: province.id,
         name: province.name,
         code: province.code,
@@ -54,7 +55,7 @@ export const useHomeData = (): DashboardData => {
                     province.alert_level === 'warning' || 
                     province.alert_level === 'severe') 
                    ? province.alert_level 
-                   : 'normal' as 'normal' | 'warning' | 'severe',
+                   : 'normal',
         employeeCount: province.employee_count || 0
       }))
     : fallbackProvinces;
