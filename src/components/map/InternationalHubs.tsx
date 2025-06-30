@@ -1,128 +1,28 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import { AlertLevel } from '@/types';
 import { Filter, RefreshCw } from 'lucide-react';
 import { useSimpleLocationFilter } from '@/hooks/useSimpleLocationFilter';
-import { Button } from '../ui/button';
+import { useNavigate } from 'react-router-dom';
 import CompactLocationCard from './CompactLocationCard';
+import { InternationalHub } from '@/types/dashboard';
 
-interface InternationalHub {
-  id: string;
-  name: string;
-  country: string;
-  flag: string;
-  alertLevel: AlertLevel;
-  travelWarnings: number;
-  localIncidents: number;
-  lastUpdate: string;
+interface InternationalHubsProps {
+  hubs: InternationalHub[];
+  loading?: boolean;
+  onRefresh?: () => void;
 }
 
-const InternationalHubs = () => {
-  const internationalHubs: InternationalHub[] = [
-    {
-      id: 'nyc',
-      name: 'New York',
-      country: 'United States',
-      flag: '🇺🇸',
-      alertLevel: AlertLevel.NORMAL,
-      travelWarnings: 0,
-      localIncidents: 2,
-      lastUpdate: '2024-01-15'
-    },
-    {
-      id: 'london',
-      name: 'London',
-      country: 'United Kingdom',
-      flag: '🇬🇧',
-      alertLevel: AlertLevel.WARNING,
-      travelWarnings: 1,
-      localIncidents: 3,
-      lastUpdate: '2024-01-14'
-    },
-    {
-      id: 'hk',
-      name: 'Hong Kong',
-      country: 'China',
-      flag: '🇭🇰',
-      alertLevel: AlertLevel.WARNING,
-      travelWarnings: 2,
-      localIncidents: 1,
-      lastUpdate: '2024-01-13'
-    },
-    {
-      id: 'singapore',
-      name: 'Singapore',
-      country: 'Singapore',
-      flag: '🇸🇬',
-      alertLevel: AlertLevel.NORMAL,
-      travelWarnings: 0,
-      localIncidents: 0,
-      lastUpdate: '2024-01-15'
-    },
-    {
-      id: 'tokyo',
-      name: 'Tokyo',
-      country: 'Japan',
-      flag: '🇯🇵',
-      alertLevel: AlertLevel.NORMAL,
-      travelWarnings: 0,
-      localIncidents: 1,
-      lastUpdate: '2024-01-14'
-    },
-    {
-      id: 'frankfurt',
-      name: 'Frankfurt',
-      country: 'Germany',
-      flag: '🇩🇪',
-      alertLevel: AlertLevel.NORMAL,
-      travelWarnings: 0,
-      localIncidents: 0,
-      lastUpdate: '2024-01-15'
-    },
-    {
-      id: 'zurich',
-      name: 'Zurich',
-      country: 'Switzerland',
-      flag: '🇨🇭',
-      alertLevel: AlertLevel.NORMAL,
-      travelWarnings: 0,
-      localIncidents: 0,
-      lastUpdate: '2024-01-15'
-    },
-    {
-      id: 'dubai',
-      name: 'Dubai',
-      country: 'UAE',
-      flag: '🇦🇪',
-      alertLevel: AlertLevel.WARNING,
-      travelWarnings: 1,
-      localIncidents: 2,
-      lastUpdate: '2024-01-13'
-    },
-    {
-      id: 'sydney',
-      name: 'Sydney',
-      country: 'Australia',
-      flag: '🇦🇺',
-      alertLevel: AlertLevel.NORMAL,
-      travelWarnings: 0,
-      localIncidents: 1,
-      lastUpdate: '2024-01-14'
-    },
-    {
-      id: 'toronto-intl',
-      name: 'Toronto Financial District',
-      country: 'Canada',
-      flag: '🇨🇦',
-      alertLevel: AlertLevel.NORMAL,
-      travelWarnings: 0,
-      localIncidents: 0,
-      lastUpdate: '2024-01-15'
-    }
-  ];
-
-  const hubIds = internationalHubs.map(h => h.id);
+const InternationalHubs: React.FC<InternationalHubsProps> = ({ 
+  hubs, 
+  loading = false, 
+  onRefresh 
+}) => {
+  const navigate = useNavigate();
+  const hubIds = hubs.map(h => h.id);
   
   const {
     isHubVisible,
@@ -133,14 +33,32 @@ const InternationalHubs = () => {
   } = useSimpleLocationFilter([], hubIds);
 
   const handleHubClick = (hub: InternationalHub) => {
-    console.log(`Clicked on ${hub.name}:`, hub);
+    navigate(`/hub/${hub.id}`);
   };
 
   const handleRefresh = () => {
-    window.location.reload();
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
-  const visibleHubs = internationalHubs.filter(hub => isHubVisible(hub.id));
+  const visibleHubs = hubs.filter(hub => isHubVisible(hub.id));
+
+  if (loading) {
+    return (
+      <Card className="bg-white rounded-lg shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle>International Financial Hubs</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <span className="ml-2 text-muted-foreground">Loading hubs...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-white rounded-lg shadow-sm">
@@ -194,21 +112,25 @@ const InternationalHubs = () => {
               alertLevel={hub.alertLevel}
               travelWarnings={hub.travelWarnings}
               localIncidents={hub.localIncidents}
-              emoji={hub.flag}
+              emoji={hub.flagEmoji || '🏢'}
               onClick={() => handleHubClick(hub)}
             />
           ))}
         </div>
 
-        {visibleHubs.length === 0 && (
+        {visibleHubs.length === 0 && !loading && (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No international hubs match the current filters.</p>
-            <button 
-              onClick={resetFilters}
-              className="text-blue-600 hover:text-blue-800 underline mt-2"
-            >
-              Show all hubs
-            </button>
+            <p className="text-muted-foreground">
+              {hasFilters ? 'No international hubs match the current filters.' : 'No international hubs configured.'}
+            </p>
+            {hasFilters && (
+              <button 
+                onClick={resetFilters}
+                className="text-blue-600 hover:text-blue-800 underline mt-2"
+              >
+                Show all hubs
+              </button>
+            )}
           </div>
         )}
 

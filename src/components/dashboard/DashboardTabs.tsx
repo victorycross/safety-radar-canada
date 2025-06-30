@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -14,19 +13,26 @@ import InternationalHubs from '@/components/map/InternationalHubs';
 import RecentAlerts from './RecentAlerts';
 import IncidentsList from '@/components/incidents/IncidentsList';
 import EmployeeDistributionChart from './EmployeeDistributionChart';
+import { InternationalHub } from '@/types/dashboard';
 
 interface DashboardTabsProps {
   visibleProvincesCount: number;
   totalProvinces: number;
   internationalHubsCount: number;
   incidentsCount: number;
+  internationalHubs: InternationalHub[];
+  hubsLoading?: boolean;
+  onRefreshHubs?: () => void;
 }
 
 const DashboardTabs: React.FC<DashboardTabsProps> = ({
   visibleProvincesCount,
   totalProvinces,
   internationalHubsCount,
-  incidentsCount
+  incidentsCount,
+  internationalHubs,
+  hubsLoading = false,
+  onRefreshHubs
 }) => {
   return (
     <Tabs defaultValue="provinces" className="space-y-6">
@@ -97,7 +103,11 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({
             {internationalHubsCount} key locations worldwide
           </p>
         </div>
-        <InternationalHubs />
+        <InternationalHubs 
+          hubs={internationalHubs}
+          loading={hubsLoading}
+          onRefresh={onRefreshHubs}
+        />
       </TabsContent>
 
       <TabsContent value="alerts" className="space-y-4">

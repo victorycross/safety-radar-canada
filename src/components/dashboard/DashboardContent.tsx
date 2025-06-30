@@ -14,7 +14,9 @@ interface DashboardContentProps {
   internationalHubs: InternationalHub[];
   incidentsCount: number;
   onRefresh: () => void;
+  onRefreshHubs?: () => void;
   loading: boolean;
+  hubsLoading?: boolean;
 }
 
 const DashboardContent: React.FC<DashboardContentProps> = ({
@@ -26,7 +28,9 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   internationalHubs,
   incidentsCount,
   onRefresh,
-  loading
+  onRefreshHubs,
+  loading,
+  hubsLoading = false
 }) => {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -54,6 +58,9 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
           totalProvinces={totalProvinces}
           internationalHubsCount={internationalHubs.length}
           incidentsCount={incidentsCount}
+          internationalHubs={internationalHubs}
+          hubsLoading={hubsLoading}
+          onRefreshHubs={onRefreshHubs}
         />
       </div>
     </div>
