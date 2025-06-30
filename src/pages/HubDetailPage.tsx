@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { useHubData } from '@/hooks/useHubData';
 import { AlertLevel } from '@/types';
 import { logger } from '@/utils/logger';
+import HubBreadcrumb from '@/components/hub/HubBreadcrumb';
 
 const HubDetailPage = () => {
   const { hubId } = useParams<{ hubId: string }>();
@@ -75,9 +76,11 @@ const HubDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header with Breadcrumb */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
+          <HubBreadcrumb hubName={hub.name} hubId={hub.id} />
+          
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link to="/hubs">
