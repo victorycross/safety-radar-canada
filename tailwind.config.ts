@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -114,5 +113,10 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+		async () => {
+			const animatePlugin = await import('tailwindcss-animate');
+			return animatePlugin.default;
+		}
+	],
 } satisfies Config;
