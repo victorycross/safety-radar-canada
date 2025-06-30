@@ -6,6 +6,7 @@ import AnalyticsFilters from '@/components/analytics/AnalyticsFilters';
 import EnhancedCharts from '@/components/analytics/EnhancedCharts';
 import ExecutiveSummary from '@/components/analytics/ExecutiveSummary';
 import { useAnalyticsState } from '@/hooks/useAnalyticsState';
+import { AnalyticsChartData } from '@/types/analytics';
 
 const AnalyticsPage = () => {
   const { 
@@ -15,9 +16,24 @@ const AnalyticsPage = () => {
     exportData 
   } = useAnalyticsState();
 
-  // Helper function to update date range
-  const updateDateRange = (dateRange: { from: Date; to: Date }) => {
-    updateFilters({ dateRange });
+  // Mock data for now - will be replaced with real data in Phase 3
+  const mockChartData: AnalyticsChartData = {
+    incidentsByAlertLevel: [
+      { name: 'Normal', value: 45, fill: '#22c55e' },
+      { name: 'Warning', value: 12, fill: '#f59e0b' },
+      { name: 'Severe', value: 3, fill: '#ef4444' }
+    ],
+    incidentsBySource: [
+      { name: 'Weather Alerts', value: 25, fill: '#3b82f6' },
+      { name: 'Security Feeds', value: 20, fill: '#8b5cf6' },
+      { name: 'Manual Reports', value: 15, fill: '#06b6d4' }
+    ],
+    provincesByAlertLevel: [
+      { name: 'Normal', value: 10, fill: '#22c55e' },
+      { name: 'Warning', value: 2, fill: '#f59e0b' },
+      { name: 'Severe', value: 1, fill: '#ef4444' }
+    ],
+    trendsOverTime: []
   };
 
   return (
@@ -47,9 +63,9 @@ const AnalyticsPage = () => {
           />
           
           <EnhancedCharts 
-            incidentsByAlertLevel={[]}
-            incidentsBySource={[]}
-            provincesByAlertLevel={[]}
+            incidentsByAlertLevel={mockChartData.incidentsByAlertLevel}
+            incidentsBySource={mockChartData.incidentsBySource}
+            provincesByAlertLevel={mockChartData.provincesByAlertLevel}
           />
         </TabsContent>
 
@@ -72,9 +88,9 @@ const AnalyticsPage = () => {
             </CardHeader>
             <CardContent>
               <EnhancedCharts 
-                incidentsByAlertLevel={[]}
-                incidentsBySource={[]}
-                provincesByAlertLevel={[]}
+                incidentsByAlertLevel={mockChartData.incidentsByAlertLevel}
+                incidentsBySource={mockChartData.incidentsBySource}
+                provincesByAlertLevel={mockChartData.provincesByAlertLevel}
               />
             </CardContent>
           </Card>
@@ -82,10 +98,10 @@ const AnalyticsPage = () => {
 
         <TabsContent value="executive" className="space-y-6">
           <ExecutiveSummary 
-            totalIncidents={0}
-            affectedProvinces={0}
-            latestIncident=""
-            incidentsByAlertLevel={[]}
+            totalIncidents={60}
+            affectedProvinces={13}
+            latestIncident="Security alert in Ontario"
+            incidentsByAlertLevel={mockChartData.incidentsByAlertLevel}
             provinces={[]}
           />
         </TabsContent>

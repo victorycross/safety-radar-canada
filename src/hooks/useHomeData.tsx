@@ -1,12 +1,21 @@
+
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
 import { AlertLevel } from '@/types';
+import { Province, InternationalHub, DashboardData } from '@/types/dashboard';
+import { logger } from '@/utils/logger';
 
-export const useHomeData = () => {
-  const { provinces, incidents, loading, refreshData } = useSupabaseDataContext();
+export const useHomeData = (): DashboardData => {
+  const { provinces: supabaseProvinces, incidents, loading, refreshData } = useSupabaseDataContext();
+  
+  logger.debug('useHomeData: Hook called', {
+    supabaseProvincesCount: supabaseProvinces?.length || 0,
+    incidentsCount: incidents?.length || 0,
+    loading
+  });
   
   // International hubs data - consolidated here
-  const internationalHubs = [
+  const internationalHubs: InternationalHub[] = [
     { id: 'nyc', name: 'New York', country: 'United States' },
     { id: 'london', name: 'London', country: 'United Kingdom' },
     { id: 'hk', name: 'Hong Kong', country: 'China' },
@@ -19,52 +28,72 @@ export const useHomeData = () => {
     { id: 'toronto-intl', name: 'Toronto Financial District', country: 'Canada' }
   ];
 
-  // Fallback provinces data
-  const fallbackProvinces = [
-    { id: 'ab', name: 'Alberta', code: 'AB', alertLevel: 'normal' as const, employeeCount: 15420 },
-    { id: 'bc', name: 'British Columbia', code: 'BC', alertLevel: 'normal' as const, employeeCount: 23150 },
-    { id: 'mb', name: 'Manitoba', code: 'MB', alertLevel: 'normal' as const, employeeCount: 5890 },
-    { id: 'nb', name: 'New Brunswick', code: 'NB', alertLevel: 'normal' as const, employeeCount: 3420 },
-    { id: 'nl', name: 'Newfoundland and Labrador', code: 'NL', alertLevel: 'normal' as const, employeeCount: 2180 },
-    { id: 'ns', name: 'Nova Scotia', code: 'NS', alertLevel: 'normal' as const, employeeCount: 4350 },
-    { id: 'on', name: 'Ontario', code: 'ON', alertLevel: 'normal' as const, employeeCount: 45200 },
-    { id: 'pe', name: 'Prince Edward Island', code: 'PE', alertLevel: 'normal' as const, employeeCount: 890 },
-    { id: 'qc', name: 'Quebec', code: 'QC', alertLevel: 'normal' as const, employeeCount: 32100 },
-    { id: 'sk', name: 'Saskatchewan', code: 'SK', alertLevel: 'normal' as const, employeeCount: 4750 },
-    { id: 'nt', name: 'Northwest Territories', code: 'NT', alertLevel: 'normal' as const, employeeCount: 220 },
-    { id: 'nu', name: 'Nunavut', code: 'NU', alertLevel: 'normal' as const, employeeCount: 180 },
-    { id: 'yt', name: 'Yukon', code: 'YT', alertLevel: 'normal' as const, employeeCount: 150 }
+  // Fallback provinces data - only used if no Supabase data
+  const fallbackProvinces: Province[] = [
+    { id: 'ab', name: 'Alberta', code: 'AB', alertLevel: 'normal', employeeCount: 15420 },
+    { id: 'bc', name: 'British Columbia', code: 'BC', alertLevel: 'normal', employeeCount: 23150 },
+    { id: 'mb', name: 'Manitoba', code: 'MB', alertLevel: 'normal', employeeCount: 5890 },
+    { id: 'nb', name: 'New Brunswick', code: 'NB', alertLevel: 'normal', employeeCount: 3420 },
+    { id: 'nl', name: 'Newfoundland and Labrador', code: 'NL', alertLevel: 'normal', employeeCount: 2180 },
+    { id: 'ns', name: 'Nova Scotia', code: 'NS', alertLevel: 'normal', employeeCount: 4350 },
+    { id: 'on', name: 'Ontario', code: 'ON', alertLevel: 'normal', employeeCount: 45200 },
+    { id: 'pe', name: 'Prince Edward Island', code: 'PE', alertLevel: 'normal', employeeCount: 890 },
+    { id: 'qc', name: 'Quebec', code: 'QC', alertLevel: 'normal', employeeCount: 32100 },
+    { id: 'sk', name: 'Saskatchewan', code: 'SK', alertLevel: 'normal', employeeCount: 4750 },
+    { id: 'nt', name: 'Northwest Territories', code: 'NT', alertLevel: 'normal', employeeCount: 220 },
+    { id: 'nu', name: 'Nunavut', code: 'NU', alertLevel: 'normal', employeeCount: 180 },
+    { id: 'yt', name: 'Yukon', code: 'YT', alertLevel: 'normal', employeeCount: 150 }
   ];
 
-  // Use data from context if available, otherwise use fallback data
-  const displayProvinces = provinces.length > 0 ? provinces : fallbackProvinces;
+  // Transform Supabase data to match our interface, with fallback
+  const provinces: Province[] = supabaseProvinces?.length > 0 
+    ? supabaseProvinces.map(province => ({
+        id: province.id,
+        name: province.name,
+        code: province.code,
+        alertLevel: province.alert_level as 'normal' | 'warning' | 'severe',
+        employeeCount: province.employee_count || 0
+      }))
+    : fallbackProvinces;
+
+  logger.info('useHomeData: Using data source', {
+    source: supabaseProvinces?.length > 0 ? 'Supabase' : 'Fallback',
+    provincesCount: provinces.length
+  });
   
   // Extract actual province IDs for the hook
-  const actualProvinceIds = displayProvinces.map(p => p.id);
+  const actualProvinceIds = provinces.map(p => p.id);
   
   const { isProvinceVisible } = useLocationVisibility(actualProvinceIds);
   
   // Get provinces with severe or warning statuses
-  const alertProvinces = displayProvinces.filter(province => 
-    province.alertLevel === AlertLevel.SEVERE || province.alertLevel === AlertLevel.WARNING
+  const alertProvinces = provinces.filter(province => 
+    province.alertLevel === 'severe' || province.alertLevel === 'warning'
   );
 
   // Filter alert provinces based on visibility for display purposes
   const visibleAlertProvinces = alertProvinces.filter(province => isProvinceVisible(province.id));
 
   // Get visible provinces count
-  const visibleProvincesCount = displayProvinces.filter(province => isProvinceVisible(province.id)).length;
+  const visibleProvincesCount = provinces.filter(province => isProvinceVisible(province.id)).length;
 
   // Recent incidents count
-  const recentIncidentsCount = incidents.length;
+  const recentIncidentsCount = incidents?.length || 0;
+
+  const metrics: DashboardData['metrics'] = {
+    totalProvinces: provinces.length,
+    visibleProvincesCount,
+    alertProvincesCount: alertProvinces.length,
+    incidentsCount: recentIncidentsCount,
+    employeesCount: provinces.reduce((sum, p) => sum + p.employeeCount, 0)
+  };
 
   return {
-    displayProvinces,
+    provinces,
     internationalHubs,
     alertProvinces,
     visibleAlertProvinces,
-    visibleProvincesCount,
-    recentIncidentsCount,
+    metrics,
     loading,
     refreshData
   };

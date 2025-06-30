@@ -3,47 +3,39 @@ import React from 'react';
 import { useHomeData } from '@/hooks/useHomeData';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 import DashboardContent from '@/components/dashboard/DashboardContent';
+import { logger } from '@/utils/logger';
 
 const HomePage = () => {
-  console.log('HomePage: Component rendering started');
+  logger.debug('HomePage: Component rendering started');
   
-  const {
-    displayProvinces,
-    internationalHubs,
-    alertProvinces,
-    visibleAlertProvinces,
-    visibleProvincesCount,
-    recentIncidentsCount,
-    loading,
-    refreshData
-  } = useHomeData();
+  const homeData = useHomeData();
 
-  console.log('HomePage: Data loaded', {
-    loading,
-    displayProvincesCount: displayProvinces?.length,
-    alertProvincesCount: alertProvinces?.length,
-    visibleProvincesCount,
-    recentIncidentsCount
+  logger.debug('HomePage: Data loaded', {
+    loading: homeData.loading,
+    provincesCount: homeData.provinces.length,
+    alertProvincesCount: homeData.alertProvinces.length,
+    visibleProvincesCount: homeData.metrics.visibleProvincesCount,
+    incidentsCount: homeData.metrics.incidentsCount
   });
 
-  if (loading) {
-    console.log('HomePage: Showing loading state');
+  if (homeData.loading) {
+    logger.debug('HomePage: Showing loading state');
     return <DashboardLoadingState />;
   }
 
-  console.log('HomePage: Rendering dashboard content');
+  logger.debug('HomePage: Rendering dashboard content');
 
   return (
     <DashboardContent
-      alertProvinces={alertProvinces}
-      visibleAlertProvinces={visibleAlertProvinces}
-      visibleProvincesCount={visibleProvincesCount}
-      totalProvinces={displayProvinces.length}
-      displayProvinces={displayProvinces}
-      internationalHubs={internationalHubs}
-      incidentsCount={recentIncidentsCount}
-      onRefresh={refreshData}
-      loading={loading}
+      alertProvinces={homeData.alertProvinces}
+      visibleAlertProvinces={homeData.visibleAlertProvinces}
+      visibleProvincesCount={homeData.metrics.visibleProvincesCount}
+      totalProvinces={homeData.metrics.totalProvinces}
+      displayProvinces={homeData.provinces}
+      internationalHubs={homeData.internationalHubs}
+      incidentsCount={homeData.metrics.incidentsCount}
+      onRefresh={homeData.refreshData}
+      loading={homeData.loading}
     />
   );
 };

@@ -7,21 +7,33 @@ import { fallbackProvinces } from './data';
 import GridHeader from './GridHeader';
 import CompactLocationCard from '../CompactLocationCard';
 import Legend from './Legend';
+import { Province } from '@/types/dashboard';
+import { logger } from '@/utils/logger';
 
 const CanadianProvincesGrid = () => {
-  const { provinces } = useSupabaseDataContext();
+  const { provinces: supabaseProvinces } = useSupabaseDataContext();
 
-  // Use data from context if available, otherwise use fallback data
-  const displayProvinces = provinces.length > 0 ? provinces : fallbackProvinces;
+  // Transform Supabase provinces to match our interface
+  const transformedProvinces: Province[] = supabaseProvinces?.length > 0 
+    ? supabaseProvinces.map(province => ({
+        id: province.id,
+        name: province.name,
+        code: province.code,
+        alertLevel: province.alert_level as 'normal' | 'warning' | 'severe',
+        employeeCount: province.employee_count || 0
+      }))
+    : fallbackProvinces;
+
+  logger.debug('CanadianProvincesGrid: Using data source', {
+    source: supabaseProvinces?.length > 0 ? 'Supabase' : 'Fallback',
+    provincesCount: transformedProvinces.length
+  });
   
   // Extract actual province IDs for the hook
-  const actualProvinceIds = displayProvinces.map(p => p.id);
+  const actualProvinceIds = transformedProvinces.map(p => p.id);
   
   const {
     isProvinceVisible,
-    toggleProvince,
-    showAllProvinces,
-    hideAllProvinces,
     resetFilters,
     visibleProvinceCount,
     totalProvinces,
@@ -29,7 +41,7 @@ const CanadianProvincesGrid = () => {
   } = useSimpleLocationFilter(actualProvinceIds, []);
   
   // Filter provinces based on visibility settings
-  const visibleProvinces = displayProvinces.filter(province => isProvinceVisible(province.id));
+  const visibleProvinces = transformedProvinces.filter(province => isProvinceVisible(province.id));
 
   const handleRefresh = () => {
     // Force re-render by resetting the component

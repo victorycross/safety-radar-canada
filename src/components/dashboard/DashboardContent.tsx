@@ -3,14 +3,15 @@ import React from 'react';
 import DashboardHeader from '@/components/layout/DashboardHeader';
 import CriticalAlertsHero from '@/components/dashboard/CriticalAlertsHero';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
+import { Province, InternationalHub } from '@/types/dashboard';
 
 interface DashboardContentProps {
-  alertProvinces: any[];
-  visibleAlertProvinces: any[];
+  alertProvinces: Province[];
+  visibleAlertProvinces: Province[];
   visibleProvincesCount: number;
   totalProvinces: number;
-  displayProvinces: any[];
-  internationalHubs: any[];
+  displayProvinces: Province[];
+  internationalHubs: InternationalHub[];
   incidentsCount: number;
   onRefresh: () => void;
   loading: boolean;

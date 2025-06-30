@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
@@ -22,6 +23,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import { useAuth } from '@/components/auth/AuthProvider';
 import Header from '@/components/layout/Header';
 import { logSecurityEvent, SecurityEvents } from '@/utils/securityAudit';
+import { logger } from '@/utils/logger';
 
 // Move QueryClient outside component to prevent recreation
 const queryClient = new QueryClient();
@@ -66,10 +68,10 @@ const AppRoutes = () => (
 const AppContent = () => {
   const { user, loading, isAdmin } = useAuth();
 
-  console.log('AppContent: Render started', { user: !!user, loading, isAdmin: isAdmin() });
+  logger.debug('AppContent: Render started', { user: !!user, loading, isAdmin: isAdmin() });
 
   useEffect(() => {
-    console.log('AppContent: useEffect triggered');
+    logger.debug('AppContent: useEffect triggered');
     
     // Set security headers
     setSecurityHeaders();
@@ -85,7 +87,7 @@ const AppContent = () => {
 
   // Show loading state while auth is being determined
   if (loading) {
-    console.log('AppContent: Showing loading state');
+    logger.debug('AppContent: Showing loading state');
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -96,11 +98,11 @@ const AppContent = () => {
     );
   }
 
-  console.log('AppContent: Auth loading complete, rendering routes');
+  logger.debug('AppContent: Auth loading complete, rendering routes');
 
   // If user is authenticated, use MainLayout with sidebar
   if (user) {
-    console.log('AppContent: User authenticated, rendering with MainLayout');
+    logger.debug('AppContent: User authenticated, rendering with MainLayout');
     return (
       <MainLayout>
         <Routes>
@@ -111,7 +113,7 @@ const AppContent = () => {
     );
   }
 
-  console.log('AppContent: User not authenticated, rendering without MainLayout');
+  logger.debug('AppContent: User not authenticated, rendering without MainLayout');
 
   // If user is not authenticated, show auth page for auth route, otherwise show public content
   return (
@@ -128,7 +130,7 @@ const AppContent = () => {
 };
 
 function App() {
-  console.log('App: Component render started');
+  logger.debug('App: Component render started');
   
   return (
     <ErrorBoundary>
@@ -148,6 +150,6 @@ function App() {
   );
 }
 
-console.log('App: Component defined');
+logger.debug('App: Component defined');
 
 export default App;
