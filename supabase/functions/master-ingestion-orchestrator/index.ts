@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Master ingestion orchestrator started');
+    console.log('🚀 Master ingestion orchestrator started');
 
     // Get all active alert sources
     const { data: sources, error: sourcesError } = await supabaseClient
@@ -31,10 +31,11 @@ Deno.serve(async (req) => {
       .eq('is_active', true);
 
     if (sourcesError) {
+      console.error('❌ Failed to fetch alert sources:', sourcesError);
       throw new Error(`Failed to fetch alert sources: ${sourcesError.message}`);
     }
 
-    console.log(`Found ${sources?.length || 0} active sources to process`);
+    console.log(`📊 Found ${sources?.length || 0} active sources to process`);
 
     const results = [];
     let totalProcessed = 0;
@@ -42,11 +43,11 @@ Deno.serve(async (req) => {
     // Process each source
     for (const source of sources || []) {
       try {
-        console.log(`Processing source: ${source.name} (${source.source_type})`);
+        console.log(`🔄 Processing source: ${source.name} (${source.source_type})`);
         
         const shouldPoll = shouldPollSource(source);
         if (!shouldPoll) {
-          console.log(`Skipping ${source.name} - not due for polling`);
+          console.log(`⏭️ Skipping ${source.name} - not due for polling`);
           continue;
         }
 
@@ -54,14 +55,19 @@ Deno.serve(async (req) => {
         results.push(result);
         totalProcessed += result.records_processed || 0;
 
+        console.log(`✅ Successfully processed ${source.name}: ${result.records_processed} records`);
+
         // Update the source's last_poll_at timestamp
         await supabaseClient
           .from('alert_sources')
-          .update({ last_poll_at: new Date().toISOString() })
+          .update({ 
+            last_poll_at: new Date().toISOString(),
+            health_status: result.success ? 'healthy' : 'error'
+          })
           .eq('id', source.id);
 
       } catch (error) {
-        console.error(`Error processing source ${source.name}:`, error);
+        console.error(`❌ Error processing source ${source.name}:`, error);
         
         // Record failed health metric
         await recordHealthMetric(supabaseClient, {
@@ -71,18 +77,41 @@ Deno.serve(async (req) => {
           error_message: error.message,
           records_processed: 0
         });
+
+        // Update source health status
+        await supabaseClient
+          .from('alert_sources')
+          .update({ 
+            health_status: 'error',
+            last_poll_at: new Date().toISOString()
+          })
+          .eq('id', source.id);
+
+        results.push({
+          source_name: source.name,
+          success: false,
+          error: error.message,
+          records_processed: 0
+        });
       }
     }
 
     // Run correlation analysis on new incidents
-    await runCorrelationAnalysis(supabaseClient);
+    try {
+      await runCorrelationAnalysis(supabaseClient);
+      console.log('🔗 Correlation analysis completed');
+    } catch (error) {
+      console.error('⚠️ Correlation analysis failed:', error);
+    }
 
-    console.log(`Processing complete. Total records processed: ${totalProcessed}`);
+    console.log(`🏁 Processing complete. Total records processed: ${totalProcessed}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         processed_sources: results.length,
+        successful_sources: results.filter(r => r.success).length,
+        failed_sources: results.filter(r => !r.success).length,
         total_records_processed: totalProcessed,
         results: results,
         timestamp: new Date().toISOString()
@@ -94,9 +123,10 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Master orchestrator error:', error);
+    console.error('💥 Master orchestrator error:', error);
     return new Response(
       JSON.stringify({ 
+        success: false,
         error: error.message,
         timestamp: new Date().toISOString()
       }),

@@ -22,12 +22,14 @@ export const useAllAlertSources = () => {
   
   const fetchSources = async () => {
     try {
+      console.log('Fetching alert sources...');
       const { data, error } = await supabase
         .from('alert_sources')
         .select('*')
         .eq('is_active', true);
       
       if (error) throw error;
+      console.log('Fetched sources:', data);
       setSources(data || []);
       return data || [];
     } catch (err) {
@@ -38,6 +40,8 @@ export const useAllAlertSources = () => {
 
   const fetchAlertsFromSource = async (source: AlertSource): Promise<UniversalAlert[]> => {
     try {
+      console.log(`Fetching alerts from source: ${source.name} (${source.source_type})`);
+      
       let result;
       
       switch (source.source_type) {
@@ -50,20 +54,35 @@ export const useAllAlertSources = () => {
             .order('created_at', { ascending: false })
             .limit(50);
           
-          if (rssError) throw rssError;
+          if (rssError) {
+            console.error('RSS data fetch error:', rssError);
+            throw rssError;
+          }
           
-          return (rssData || []).map(alert => normalizeAlert({
-            id: alert.id,
-            title: alert.title,
-            summary: alert.summary,
-            description: alert.summary || alert.title,
-            link: alert.link,
-            pubDate: alert.pub_date,
-            category: alert.category,
-            source: alert.source,
-            location: alert.location,
-            raw_data: alert.raw_data
-          }, source.source_type));
+          console.log(`Fetched ${rssData?.length || 0} RSS alerts`);
+          
+          return (rssData || []).map(alert => {
+            const normalized = normalizeAlert({
+              id: alert.id,
+              title: alert.title,
+              summary: alert.summary,
+              description: alert.summary || alert.title,
+              link: alert.link,
+              pubDate: alert.pub_date,
+              category: alert.category,
+              source: alert.source,
+              location: alert.location,
+              raw_data: alert.raw_data
+            }, source.source_type);
+            
+            console.log('Normalized RSS alert:', {
+              id: normalized.id,
+              title: normalized.title,
+              source: normalized.source
+            });
+            
+            return normalized;
+          });
 
         case 'weather':
         case 'weather-geocmet':
@@ -74,19 +93,34 @@ export const useAllAlertSources = () => {
             .order('created_at', { ascending: false })
             .limit(50);
           
-          if (weatherError) throw weatherError;
+          if (weatherError) {
+            console.error('Weather data fetch error:', weatherError);
+            throw weatherError;
+          }
           
-          return (weatherData || []).map(alert => normalizeAlert({
-            id: alert.id,
-            title: alert.description?.split('.')[0] || 'Weather Alert',
-            description: alert.description,
-            severity: alert.severity,
-            event_type: alert.event_type,
-            onset: alert.onset,
-            expires: alert.expires,
-            geometry_coordinates: alert.geometry_coordinates,
-            raw_data: alert.raw_data
-          }, source.source_type));
+          console.log(`Fetched ${weatherData?.length || 0} weather alerts`);
+          
+          return (weatherData || []).map(alert => {
+            const normalized = normalizeAlert({
+              id: alert.id,
+              title: alert.description?.split('.')[0] || 'Weather Alert',
+              description: alert.description,
+              severity: alert.severity,
+              event_type: alert.event_type,
+              onset: alert.onset,
+              expires: alert.expires,
+              geometry_coordinates: alert.geometry_coordinates,
+              raw_data: alert.raw_data
+            }, source.source_type);
+            
+            console.log('Normalized weather alert:', {
+              id: normalized.id,
+              title: normalized.title,
+              source: normalized.source
+            });
+            
+            return normalized;
+          });
 
         default:
           console.log(`No specific handler for source type: ${source.source_type}`);
@@ -103,29 +137,49 @@ export const useAllAlertSources = () => {
     setError(null);
     
     try {
+      console.log('Starting to fetch all alerts...');
       const activeSources = await fetchSources();
       const allAlerts: UniversalAlert[] = [];
       
       // Fetch alerts from each active source
       for (const source of activeSources) {
+        console.log(`Processing source: ${source.name}`);
         const sourceAlerts = await fetchAlertsFromSource(source);
+        console.log(`Got ${sourceAlerts.length} alerts from ${source.name}`);
         allAlerts.push(...sourceAlerts);
       }
       
-      // Filter out test data and sort by published date
+      console.log(`Total alerts fetched: ${allAlerts.length}`);
+      
+      // Enhanced filtering for better data quality
       const validAlerts = allAlerts.filter(alert => {
-        const isValidAlert = alert.title !== 'Untitled Alert' && 
-                            alert.description !== 'No description available' &&
-                            !alert.title.toLowerCase().includes('test') &&
-                            alert.title.trim().length > 0;
-        return isValidAlert;
+        // More comprehensive filtering
+        const hasValidTitle = alert.title && 
+                             alert.title !== 'Untitled Alert' && 
+                             alert.title.trim().length > 0 &&
+                             !alert.title.toLowerCase().includes('test') &&
+                             !alert.title.toLowerCase().includes('dummy');
+        
+        const hasValidDescription = alert.description && 
+                                   alert.description !== 'No description available' &&
+                                   alert.description.trim().length > 0;
+        
+        const isNotTestData = !alert.title.toLowerCase().includes('test') &&
+                             !alert.description.toLowerCase().includes('test');
+        
+        return hasValidTitle && hasValidDescription && isNotTestData;
       });
       
+      // Sort by published date (most recent first)
       validAlerts.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
+      
+      console.log(`Filtered to ${validAlerts.length} valid alerts from ${allAlerts.length} total`);
       
       setAlerts(validAlerts);
       
-      console.log(`Filtered ${validAlerts.length} valid alerts from ${allAlerts.length} total`);
+      if (validAlerts.length === 0) {
+        console.warn('No valid alerts found. This might indicate a data ingestion issue.');
+      }
       
     } catch (err) {
       console.error('Error fetching all alerts:', err);
@@ -141,6 +195,7 @@ export const useAllAlertSources = () => {
   };
 
   useEffect(() => {
+    console.log('useAllAlertSources hook initialized');
     fetchAllAlerts();
   }, []);
   
@@ -149,7 +204,9 @@ export const useAllAlertSources = () => {
     
     // Filter by source if specified
     if (sourceFilter && sourceFilter !== 'all') {
-      filtered = filtered.filter(alert => alert.source.toLowerCase().includes(sourceFilter.toLowerCase()));
+      filtered = filtered.filter(alert => 
+        alert.source.toLowerCase().includes(sourceFilter.toLowerCase())
+      );
     }
     
     // Filter by severity/urgency
