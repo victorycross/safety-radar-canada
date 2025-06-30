@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Activity, ExternalLink } from 'lucide-react';
+import { Activity, ExternalLink, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertSource } from '@/types/dataIngestion';
@@ -21,6 +21,7 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
   const { toast } = useToast();
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const handleToggleActive = async (isActive: boolean) => {
     try {
@@ -77,6 +78,38 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
     }
   };
 
+  const handleRemove = async () => {
+    if (!confirm(`Are you sure you want to remove "${feed.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('alert_sources')
+        .delete()
+        .eq('id', feed.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Feed Removed',
+        description: `${feed.name} has been successfully removed`,
+      });
+
+      onUpdate();
+    } catch (error) {
+      console.error('Error removing feed:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove feed',
+        variant: 'destructive'
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const formatLastPoll = (lastPoll: string | null) => {
     if (!lastPoll) return 'Never';
     const date = new Date(lastPoll);
@@ -105,7 +138,18 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
               {feed.description || 'No description provided'}
             </CardDescription>
           </div>
-          <FeedHealthStatus status={feed.health_status} />
+          <div className="flex items-center gap-2">
+            <FeedHealthStatus status={feed.health_status} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRemove}
+              disabled={deleting}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       

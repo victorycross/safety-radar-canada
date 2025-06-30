@@ -1,14 +1,21 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { TestTube, Edit, Activity } from 'lucide-react';
+import { TestTube, Edit, Activity, Trash2 } from 'lucide-react';
 
 interface FeedActionsProps {
   onTest: () => void;
   testing: boolean;
+  onRemove?: () => void;
+  removing?: boolean;
 }
 
-const FeedActions: React.FC<FeedActionsProps> = ({ onTest, testing }) => {
+const FeedActions: React.FC<FeedActionsProps> = ({ 
+  onTest, 
+  testing, 
+  onRemove, 
+  removing = false 
+}) => {
   return (
     <div className="flex space-x-2 pt-2">
       <Button size="sm" variant="outline" onClick={onTest} disabled={testing}>
@@ -28,6 +35,27 @@ const FeedActions: React.FC<FeedActionsProps> = ({ onTest, testing }) => {
         <Edit className="h-3 w-3 mr-1" />
         Edit
       </Button>
+      {onRemove && (
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={onRemove}
+          disabled={removing}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          {removing ? (
+            <>
+              <Activity className="h-3 w-3 mr-1 animate-spin" />
+              Removing...
+            </>
+          ) : (
+            <>
+              <Trash2 className="h-3 w-3 mr-1" />
+              Remove
+            </>
+          )}
+        </Button>
+      )}
     </div>
   );
 };

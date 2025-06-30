@@ -65,8 +65,8 @@ const ActiveSourcesTab = () => {
     }
   };
 
-  const handleDelete = async (sourceId: string) => {
-    if (confirm('Are you sure you want to delete this source? This action cannot be undone.')) {
+  const handleDelete = async (sourceId: string, sourceName: string) => {
+    if (confirm(`Are you sure you want to remove "${sourceName}"? This action cannot be undone.`)) {
       await deleteSource(sourceId);
     }
   };
@@ -204,8 +204,8 @@ const ActiveSourcesTab = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(source.id)}
-                    className="text-red-600 hover:text-red-700"
+                    onClick={() => handleDelete(source.id, source.name)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
