@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -147,7 +146,7 @@ const RSSFeedEvaluator = () => {
       setResult({
         score: 0,
         criteria,
-        issues: ['Failed to fetch or parse the feed', error.message],
+        issues: ['Failed to fetch or parse the feed', error instanceof Error ? error.message : 'Unknown error'],
         recommendations: ['Check the URL and try again', 'Verify the feed is publicly accessible'],
         sampleData: []
       });
@@ -173,9 +172,18 @@ const RSSFeedEvaluator = () => {
     }
 
     try {
+      // Convert EvaluationCriteria to a plain object that matches Json type
+      const criteriaAsJson = {
+        connectivity: result.criteria.connectivity,
+        dataQuality: result.criteria.dataQuality,
+        updateFrequency: result.criteria.updateFrequency,
+        contentRelevance: result.criteria.contentRelevance,
+        structureValid: result.criteria.structureValid
+      };
+
       const { error } = await supabase
         .from('alert_sources')
-        .insert([{
+        .insert({
           name: feedName || 'New RSS Feed',
           description: feedDescription || 'RSS feed added via evaluation',
           source_type: 'rss',
@@ -185,9 +193,9 @@ const RSSFeedEvaluator = () => {
           configuration: {
             evaluation_score: result.score,
             evaluation_date: new Date().toISOString(),
-            evaluation_criteria: result.criteria
+            evaluation_criteria: criteriaAsJson
           }
-        }]);
+        });
 
       if (error) throw error;
 
