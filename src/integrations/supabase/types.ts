@@ -341,6 +341,106 @@ export type Database = {
           },
         ]
       }
+      hub_employee_locations: {
+        Row: {
+          created_at: string | null
+          current_location_count: number | null
+          home_base_count: number | null
+          hub_id: string
+          id: string
+          travel_away_count: number | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_location_count?: number | null
+          home_base_count?: number | null
+          hub_id: string
+          id?: string
+          travel_away_count?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_location_count?: number | null
+          home_base_count?: number | null
+          hub_id?: string
+          id?: string
+          travel_away_count?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_employee_locations_hub_id_fkey"
+            columns: ["hub_id"]
+            isOneToOne: false
+            referencedRelation: "international_hubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hub_incidents: {
+        Row: {
+          alert_level: string | null
+          confidence_score: number | null
+          created_at: string | null
+          description: string | null
+          geographic_scope: string | null
+          hub_id: string
+          id: string
+          raw_payload: Json | null
+          recommended_action: string | null
+          source: string | null
+          timestamp: string | null
+          title: string
+          updated_at: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          alert_level?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          geographic_scope?: string | null
+          hub_id: string
+          id?: string
+          raw_payload?: Json | null
+          recommended_action?: string | null
+          source?: string | null
+          timestamp?: string | null
+          title: string
+          updated_at?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          alert_level?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          geographic_scope?: string | null
+          hub_id?: string
+          id?: string
+          raw_payload?: Json | null
+          recommended_action?: string | null
+          source?: string | null
+          timestamp?: string | null
+          title?: string
+          updated_at?: string | null
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_incidents_hub_id_fkey"
+            columns: ["hub_id"]
+            isOneToOne: false
+            referencedRelation: "international_hubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           alert_level: string
@@ -415,6 +515,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      international_hubs: {
+        Row: {
+          alert_level: string | null
+          code: string
+          coordinates: unknown | null
+          country: string
+          created_at: string | null
+          employee_count: number | null
+          flag_emoji: string | null
+          id: string
+          is_active: boolean | null
+          local_incidents: number | null
+          name: string
+          travel_warnings: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          alert_level?: string | null
+          code: string
+          coordinates?: unknown | null
+          country: string
+          created_at?: string | null
+          employee_count?: number | null
+          flag_emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          local_incidents?: number | null
+          name: string
+          travel_warnings?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          alert_level?: string | null
+          code?: string
+          coordinates?: unknown | null
+          country?: string
+          created_at?: string | null
+          employee_count?: number | null
+          flag_emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          local_incidents?: number | null
+          name?: string
+          travel_warnings?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       location_history: {
         Row: {
@@ -890,6 +1038,14 @@ export type Database = {
       make_user_admin: {
         Args: { _user_email: string }
         Returns: undefined
+      }
+      validate_hub_data_consistency: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          hub_name: string
+          issue_description: string
+          severity: string
+        }[]
       }
       verify_rls_coverage: {
         Args: Record<PropertyKey, never>

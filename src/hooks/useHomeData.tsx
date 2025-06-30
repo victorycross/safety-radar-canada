@@ -1,6 +1,7 @@
 
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
+import { useHubData } from '@/hooks/useHubData';
 import { Province, InternationalHub, DashboardData } from '@/types/dashboard';
 import { AlertLevel } from '@/types';
 import { logger } from '@/utils/logger';
@@ -8,7 +9,8 @@ import { syncProvinceData } from '@/services/provinceMapping';
 import { useEffect, useState } from 'react';
 
 export const useHomeData = (): DashboardData => {
-  const { provinces: supabaseProvinces, incidents, loading: supabaseLoading, refreshData } = useSupabaseDataContext();
+  const { provinces: supabaseProvinces, incidents, loading: supabaseLoading, refreshData: refreshSupabaseData } = useSupabaseDataContext();
+  const { hubs: internationalHubs, alertHubs, loading: hubsLoading, refreshData: refreshHubData } = useHubData();
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +18,9 @@ export const useHomeData = (): DashboardData => {
   logger.debug('useHomeData: Hook called', {
     supabaseProvincesCount: supabaseProvinces?.length || 0,
     incidentsCount: incidents?.length || 0,
-    supabaseLoading
+    hubsCount: internationalHubs?.length || 0,
+    supabaseLoading,
+    hubsLoading
   });
 
   // Sync province data when component mounts or when supabase data changes
@@ -48,20 +52,6 @@ export const useHomeData = (): DashboardData => {
     loadProvinceData();
   }, [supabaseProvinces]);
 
-  // International hubs data - consolidated here
-  const internationalHubs: InternationalHub[] = [
-    { id: 'nyc', name: 'New York', country: 'United States' },
-    { id: 'london', name: 'London', country: 'United Kingdom' },
-    { id: 'hk', name: 'Hong Kong', country: 'China' },
-    { id: 'singapore', name: 'Singapore', country: 'Singapore' },
-    { id: 'tokyo', name: 'Tokyo', country: 'Japan' },
-    { id: 'frankfurt', name: 'Frankfurt', country: 'Germany' },
-    { id: 'zurich', name: 'Zurich', country: 'Switzerland' },
-    { id: 'dubai', name: 'Dubai', country: 'UAE' },
-    { id: 'sydney', name: 'Sydney', country: 'Australia' },
-    { id: 'toronto-intl', name: 'Toronto Financial District', country: 'Canada' }
-  ];
-  
   // Extract actual province IDs for the hook
   const actualProvinceIds = provinces.map(p => p.id);
   
@@ -81,12 +71,24 @@ export const useHomeData = (): DashboardData => {
   // Recent incidents count
   const recentIncidentsCount = incidents?.length || 0;
 
+  // Enhanced metrics including hub data
   const metrics: DashboardData['metrics'] = {
     totalProvinces: provinces.length,
     visibleProvincesCount,
     alertProvincesCount: alertProvinces.length,
     incidentsCount: recentIncidentsCount,
-    employeesCount: provinces.reduce((sum, p) => sum + p.employeeCount, 0)
+    employeesCount: provinces.reduce((sum, p) => sum + p.employeeCount, 0),
+    totalHubs: internationalHubs.length,
+    alertHubsCount: alertHubs.length,
+    hubEmployeesCount: internationalHubs.reduce((sum, hub) => sum + hub.employeeCount, 0)
+  };
+
+  // Combined refresh function
+  const refreshData = async () => {
+    await Promise.all([
+      refreshSupabaseData(),
+      refreshHubData()
+    ]);
   };
 
   return {
@@ -94,8 +96,9 @@ export const useHomeData = (): DashboardData => {
     internationalHubs,
     alertProvinces,
     visibleAlertProvinces,
+    alertHubs,
     metrics,
-    loading: loading || supabaseLoading,
+    loading: loading || supabaseLoading || hubsLoading,
     error,
     refreshData
   };

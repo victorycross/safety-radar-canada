@@ -114,6 +114,92 @@ export const useRealtimeUpdates = () => {
         }));
       });
 
+    // International hubs updates subscription
+    const hubsSubscription = supabase
+      .channel('hubs-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'international_hubs'
+        },
+        (payload) => {
+          logger.debug('Hub update received:', payload);
+          
+          setStatus(prev => ({
+            ...prev,
+            lastUpdate: new Date(),
+            isConnected: true
+          }));
+
+          // Show toast notification for hub changes
+          if (payload.eventType === 'UPDATE') {
+            const hubName = payload.new?.name || 'Unknown Hub';
+            toast({
+              title: 'Hub Updated',
+              description: `${hubName} information has been updated`,
+              duration: 3000,
+            });
+          }
+
+          // Refresh data to get latest changes
+          setTimeout(() => refreshData(), 100);
+        }
+      )
+      .subscribe((status) => {
+        logger.debug('Hubs subscription status:', status);
+        setStatus(prev => ({
+          ...prev,
+          subscriptions: prev.subscriptions.includes('hubs') 
+            ? prev.subscriptions 
+            : [...prev.subscriptions, 'hubs']
+        }));
+      });
+
+    // Hub incidents updates subscription
+    const hubIncidentsSubscription = supabase
+      .channel('hub-incidents-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'hub_incidents'
+        },
+        (payload) => {
+          logger.debug('Hub incident update received:', payload);
+          
+          setStatus(prev => ({
+            ...prev,
+            lastUpdate: new Date()
+          }));
+
+          // Show toast notification for new hub incidents
+          if (payload.eventType === 'INSERT') {
+            const incidentTitle = payload.new?.title || 'New Hub Incident';
+            toast({
+              title: 'New Hub Incident Reported',
+              description: incidentTitle,
+              variant: 'destructive',
+              duration: 5000,
+            });
+          }
+
+          // Refresh data to get latest changes
+          setTimeout(() => refreshData(), 100);
+        }
+      )
+      .subscribe((status) => {
+        logger.debug('Hub incidents subscription status:', status);
+        setStatus(prev => ({
+          ...prev,
+          subscriptions: prev.subscriptions.includes('hub-incidents') 
+            ? prev.subscriptions 
+            : [...prev.subscriptions, 'hub-incidents']
+        }));
+      });
+
     // Employee data updates subscription
     const employeesSubscription = supabase
       .channel('employees-realtime')
@@ -167,6 +253,8 @@ export const useRealtimeUpdates = () => {
       clearInterval(connectionMonitor);
       supabase.removeChannel(provincesSubscription);
       supabase.removeChannel(incidentsSubscription);
+      supabase.removeChannel(hubsSubscription);
+      supabase.removeChannel(hubIncidentsSubscription);
       supabase.removeChannel(employeesSubscription);
     };
   }, [refreshData, toast]);
