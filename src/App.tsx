@@ -14,6 +14,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/components/auth/AuthProvider';
+import { SessionManager } from '@/components/auth/SessionManager';
 import { SupabaseDataProvider } from '@/context/SupabaseDataProvider';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import MainLayout from '@/components/layout/MainLayout';
@@ -49,7 +50,11 @@ const setSecurityHeaders = () => {
 const AppContent = () => {
   const { user, loading, isAdmin } = useAuth();
 
+  console.log('AppContent: Render started', { user: !!user, loading, isAdmin: isAdmin() });
+
   useEffect(() => {
+    console.log('AppContent: useEffect triggered');
+    
     // Set security headers
     setSecurityHeaders();
 
@@ -64,6 +69,7 @@ const AppContent = () => {
 
   // Show loading state while auth is being determined
   if (loading) {
+    console.log('AppContent: Showing loading state');
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -74,8 +80,11 @@ const AppContent = () => {
     );
   }
 
+  console.log('AppContent: Auth loading complete, rendering routes');
+
   // If user is authenticated, use MainLayout with sidebar
   if (user) {
+    console.log('AppContent: User authenticated, rendering with MainLayout');
     return (
       <MainLayout>
         <Routes>
@@ -93,6 +102,8 @@ const AppContent = () => {
       </MainLayout>
     );
   }
+
+  console.log('AppContent: User not authenticated, rendering without MainLayout');
 
   // If user is not authenticated, use the original layout with header
   return (
@@ -117,20 +128,26 @@ const AppContent = () => {
 };
 
 function App() {
+  console.log('App: Component render started');
+  
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <SupabaseDataProvider>
-            <Toaster />
-            <Router>
-              <AppContent />
-            </Router>
-          </SupabaseDataProvider>
+          <SessionManager>
+            <SupabaseDataProvider>
+              <Toaster />
+              <Router>
+                <AppContent />
+              </Router>
+            </SupabaseDataProvider>
+          </SessionManager>
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
 }
+
+console.log('App: Component defined');
 
 export default App;
