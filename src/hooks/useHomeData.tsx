@@ -46,15 +46,7 @@ export const useHomeData = (): DashboardData => {
   ];
 
   // Use supabase provinces if available, otherwise fallback
-  const provinces: Province[] = supabaseProvinces?.length > 0 
-    ? supabaseProvinces.map((province: Province) => ({
-        id: province.id,
-        name: province.name,
-        code: province.code,
-        alertLevel: province.alertLevel,
-        employeeCount: province.employeeCount || 0
-      }))
-    : fallbackProvinces;
+  const provinces: Province[] = supabaseProvinces?.length > 0 ? supabaseProvinces : fallbackProvinces;
 
   logger.info('useHomeData: Using data source', {
     source: supabaseProvinces?.length > 0 ? 'Supabase' : 'Fallback',

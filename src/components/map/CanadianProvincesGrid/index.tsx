@@ -16,13 +16,7 @@ const CanadianProvincesGrid = () => {
 
   // Use supabase provinces if available, otherwise fallback
   const transformedProvinces: Province[] = supabaseProvinces?.length > 0 
-    ? supabaseProvinces.map((province: Province) => ({
-        id: province.id,
-        name: province.name,
-        code: province.code,
-        alertLevel: province.alertLevel,
-        employeeCount: province.employeeCount || 0
-      }))
+    ? supabaseProvinces
     : fallbackProvinces;
 
   logger.debug('CanadianProvincesGrid: Using data source', {
@@ -80,7 +74,7 @@ const CanadianProvincesGrid = () => {
               id={province.id}
               name={province.name}
               code={province.code}
-              alertLevel={province.alertLevel as AlertLevel}
+              alertLevel={province.alertLevel}
               employeeCount={province.employeeCount}
               emoji={province.id === 'bc' ? '🏔️' : province.id === 'ab' ? '🛢️' : province.id === 'on' ? '🏙️' : '🍁'}
               linkTo={`/province/${province.id}`}
