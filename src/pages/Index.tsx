@@ -4,6 +4,7 @@ import DashboardContent from '@/components/dashboard/DashboardContent';
 import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 import { useHomeData } from '@/hooks/useHomeData';
 import { useLocationVisibility } from '@/hooks/useLocationVisibility';
+import { useHubData } from '@/hooks/useHubData';
 import { logger } from '@/utils/logger';
 
 const Index = () => {
@@ -22,8 +23,7 @@ const Index = () => {
 
   const actualProvinceIds = provinces.map(p => p.id);
   const { 
-    isProvinceVisible,
-    getVisibleProvinces 
+    isProvinceVisible
   } = useLocationVisibility(actualProvinceIds);
 
   logger.debug('Index: Component rendered', {
@@ -35,7 +35,7 @@ const Index = () => {
   });
 
   // Get provinces visible based on current filter settings
-  const displayProvinces = getVisibleProvinces(provinces);
+  const displayProvinces = provinces.filter(province => isProvinceVisible(province.id));
   const visibleProvincesCount = displayProvinces.length;
 
   if (error) {
