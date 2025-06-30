@@ -1,19 +1,17 @@
 
-import { SourceHealthMetric } from '@/types/dataIngestion';
+import { SourceHealthMetric } from './useSourceState';
 
 export const useSourceHealth = (healthMetrics: SourceHealthMetric[]) => {
   const getSourceHealth = (sourceId: string) => {
-    return healthMetrics
-      .filter(metric => metric.source_id === sourceId)
-      .slice(0, 10); // Last 10 metrics
+    return healthMetrics.filter(metric => metric.source_id === sourceId);
   };
 
-  const getSourceUptime = (sourceId: string) => {
+  const getSourceUptime = (sourceId: string): number => {
     const metrics = getSourceHealth(sourceId);
-    if (!metrics.length) return 0;
+    if (metrics.length === 0) return 0;
     
     const successCount = metrics.filter(m => m.success).length;
-    return (successCount / metrics.length) * 100;
+    return Math.round((successCount / metrics.length) * 100);
   };
 
   return {
