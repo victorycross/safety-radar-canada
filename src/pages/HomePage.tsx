@@ -1,41 +1,52 @@
 
 import React from 'react';
-import { useHomeData } from '@/hooks/useHomeData';
-import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
 import DashboardContent from '@/components/dashboard/DashboardContent';
+import DashboardLoadingState from '@/components/dashboard/DashboardLoadingState';
+import { useHomeData } from '@/hooks/useHomeData';
+import { useLocationVisibility } from '@/hooks/useLocationVisibility';
 import { logger } from '@/utils/logger';
 
 const HomePage = () => {
-  logger.debug('HomePage: Component rendering started');
+  logger.debug('HomePage: Component rendering');
   
-  const homeData = useHomeData();
+  const {
+    provinces,
+    internationalHubs,
+    alertProvinces,
+    visibleAlertProvinces,
+    metrics,
+    loading,
+    refreshData
+  } = useHomeData();
 
-  logger.debug('HomePage: Data loaded', {
-    loading: homeData.loading,
-    provincesCount: homeData.provinces.length,
-    alertProvincesCount: homeData.alertProvinces.length,
-    visibleProvincesCount: homeData.metrics.visibleProvincesCount,
-    incidentsCount: homeData.metrics.incidentsCount
-  });
+  const provinceIds = provinces.map(p => p.id);
+  const { isProvinceVisible } = useLocationVisibility(provinceIds);
+  
+  // Filter provinces for display
+  const displayProvinces = provinces.filter(province => isProvinceVisible(province.id));
 
-  if (homeData.loading) {
+  if (loading) {
     logger.debug('HomePage: Showing loading state');
     return <DashboardLoadingState />;
   }
 
-  logger.debug('HomePage: Rendering dashboard content');
+  logger.debug('HomePage: Rendering dashboard content', {
+    provincesCount: provinces.length,
+    alertProvincesCount: alertProvinces.length,
+    visibleAlertProvincesCount: visibleAlertProvinces.length
+  });
 
   return (
     <DashboardContent
-      alertProvinces={homeData.alertProvinces}
-      visibleAlertProvinces={homeData.visibleAlertProvinces}
-      visibleProvincesCount={homeData.metrics.visibleProvincesCount}
-      totalProvinces={homeData.metrics.totalProvinces}
-      displayProvinces={homeData.provinces}
-      internationalHubs={homeData.internationalHubs}
-      incidentsCount={homeData.metrics.incidentsCount}
-      onRefresh={homeData.refreshData}
-      loading={homeData.loading}
+      alertProvinces={alertProvinces}
+      visibleAlertProvinces={visibleAlertProvinces}
+      visibleProvincesCount={metrics.visibleProvincesCount}
+      totalProvinces={metrics.totalProvinces}
+      displayProvinces={displayProvinces}
+      internationalHubs={internationalHubs}
+      incidentsCount={metrics.incidentsCount}
+      onRefresh={refreshData}
+      loading={loading}
     />
   );
 };
