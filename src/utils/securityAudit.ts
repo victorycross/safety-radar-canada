@@ -20,14 +20,29 @@ export const logSecurityEvent = async (entry: AuditLogEntry): Promise<void> => {
       user_id: user?.id || null,
       ip_address: entry.ip_address || await getClientIP(),
       user_agent: entry.user_agent || navigator.userAgent,
+      timestamp: new Date().toISOString()
     };
 
-    const { error } = await supabase
-      .from('security_audit_log')
-      .insert([auditEntry]);
+    // Log to console for now since security_audit_log table doesn't exist yet
+    console.log('Security Event:', auditEntry);
+    
+    // TODO: Implement proper audit logging when security_audit_log table is available
+    // For now, we'll use the incidents table as a temporary workaround for critical events
+    if (entry.action === SecurityEvents.SUSPICIOUS_ACTIVITY) {
+      const { error } = await supabase
+        .from('incidents')
+        .insert([{
+          title: 'Security Alert',
+          description: `Security event: ${entry.action}`,
+          source: 'security_audit',
+          alert_level: 'warning',
+          province_id: '00000000-0000-0000-0000-000000000000', // Default province
+          raw_payload: auditEntry
+        }]);
 
-    if (error) {
-      console.error('Failed to log security event:', error);
+      if (error) {
+        console.error('Failed to log security event to incidents:', error);
+      }
     }
   } catch (error) {
     console.error('Security audit logging failed:', error);

@@ -1,157 +1,204 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { 
-  Activity, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  Database,
-  RefreshCw 
+  Activity,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  TrendingUp,
+  Server
 } from 'lucide-react';
-import { useSourceManagement } from '@/hooks/useSourceManagement';
+import { UnifiedSource, SourceHealthMetric } from '@/hooks/useSourceState';
 
-const SourceMonitoringTab = () => {
-  const { sources, healthMetrics, loading, triggerIngestion } = useSourceManagement();
+interface SourceMonitoringTabProps {
+  sources: UnifiedSource[];
+  healthMetrics: SourceHealthMetric[];
+  getSourceHealth: (sourceId: string) => any;
+  getSourceUptime: (sourceId: string) => number;
+  loading: boolean;
+}
 
-  // Calculate real-time metrics
-  const recentMetrics = healthMetrics.slice(0, 20);
-  const successRate = recentMetrics.length > 0 
-    ? (recentMetrics.filter(m => m.success).length / recentMetrics.length) * 100 
-    : 0;
+const SourceMonitoringTab: React.FC<SourceMonitoringTabProps> = ({ 
+  sources, 
+  healthMetrics, 
+  getSourceHealth, 
+  getSourceUptime, 
+  loading 
+}) => {
+  const getHealthIcon = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'degraded':
+        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+      case 'error':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      default:
+        return <Server className="h-4 w-4 text-gray-600" />;
+    }
+  };
 
-  const avgResponseTime = recentMetrics.length > 0
-    ? recentMetrics.reduce((acc, m) => acc + (m.response_time_ms || 0), 0) / recentMetrics.length
-    : 0;
+  const getHealthBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return 'default';
+      case 'degraded':
+        return 'secondary';
+      case 'error':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
 
-  const totalRecordsProcessed = recentMetrics.reduce((acc, m) => acc + (m.records_processed || 0), 0);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Loading monitoring data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold">Real-time Monitoring</h3>
-          <p className="text-muted-foreground">Live performance metrics and diagnostics</p>
-        </div>
-        <Button onClick={triggerIngestion} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Data
-        </Button>
+      <div className="text-center">
+        <h3 className="text-lg font-semibold">Source Monitoring</h3>
+        <p className="text-muted-foreground">
+          Real-time health status and performance metrics
+        </p>
       </div>
 
-      {/* Real-time Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{successRate.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">
-              Last 20 operations
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Response</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgResponseTime.toFixed(0)}ms</div>
-            <p className="text-xs text-muted-foreground">
-              Recent average
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Records Processed</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalRecordsProcessed}</div>
-            <p className="text-xs text-muted-foreground">
-              Recent operations
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Sources</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{sources.filter(s => s.is_active).length}</div>
-            <p className="text-xs text-muted-foreground">
-              Currently polling
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Source Performance Overview */}
+      {/* Health Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>Source Performance</CardTitle>
-          <CardDescription>Individual source health and performance metrics</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Health Overview
+          </CardTitle>
+          <CardDescription>
+            Current status of all monitored sources
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {sources.map((source) => {
-              const sourceMetrics = healthMetrics.filter(m => m.source_id === source.id).slice(0, 5);
-              const sourceSuccessRate = sourceMetrics.length > 0
-                ? (sourceMetrics.filter(m => m.success).length / sourceMetrics.length) * 100
-                : 0;
-              
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {['healthy', 'degraded', 'error'].map(status => {
+              const count = sources.filter(s => s.health_status === status).length;
               return (
-                <div key={source.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{source.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {source.source_type}
-                      </Badge>
-                      {source.health_status === 'healthy' ? (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                      )}
-                    </div>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      Last poll: {source.last_poll_at ? new Date(source.last_poll_at).toLocaleString() : 'Never'}
-                    </div>
+                <div key={status} className="text-center p-4 border rounded-lg">
+                  <div className="flex items-center justify-center mb-2">
+                    {getHealthIcon(status)}
                   </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="text-sm font-medium">{sourceSuccessRate.toFixed(0)}%</div>
-                      <div className="text-xs text-muted-foreground">Success Rate</div>
-                    </div>
-                    
-                    <div className="w-24">
-                      <Progress value={sourceSuccessRate} className="h-2" />
-                    </div>
-                  </div>
+                  <div className="text-2xl font-bold">{count}</div>
+                  <div className="text-sm text-muted-foreground capitalize">{status}</div>
                 </div>
               );
             })}
-            
-            {sources.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No sources configured yet
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Source Details */}
+      <div className="grid gap-4">
+        {sources.map((source) => {
+          const uptime = getSourceUptime(source.id);
+          const recentMetrics = healthMetrics
+            .filter(m => m.source_id === source.id)
+            .slice(0, 5);
+
+          return (
+            <Card key={source.id}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      {getHealthIcon(source.health_status)}
+                      {source.name}
+                    </CardTitle>
+                    <CardDescription>{source.source_type}</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={getHealthBadgeVariant(source.health_status)} className="capitalize">
+                      {source.health_status}
+                    </Badge>
+                    {source.is_active && (
+                      <Badge variant="outline">Active</Badge>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="text-muted-foreground">Uptime</div>
+                    <div className="font-semibold">{uptime.toFixed(1)}%</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Last Poll</div>
+                    <div className="font-semibold flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {source.last_poll_at 
+                        ? new Date(source.last_poll_at).toLocaleTimeString()
+                        : 'Never'
+                      }
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Interval</div>
+                    <div className="font-semibold">{source.polling_interval}s</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Recent Checks</div>
+                    <div className="font-semibold">{recentMetrics.length}</div>
+                  </div>
+                </div>
+
+                {recentMetrics.length > 0 && (
+                  <div>
+                    <div className="text-sm font-medium mb-2 flex items-center gap-1">
+                      <TrendingUp className="h-4 w-4" />
+                      Recent Performance
+                    </div>
+                    <div className="space-y-2">
+                      {recentMetrics.map((metric) => (
+                        <div key={metric.id} className="flex items-center justify-between text-xs">
+                          <span>{new Date(metric.timestamp).toLocaleString()}</span>
+                          <div className="flex items-center gap-2">
+                            <span>{metric.response_time_ms || 0}ms</span>
+                            <Badge 
+                              variant={metric.success ? 'default' : 'destructive'}
+                              className="text-xs"
+                            >
+                              {metric.success ? 'Success' : 'Failed'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {sources.length === 0 && (
+        <Card>
+          <CardContent className="text-center py-8">
+            <Activity className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              No sources to monitor yet. Add sources to see their health status.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

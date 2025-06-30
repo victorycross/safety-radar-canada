@@ -35,23 +35,38 @@ const UnifiedSourceManagementPage = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <SourceOverviewTab {...sourceManagement} />
+            <SourceOverviewTab 
+              sources={sourceManagement.sources}
+              healthMetrics={sourceManagement.healthMetrics}
+              loading={sourceManagement.loading}
+              error={sourceManagement.error}
+            />
           </TabsContent>
 
           <TabsContent value="active" className="space-y-4">
-            <ActiveSourcesTab {...sourceManagement} />
+            <ActiveSourcesTab />
           </TabsContent>
 
           <TabsContent value="configuration" className="space-y-4">
-            <SourceConfigurationTab {...sourceManagement} />
+            <SourceConfigurationTab 
+              sources={sourceManagement.sources}
+              updateSource={sourceManagement.updateSource}
+              loading={sourceManagement.loading}
+            />
           </TabsContent>
 
           <TabsContent value="monitoring" className="space-y-4">
-            <SourceMonitoringTab {...sourceManagement} />
+            <SourceMonitoringTab 
+              sources={sourceManagement.sources}
+              healthMetrics={sourceManagement.healthMetrics}
+              getSourceHealth={sourceManagement.getSourceHealth}
+              getSourceUptime={sourceManagement.getSourceUptime}
+              loading={sourceManagement.loading}
+            />
           </TabsContent>
 
           <TabsContent value="add" className="space-y-4">
-            <AddSourceTab {...sourceManagement} />
+            <AddSourceTab />
           </TabsContent>
         </Tabs>
       </div>
