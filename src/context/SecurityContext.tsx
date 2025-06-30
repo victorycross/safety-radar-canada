@@ -29,7 +29,7 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
     const newIncident: Incident = {
       ...incidentData,
       id: `incident-${Date.now()}`,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     };
 
     setIncidents(prev => [...prev, newIncident]);
@@ -44,7 +44,7 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
     const reportedIncident: Incident = {
       ...incidentData,
       id: `report-${Date.now()}`,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
       verificationStatus: VerificationStatus.UNVERIFIED,
       source: IncidentSource.MANUAL,
     };

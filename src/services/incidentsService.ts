@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Incident, AlertLevel, IncidentSource, VerificationStatus } from '@/types';
 
@@ -25,7 +24,7 @@ export const fetchIncidents = async (): Promise<Incident[]> => {
       title: incident.title,
       description: incident.description,
       provinceId: incident.province_id,
-      timestamp: new Date(incident.timestamp),
+      timestamp: incident.timestamp, // Keep as string since it comes from database as ISO string
       alertLevel: incident.alert_level as AlertLevel,
       source: incident.source as IncidentSource,
       verificationStatus: incident.verification_status as VerificationStatus,
