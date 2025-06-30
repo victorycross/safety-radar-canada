@@ -40,17 +40,16 @@ const HubManagementTab = () => {
     );
   }
 
-  // Ensure all required DashboardMetrics properties are provided
+  // Create proper DashboardMetrics object with all required properties
   const hubMetrics = {
-    ...metrics,
-    totalProvinces: metrics.totalProvinces || 0,
-    visibleProvincesCount: metrics.visibleProvincesCount || 0,
-    alertProvincesCount: metrics.alertProvincesCount || 0,
-    incidentsCount: metrics.incidentsCount || 0,
-    employeesCount: metrics.employeesCount || 0,
-    totalHubs: metrics.totalHubs || hubs.length,
-    alertHubsCount: metrics.alertHubsCount || 0,
-    hubEmployeesCount: metrics.hubEmployeesCount || 0
+    totalProvinces: 0, // Hub management doesn't need province data
+    visibleProvincesCount: 0,
+    alertProvincesCount: 0,
+    incidentsCount: incidents.length,
+    employeesCount: hubs.reduce((sum, hub) => sum + hub.employeeCount, 0),
+    totalHubs: hubs.length,
+    alertHubsCount: hubs.filter(hub => hub.alertLevel !== 'normal').length,
+    hubEmployeesCount: hubs.reduce((sum, hub) => sum + hub.employeeCount, 0)
   };
 
   return (
