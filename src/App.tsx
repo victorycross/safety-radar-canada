@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
@@ -10,6 +11,7 @@ import ReportPage from '@/pages/ReportPage';
 import EmployeesPage from '@/pages/EmployeesPage';
 import WidgetPage from '@/pages/WidgetPage';
 import AuthPage from '@/pages/AuthPage';
+import DiagnosticsPage from '@/pages/DiagnosticsPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { Navigate } from 'react-router-dom';
@@ -98,6 +100,7 @@ const AppContent = () => {
           <Route path="/report" element={<ReportPage />} />
           <Route path="/employees" element={<EmployeesPage />} />
           <Route path="/widgets" element={<WidgetPage />} />
+          <Route path="/diagnostics" element={<DiagnosticsPage />} />
           <Route path="/auth" element={<Navigate to="/" replace />} />
         </Routes>
       </MainLayout>
@@ -123,6 +126,7 @@ const AppContent = () => {
           <Route path="/report" element={<ReportPage />} />
           <Route path="/employees" element={<EmployeesPage />} />
           <Route path="/widgets" element={<WidgetPage />} />
+          <Route path="/diagnostics" element={<DiagnosticsPage />} />
         </Routes>
       </main>
     </div>

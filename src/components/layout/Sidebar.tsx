@@ -1,179 +1,79 @@
 
 import React from 'react';
-import { AlertLevel } from '@/types';
-import { NavLink } from 'react-router-dom';
-import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { cn } from '@/lib/utils';
-import { 
+import {
+  Home,
+  Shield,
+  Activity,
+  BarChart3,
   AlertTriangle,
-  Bell,
-  Flag,
-  Info,
-  MapPin,
-  Search,
+  FileText,
   Users,
   Settings,
-  Zap
+  Database,
+  Stethoscope
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
-  const { provinces } = useSupabaseDataContext();
-  const { user, isAdmin, isPowerUserOrAdmin } = useAuth();
-  
-  // Count provinces by alert level
-  const severeCount = provinces.filter(p => p.alertLevel === AlertLevel.SEVERE).length;
-  const warningCount = provinces.filter(p => p.alertLevel === AlertLevel.WARNING).length;
+  const location = useLocation();
+  const { user, isAdmin } = useAuth();
 
-  // Don't render sidebar if user is not authenticated
+  const navigation = [
+    { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'Alert Ready', href: '/alert-ready', icon: AlertTriangle },
+    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'Incidents', href: '/incidents', icon: Activity },
+    { name: 'Report', href: '/report', icon: FileText },
+    { name: 'Employees', href: '/employees', icon: Users },
+    { name: 'Source Management', href: '/source-management', icon: Database },
+    { name: 'Widgets', href: '/widgets', icon: Settings },
+    { name: 'Diagnostics', href: '/diagnostics', icon: Stethoscope },
+    ...(isAdmin() ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
+  ];
+
   if (!user) {
     return null;
   }
 
   return (
-    <div className="h-screen w-64 bg-sidebar border-r flex flex-col">
+    <div className="w-64 bg-white border-r border-gray-200 h-full">
       <div className="p-6">
-        <h1 className="font-bold text-xl text-primary flex items-center">
-          <AlertTriangle className="mr-2 text-red-500" size={20} />
-          Security Barometer
-        </h1>
-      </div>
-      
-      <div className="p-4 bg-warning-light border-y border-warning/20">
-        <div className="flex justify-between items-center">
-          <div className="font-medium text-sm">Alert Summary</div>
-        </div>
-        <div className="mt-2 space-y-1 text-sm">
-          {severeCount > 0 && (
-            <div className="flex items-center">
-              <div className="h-2 w-2 rounded-full bg-danger mr-2"></div>
-              <span>{severeCount} {severeCount === 1 ? 'Severe Alert' : 'Severe Alerts'}</span>
-            </div>
-          )}
-          {warningCount > 0 && (
-            <div className="flex items-center">
-              <div className="h-2 w-2 rounded-full bg-warning mr-2"></div>
-              <span>{warningCount} {warningCount === 1 ? 'Warning Alert' : 'Warning Alerts'}</span>
-            </div>
-          )}
-          {severeCount === 0 && warningCount === 0 && (
-            <div className="flex items-center">
-              <div className="h-2 w-2 rounded-full bg-success mr-2"></div>
-              <span>All Clear</span>
-            </div>
-          )}
+        <div className="flex items-center space-x-3">
+          <Shield className="h-8 w-8 text-blue-600" />
+          <div>
+            <h1 className="font-bold text-lg">Security Barometer</h1>
+            <p className="text-sm text-gray-600">Canadian Operations</p>
+          </div>
         </div>
       </div>
       
-      <nav className="flex-1 p-4 space-y-1">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Dashboard</p>
-        
-        <NavLink 
-          to="/" 
-          className={({ isActive }) => 
-            cn("flex items-center px-3 py-2 rounded-md text-sm", 
-              isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-        >
-          <MapPin className="mr-2" size={18} />
-          Map Overview
-        </NavLink>
-        
-        <NavLink 
-          to="/incidents" 
-          className={({ isActive }) => 
-            cn("flex items-center px-3 py-2 rounded-md text-sm", 
-              isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-        >
-          <AlertTriangle className="mr-2" size={18} />
-          Incident Reports
-        </NavLink>
-
-        <NavLink 
-          to="/alert-ready" 
-          className={({ isActive }) => 
-            cn("flex items-center px-3 py-2 rounded-md text-sm", 
-              isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-        >
-          <Zap className="mr-2" size={18} />
-          Alert Ready
-        </NavLink>
-        
-        <NavLink 
-          to="/analytics" 
-          className={({ isActive }) => 
-            cn("flex items-center px-3 py-2 rounded-md text-sm", 
-              isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-        >
-          <Search className="mr-2" size={18} />
-          Analytics
-        </NavLink>
-
-        {isPowerUserOrAdmin() && (
-          <NavLink 
-            to="/report" 
-            className={({ isActive }) => 
-              cn("flex items-center px-3 py-2 rounded-md text-sm", 
-                isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-          >
-            <Flag className="mr-2" size={18} />
-            Report Incident
-          </NavLink>
-        )}
-
-        {isAdmin() && (
-          <>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mt-6 mb-2">Admin</p>
+      <nav className="px-3 pb-6">
+        <ul className="space-y-1">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            const Icon = item.icon;
             
-            <NavLink 
-              to="/sources" 
-              className={({ isActive }) => 
-                cn("flex items-center px-3 py-2 rounded-md text-sm", 
-                  isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-            >
-              <Bell className="mr-2" size={18} />
-              External Sources
-            </NavLink>
-            
-            <NavLink 
-              to="/admin" 
-              className={({ isActive }) => 
-                cn("flex items-center px-3 py-2 rounded-md text-sm", 
-                  isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-            >
-              <Settings className="mr-2" size={18} />
-              Admin Dashboard
-            </NavLink>
-          </>
-        )}
-        
-        <p className="text-xs uppercase tracking-wider text-muted-foreground mt-6 mb-2">Configuration</p>
-        
-        <NavLink 
-          to="/employees" 
-          className={({ isActive }) => 
-            cn("flex items-center px-3 py-2 rounded-md text-sm", 
-              isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-        >
-          <Users className="mr-2" size={18} />
-          Employee Distribution
-        </NavLink>
-        
-        <NavLink 
-          to="/widgets" 
-          className={({ isActive }) => 
-            cn("flex items-center px-3 py-2 rounded-md text-sm", 
-              isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent")}
-        >
-          <Info className="mr-2" size={18} />
-          Desktop Widget
-        </NavLink>
+            return (
+              <li key={item.name}>
+                <Link
+                  to={item.href}
+                  className={cn(
+                    'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                    isActive
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  )}
+                >
+                  <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                  {item.name}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </nav>
-      
-      <div className="p-4 border-t">
-        <div className="text-xs text-muted-foreground">
-          Security Barometer v1.0
-        </div>
-      </div>
     </div>
   );
 };
