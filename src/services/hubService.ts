@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { InternationalHub, HubIncident, HubEmployeeLocation, AlertLevel } from '@/types';
+import { InternationalHub, HubIncident, HubEmployeeLocation, AlertLevel } from '@/types/dashboard';
 import { logger } from '@/utils/logger';
 
 export const fetchInternationalHubs = async (): Promise<InternationalHub[]> => {
@@ -34,8 +33,8 @@ export const fetchInternationalHubs = async (): Promise<InternationalHub[]> => {
       travelWarnings: hub.travel_warnings || 0,
       localIncidents: hub.local_incidents || 0,
       coordinates: hub.coordinates ? {
-        lat: hub.coordinates.x,
-        lng: hub.coordinates.y
+        lat: (hub.coordinates as any).x || 0,
+        lng: (hub.coordinates as any).y || 0
       } : undefined,
       isActive: hub.is_active,
       created_at: hub.created_at,

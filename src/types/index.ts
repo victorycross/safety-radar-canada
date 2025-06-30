@@ -1,4 +1,3 @@
-
 export enum AlertLevel {
   NORMAL = 'normal',
   WARNING = 'warning',
@@ -66,3 +65,5 @@ export interface User {
   isAuthorized?: boolean;
   role?: string;
 }
+
+export * from './dashboard';
