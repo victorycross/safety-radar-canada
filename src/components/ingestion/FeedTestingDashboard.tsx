@@ -9,7 +9,8 @@ import {
   AlertTriangle,
   Database,
   Settings,
-  Eye
+  Eye,
+  Rss
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +18,7 @@ import FeedTestCard from './FeedTestCard';
 import FeedDetailsView from './FeedDetailsView';
 import FeedAnalysisView from './FeedAnalysisView';
 import FeedConfigModal from './FeedConfigModal';
+import RSSFeedEvaluator from './RSSFeedEvaluator';
 
 interface FeedTest {
   sourceId: string;
@@ -45,14 +47,15 @@ const FeedTestingDashboard: React.FC = () => {
     feedName: ''
   });
 
-  // Initialize with known sources including new GeoMet-OGC
+  // Initialize with known sources including RSS feeds
   React.useEffect(() => {
     const knownSources = [
       { id: 'alert-ready', name: 'Alert Ready (Canada Emergency Alerts)' },
       { id: 'bc-arcgis', name: 'BC ArcGIS Emergency Data' },
       { id: 'everbridge', name: 'Everbridge Alerts' },
       { id: 'weather-ca-geocmet', name: 'Environment Canada GeoMet-OGC Weather' },
-      { id: 'cisa-alerts', name: 'CISA Security Alerts' },
+      { id: 'cisa-alerts', name: 'CISA Security Alerts (RSS)' },
+      { id: 'security-rss', name: 'Security RSS Feeds' },
       { id: 'social-media', name: 'Social Media Monitoring' }
     ];
 
@@ -100,6 +103,13 @@ const FeedTestingDashboard: React.FC = () => {
           });
           details = 'Everbridge requires API credentials for access to emergency notifications';
           break;
+        case 'cisa-alerts':
+        case 'security-rss':
+          result = await supabase.functions.invoke('master-ingestion-orchestrator', {
+            body: { source: 'security-rss', test_mode: true }
+          });
+          details = 'RSS-based security alerts from various cybersecurity sources';
+          break;
         default:
           result = await supabase.functions.invoke('master-ingestion-orchestrator', {
             body: { source: sourceId, test_mode: true }
@@ -124,7 +134,8 @@ const FeedTestingDashboard: React.FC = () => {
             statusMessage = 'Success but no records - may indicate no active weather alerts or API access issues';
             break;
           case 'cisa-alerts':
-            statusMessage = 'Success but no records - may need to verify CISA RSS feed endpoint';
+          case 'security-rss':
+            statusMessage = 'Success but no records - may need to verify RSS feed endpoints';
             break;
           case 'social-media':
             statusMessage = 'Success but no records - requires social media API keys (Twitter, Facebook, etc.)';
@@ -252,13 +263,23 @@ const FeedTestingDashboard: React.FC = () => {
 
       if (queueError) throw queueError;
 
+      // Check RSS security alerts
+      const { data: securityAlerts, error: securityError } = await supabase
+        .from('security_alerts_ingest')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (securityError) throw securityError;
+
       toast({
         title: 'Database Check',
-        description: `Found ${incidents?.length || 0} incidents, ${weatherAlerts?.length || 0} weather alerts, ${queueItems?.length || 0} queue items`,
+        description: `Found ${incidents?.length || 0} incidents, ${weatherAlerts?.length || 0} weather alerts, ${securityAlerts?.length || 0} security alerts, ${queueItems?.length || 0} queue items`,
       });
 
       console.log('Recent incidents:', incidents);
       console.log('Weather alerts:', weatherAlerts);
+      console.log('Security alerts:', securityAlerts);
       console.log('Queue items:', queueItems);
 
     } catch (error) {
@@ -321,13 +342,14 @@ const FeedTestingDashboard: React.FC = () => {
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               This dashboard helps you test each external data source individually and verify data flow into the database.
-              The new Environment Canada GeoMet-OGC API provides weather alerts in GeoJSON format with enhanced error handling and retry logic.
+              Enhanced RSS feed evaluation helps ensure quality and relevance of security and emergency alert feeds.
             </AlertDescription>
           </Alert>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList>
               <TabsTrigger value="feeds">Feed Testing</TabsTrigger>
+              <TabsTrigger value="rss-evaluator">RSS Evaluator</TabsTrigger>
               <TabsTrigger value="details">Feed Details</TabsTrigger>
               <TabsTrigger value="analysis">Data Analysis</TabsTrigger>
             </TabsList>
@@ -344,6 +366,10 @@ const FeedTestingDashboard: React.FC = () => {
                   />
                 ))}
               </div>
+            </TabsContent>
+
+            <TabsContent value="rss-evaluator">
+              <RSSFeedEvaluator />
             </TabsContent>
 
             <TabsContent value="details">
