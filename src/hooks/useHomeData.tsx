@@ -44,13 +44,17 @@ export const useHomeData = (): DashboardData => {
     { id: 'yt', name: 'Yukon', code: 'YT', alertLevel: 'normal', employeeCount: 150 }
   ];
 
-  // Transform Supabase data to match our interface, with fallback
+  // Transform Supabase data to match our interface, with proper property mapping
   const provinces: Province[] = supabaseProvinces?.length > 0 
     ? supabaseProvinces.map(province => ({
         id: province.id,
         name: province.name,
         code: province.code,
-        alertLevel: province.alert_level as 'normal' | 'warning' | 'severe',
+        alertLevel: (province.alert_level === 'normal' || 
+                    province.alert_level === 'warning' || 
+                    province.alert_level === 'severe') 
+                   ? province.alert_level 
+                   : 'normal' as 'normal' | 'warning' | 'severe',
         employeeCount: province.employee_count || 0
       }))
     : fallbackProvinces;

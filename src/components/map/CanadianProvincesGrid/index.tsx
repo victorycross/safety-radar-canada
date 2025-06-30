@@ -13,13 +13,17 @@ import { logger } from '@/utils/logger';
 const CanadianProvincesGrid = () => {
   const { provinces: supabaseProvinces } = useSupabaseDataContext();
 
-  // Transform Supabase provinces to match our interface
+  // Transform Supabase provinces to match our interface with proper property mapping
   const transformedProvinces: Province[] = supabaseProvinces?.length > 0 
     ? supabaseProvinces.map(province => ({
         id: province.id,
         name: province.name,
         code: province.code,
-        alertLevel: province.alert_level as 'normal' | 'warning' | 'severe',
+        alertLevel: (province.alert_level === 'normal' || 
+                    province.alert_level === 'warning' || 
+                    province.alert_level === 'severe') 
+                   ? province.alert_level 
+                   : 'normal' as 'normal' | 'warning' | 'severe',
         employeeCount: province.employee_count || 0
       }))
     : fallbackProvinces;
