@@ -1,19 +1,26 @@
 
 import { useAuth } from '@/components/auth/AuthProvider';
-import { logSecurityEvent, SecurityEvents } from '@/utils/securityAudit';
+import { logSecurityEvent, SecurityEvents, detectSuspiciousActivity, checkRateLimit, monitorSession } from '@/utils/securityAudit';
 import { validateTextInput, createRateLimiter } from '@/utils/inputValidation';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
-// Legacy security middleware - kept for backward compatibility
-// Use useEnhancedSecurityMiddleware for new implementations
-
-// Create rate limiters for different operations
-const adminActionLimiter = createRateLimiter(10, 60000); // 10 actions per minute
-const generalActionLimiter = createRateLimiter(50, 60000); // 50 actions per minute
-
-export const useSecurityMiddleware = () => {
+// Enhanced security middleware with database-backed rate limiting
+export const useEnhancedSecurityMiddleware = () => {
   const { user, isAdmin, isPowerUserOrAdmin } = useAuth();
   const { toast } = useToast();
+
+  // Monitor session on component mount
+  useEffect(() => {
+    if (user) {
+      monitorSession();
+      
+      // Set up session monitoring interval
+      const interval = setInterval(monitorSession, 30000); // Check every 30 seconds
+      
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   const validateAndExecute = async <T,>(
     operation: () => Promise<T>,
@@ -23,8 +30,9 @@ export const useSecurityMiddleware = () => {
       requirePowerUser?: boolean;
       auditAction?: string;
       auditTable?: string;
-      rateLimit?: 'admin' | 'general' | 'none';
+      rateLimit?: { maxAttempts: number; windowMs: number };
       validateInputs?: { [key: string]: any };
+      skipSuspiciousActivityCheck?: boolean;
     } = {}
   ): Promise<T | null> => {
     const {
@@ -33,8 +41,9 @@ export const useSecurityMiddleware = () => {
       requirePowerUser = false,
       auditAction,
       auditTable,
-      rateLimit = 'general',
-      validateInputs = {}
+      rateLimit,
+      validateInputs = {},
+      skipSuspiciousActivityCheck = false
     } = options;
 
     try {
@@ -46,6 +55,38 @@ export const useSecurityMiddleware = () => {
           variant: 'destructive',
         });
         return null;
+      }
+
+      // Check for suspicious activity first
+      if (user && !skipSuspiciousActivityCheck) {
+        const isSuspicious = await detectSuspiciousActivity(user.id);
+        if (isSuspicious) {
+          toast({
+            title: 'Security Alert',
+            description: 'Suspicious activity detected. Please contact support.',
+            variant: 'destructive',
+          });
+          return null;
+        }
+      }
+
+      // Database-backed rate limiting
+      if (user && rateLimit && auditAction) {
+        const canProceed = await checkRateLimit(
+          user.id, 
+          auditAction, 
+          rateLimit.maxAttempts, 
+          rateLimit.windowMs
+        );
+        
+        if (!canProceed) {
+          toast({
+            title: 'Rate Limit Exceeded',
+            description: 'Too many requests. Please wait before trying again.',
+            variant: 'destructive',
+          });
+          return null;
+        }
       }
 
       // Authorization checks
@@ -60,7 +101,8 @@ export const useSecurityMiddleware = () => {
           action: SecurityEvents.SUSPICIOUS_ACTIVITY,
           new_values: { 
             type: 'unauthorized_admin_access_attempt',
-            user_id: user?.id 
+            user_id: user?.id,
+            attempted_action: auditAction
           }
         });
         
@@ -78,29 +120,11 @@ export const useSecurityMiddleware = () => {
           action: SecurityEvents.SUSPICIOUS_ACTIVITY,
           new_values: { 
             type: 'unauthorized_power_user_access_attempt',
-            user_id: user?.id 
+            user_id: user?.id,
+            attempted_action: auditAction
           }
         });
         
-        return null;
-      }
-
-      // Rate limiting
-      if (rateLimit === 'admin' && !adminActionLimiter()) {
-        toast({
-          title: 'Rate Limit Exceeded',
-          description: 'Too many admin actions. Please wait before trying again.',
-          variant: 'destructive',
-        });
-        return null;
-      }
-
-      if (rateLimit === 'general' && !generalActionLimiter()) {
-        toast({
-          title: 'Rate Limit Exceeded',
-          description: 'Too many requests. Please wait before trying again.',
-          variant: 'destructive',
-        });
         return null;
       }
 
@@ -134,7 +158,7 @@ export const useSecurityMiddleware = () => {
       return result;
 
     } catch (error: any) {
-      console.error('Security middleware error:', error);
+      console.error('Enhanced security middleware error:', error);
       
       // Log the error
       if (auditAction) {
@@ -168,6 +192,12 @@ export const useSecurityMiddleware = () => {
           new_values: { page: window.location.pathname }
         });
       }
+    },
+    logConfigChange: async (configType: string, changes: any) => {
+      await logSecurityEvent({
+        action: SecurityEvents.CONFIG_CHANGE,
+        new_values: { config_type: configType, changes }
+      });
     }
   };
 };

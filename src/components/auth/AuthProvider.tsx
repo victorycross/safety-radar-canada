@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Log successful authentication
           if (event === 'SIGNED_IN') {
-            logSecurityEvent({
+            await logSecurityEvent({
               action: SecurityEvents.LOGIN_SUCCESS,
               new_values: { user_id: session.user.id, email: session.user.email }
             });
@@ -77,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Log logout
           if (event === 'SIGNED_OUT') {
-            logSecurityEvent({
+            await logSecurityEvent({
               action: SecurityEvents.LOGOUT
             });
           }
@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         // Log failed login attempt
-        logSecurityEvent({
+        await logSecurityEvent({
           action: SecurityEvents.LOGIN_FAILURE,
           new_values: { email, error: error.message }
         });
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return { error };
     } catch (error: any) {
-      logSecurityEvent({
+      await logSecurityEvent({
         action: SecurityEvents.LOGIN_FAILURE,
         new_values: { email, error: error.message }
       });
