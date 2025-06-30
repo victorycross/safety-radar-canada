@@ -37,6 +37,7 @@ Deno.serve(async (req) => {
     console.log(`Found ${sources?.length || 0} active sources to process`);
 
     const results = [];
+    let totalProcessed = 0;
 
     // Process each source
     for (const source of sources || []) {
@@ -51,6 +52,13 @@ Deno.serve(async (req) => {
 
         const result = await processSource(source, supabaseClient);
         results.push(result);
+        totalProcessed += result.records_processed || 0;
+
+        // Update the source's last_poll_at timestamp
+        await supabaseClient
+          .from('alert_sources')
+          .update({ last_poll_at: new Date().toISOString() })
+          .eq('id', source.id);
 
       } catch (error) {
         console.error(`Error processing source ${source.name}:`, error);
@@ -69,10 +77,13 @@ Deno.serve(async (req) => {
     // Run correlation analysis on new incidents
     await runCorrelationAnalysis(supabaseClient);
 
+    console.log(`Processing complete. Total records processed: ${totalProcessed}`);
+
     return new Response(
       JSON.stringify({
         success: true,
         processed_sources: results.length,
+        total_records_processed: totalProcessed,
         results: results,
         timestamp: new Date().toISOString()
       }),

@@ -16,7 +16,7 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
     // Use specialized processing for certain source types
     if (source.source_type === 'weather-geocmet') {
       return await processGeoMetSource(source, supabaseClient);
-    } else if (source.source_type === 'security-rss') {
+    } else if (source.source_type === 'security-rss' || source.source_type === 'rss') {
       return await processSecurityRSSSource(source, supabaseClient);
     }
     
@@ -96,7 +96,67 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
       processedAlerts = await normalizeAlerts(data, source);
     }
     
-    // Queue alerts for processing
+    console.log(`Processed ${processedAlerts.length} alerts from ${source.name}`);
+    
+    // Store alerts directly in appropriate tables based on source type
+    let storedCount = 0;
+    
+    if (source.source_type === 'security-rss' || source.source_type === 'rss') {
+      // Store in security_alerts_ingest table
+      if (processedAlerts.length > 0) {
+        const securityAlerts = processedAlerts.map(alert => ({
+          id: alert.id || `${source.source_type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          title: alert.title || 'Untitled Alert',
+          summary: alert.description || alert.summary,
+          link: alert.url || alert.link,
+          pub_date: alert.published || new Date().toISOString(),
+          source: source.name,
+          category: alert.category || 'Security',
+          location: alert.area || 'Global',
+          raw_data: alert
+        }));
+
+        const { data: insertedAlerts, error: insertError } = await supabaseClient
+          .from('security_alerts_ingest')
+          .upsert(securityAlerts, { onConflict: 'id' })
+          .select();
+
+        if (insertError) {
+          console.error(`Error storing security alerts for ${source.name}:`, insertError);
+        } else {
+          storedCount = insertedAlerts?.length || 0;
+          console.log(`Stored ${storedCount} security alerts for ${source.name}`);
+        }
+      }
+    } else if (source.source_type === 'weather' || source.source_type === 'weather-geocmet') {
+      // Store in weather_alerts_ingest table
+      if (processedAlerts.length > 0) {
+        const weatherAlerts = processedAlerts.map(alert => ({
+          id: alert.id || `${source.source_type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          description: alert.description || 'No description available',
+          severity: alert.severity,
+          event_type: alert.category || 'Weather',
+          onset: alert.effective || alert.published,
+          expires: alert.expires,
+          geometry_coordinates: alert.coordinates ? JSON.stringify(alert.coordinates) : null,
+          raw_data: alert
+        }));
+
+        const { data: insertedAlerts, error: insertError } = await supabaseClient
+          .from('weather_alerts_ingest')
+          .upsert(weatherAlerts, { onConflict: 'id' })
+          .select();
+
+        if (insertError) {
+          console.error(`Error storing weather alerts for ${source.name}:`, insertError);
+        } else {
+          storedCount = insertedAlerts?.length || 0;
+          console.log(`Stored ${storedCount} weather alerts for ${source.name}`);
+        }
+      }
+    }
+    
+    // Also queue alerts for processing into incidents table
     const queuedCount = await queueAlertsForProcessing(supabaseClient, processedAlerts, source.id);
     
     const responseTime = Date.now() - startTime;
@@ -106,19 +166,21 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
       source_id: source.id,
       response_time_ms: responseTime,
       success: true,
-      records_processed: queuedCount,
+      records_processed: Math.max(storedCount, queuedCount),
       http_status_code: httpStatus
     });
 
     return {
       source_name: source.name,
       success: true,
-      records_processed: queuedCount,
+      records_processed: Math.max(storedCount, queuedCount),
       response_time_ms: responseTime
     };
 
   } catch (error) {
     const responseTime = Date.now() - startTime;
+    
+    console.error(`Error processing source ${source.name}:`, error);
     
     await recordHealthMetric(supabaseClient, {
       source_id: source.id,
@@ -129,6 +191,7 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
       http_status_code: httpStatus
     });
 
+    // Re-throw to be handled by caller
     throw error;
   }
 }
