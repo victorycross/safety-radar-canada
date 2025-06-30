@@ -21,9 +21,8 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [incidents, setIncidents] = useState<Incident[]>(incidentsData);
   const [user] = useState<User | null>({
     id: 'user-1',
-    name: 'Demo User',
+    full_name: 'Demo User',
     isAuthorized: true,
-    provinceId: 'on'
   });
 
   const addIncident = (incidentData: Omit<Incident, 'id' | 'timestamp'>) => {
@@ -47,7 +46,7 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({ children }
       id: `report-${Date.now()}`,
       timestamp: new Date(),
       verificationStatus: VerificationStatus.UNVERIFIED,
-      source: IncidentSource.EMPLOYEE,
+      source: IncidentSource.MANUAL,
     };
 
     setIncidents(prev => [...prev, reportedIncident]);

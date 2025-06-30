@@ -8,7 +8,6 @@ export const provincesData: Province[] = [
     code: "ON",
     alertLevel: AlertLevel.WARNING,
     employeeCount: 2700, // 30% of 9000
-    incidents: []
   },
   {
     id: "ab",
@@ -16,7 +15,6 @@ export const provincesData: Province[] = [
     code: "AB",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 1800, // 20% of 9000
-    incidents: []
   },
   {
     id: "qc",
@@ -24,7 +22,6 @@ export const provincesData: Province[] = [
     code: "QC",
     alertLevel: AlertLevel.SEVERE,
     employeeCount: 1800, // 20% of 9000
-    incidents: []
   },
   {
     id: "bc",
@@ -32,7 +29,6 @@ export const provincesData: Province[] = [
     code: "BC",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 1800, // 20% of 9000
-    incidents: []
   },
   {
     id: "ns",
@@ -40,7 +36,6 @@ export const provincesData: Province[] = [
     code: "NS",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 450, // 5% of 9000
-    incidents: []
   },
   {
     id: "mb",
@@ -48,7 +43,6 @@ export const provincesData: Province[] = [
     code: "MB",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 450, // 5% of 9000
-    incidents: []
   },
   {
     id: "sk",
@@ -56,7 +50,6 @@ export const provincesData: Province[] = [
     code: "SK",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 0,
-    incidents: []
   },
   {
     id: "nb",
@@ -64,7 +57,6 @@ export const provincesData: Province[] = [
     code: "NB",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 0,
-    incidents: []
   },
   {
     id: "nl",
@@ -72,7 +64,6 @@ export const provincesData: Province[] = [
     code: "NL",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 0,
-    incidents: []
   },
   {
     id: "pe",
@@ -80,7 +71,6 @@ export const provincesData: Province[] = [
     code: "PE",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 0,
-    incidents: []
   },
   {
     id: "nt",
@@ -88,7 +78,6 @@ export const provincesData: Province[] = [
     code: "NT",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 0,
-    incidents: []
   },
   {
     id: "yt",
@@ -96,7 +85,6 @@ export const provincesData: Province[] = [
     code: "YT",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 0,
-    incidents: []
   },
   {
     id: "nu",
@@ -104,7 +92,6 @@ export const provincesData: Province[] = [
     code: "NU",
     alertLevel: AlertLevel.NORMAL,
     employeeCount: 0,
-    incidents: []
   }
 ];
 
