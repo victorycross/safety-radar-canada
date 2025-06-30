@@ -66,8 +66,9 @@ const IncidentsList = () => {
     );
   };
   
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleString('en-CA', {
+  const formatDate = (timestamp: string | Date) => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    return date.toLocaleString('en-CA', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
