@@ -1,5 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { InternationalHub, HubIncident, HubEmployeeLocation, AlertLevel } from '@/types/dashboard';
+import { InternationalHub, HubIncident, HubEmployeeLocation } from '@/types/dashboard';
+import { AlertLevel } from '@/types';
 import { logger } from '@/utils/logger';
 
 export const fetchInternationalHubs = async (): Promise<InternationalHub[]> => {

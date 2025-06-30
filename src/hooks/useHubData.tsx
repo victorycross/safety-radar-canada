@@ -1,5 +1,7 @@
+
 import { useEffect, useState } from 'react';
-import { InternationalHub, HubIncident, AlertLevel } from '@/types/dashboard';
+import { InternationalHub, HubIncident } from '@/types/dashboard';
+import { AlertLevel } from '@/types';
 import { logger } from '@/utils/logger';
 import { 
   fetchInternationalHubs, 
