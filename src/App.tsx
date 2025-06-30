@@ -51,10 +51,14 @@ const setSecurityHeaders = () => {
 const AppContent = () => {
   const { user, loading, isAdmin } = useAuth();
 
-  logger.debug('AppContent: Render started', { user: !!user, loading, isAdmin: isAdmin() });
+  logger.debug('AppContent: Render started', { 
+    hasUser: !!user, 
+    loading, 
+    isAdminUser: user ? isAdmin() : false 
+  });
 
   useEffect(() => {
-    logger.debug('AppContent: useEffect triggered');
+    logger.debug('AppContent: useEffect triggered for security headers');
     
     // Set security headers
     setSecurityHeaders();
@@ -108,7 +112,7 @@ const AppContent = () => {
 
   logger.debug('AppContent: User not authenticated, rendering without MainLayout');
 
-  // If user is not authenticated, show auth page for auth route, otherwise show public content
+  // If user is not authenticated, show content with header only
   return (
     <div className="min-h-screen bg-background">
       <Header />

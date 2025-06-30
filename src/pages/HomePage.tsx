@@ -25,16 +25,19 @@ const HomePage = () => {
   // Filter provinces for display
   const displayProvinces = provinces.filter(province => isProvinceVisible(province.id));
 
+  logger.debug('HomePage: Data loaded', {
+    provincesCount: provinces.length,
+    alertProvincesCount: alertProvinces.length,
+    visibleAlertProvincesCount: visibleAlertProvinces.length,
+    loading
+  });
+
   if (loading) {
     logger.debug('HomePage: Showing loading state');
     return <DashboardLoadingState />;
   }
 
-  logger.debug('HomePage: Rendering dashboard content', {
-    provincesCount: provinces.length,
-    alertProvincesCount: alertProvinces.length,
-    visibleAlertProvincesCount: visibleAlertProvinces.length
-  });
+  logger.debug('HomePage: Rendering dashboard content');
 
   return (
     <DashboardContent

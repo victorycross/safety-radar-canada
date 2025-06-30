@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { logSecurityEvent, SecurityEvents } from '@/utils/securityAudit';
+import { logger } from '@/utils/logger';
 
 export type AppRole = 'admin' | 'power_user' | 'regular_user';
 
@@ -35,33 +36,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userRoles, setUserRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
+  logger.debug('AuthProvider: Component initialized');
+
   const fetchUserRoles = async (userId: string) => {
     try {
+      logger.debug('AuthProvider: Fetching user roles for', userId);
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
       
-      if (error) throw error;
+      if (error) {
+        logger.warn('AuthProvider: Error fetching user roles:', error);
+        setUserRoles([]);
+        return;
+      }
       
       const roles = data?.map(r => r.role as AppRole) || [];
+      logger.debug('AuthProvider: User roles fetched:', roles);
       setUserRoles(roles);
     } catch (error) {
-      console.error('Error fetching user roles:', error);
+      logger.error('AuthProvider: Error fetching user roles:', error);
       setUserRoles([]);
     }
   };
 
   useEffect(() => {
     let mounted = true;
+    logger.debug('AuthProvider: useEffect starting');
 
     // Initialize auth state
     const initializeAuth = async () => {
       try {
+        logger.debug('AuthProvider: Initializing auth state');
+        
         // Get initial session
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          logger.error('AuthProvider: Error getting session:', error);
+          if (mounted) {
+            setLoading(false);
+          }
+          return;
+        }
         
         if (mounted) {
+          logger.debug('AuthProvider: Setting initial session', { hasSession: !!initialSession });
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
           
@@ -69,10 +90,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await fetchUserRoles(initialSession.user.id);
           }
           
+          logger.debug('AuthProvider: Auth initialization complete');
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        logger.error('AuthProvider: Error initializing auth:', error);
         if (mounted) {
           setLoading(false);
         }
@@ -83,6 +105,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
+
+        logger.debug('AuthProvider: Auth state changed', { event, hasSession: !!session });
 
         setSession(session);
         setUser(session?.user ?? null);
@@ -114,6 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
 
     return () => {
+      logger.debug('AuthProvider: Cleaning up');
       mounted = false;
       subscription.unsubscribe();
     };
@@ -121,12 +146,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      logger.debug('AuthProvider: Attempting sign in');
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) {
+        logger.warn('AuthProvider: Sign in failed:', error.message);
         // Log failed login attempt
         await logSecurityEvent({
           action: SecurityEvents.LOGIN_FAILURE,
@@ -136,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return { error };
     } catch (error: any) {
+      logger.error('AuthProvider: Sign in error:', error);
       await logSecurityEvent({
         action: SecurityEvents.LOGIN_FAILURE,
         new_values: { email, error: error.message }
@@ -145,6 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
+    logger.debug('AuthProvider: Attempting sign up');
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -161,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    logger.debug('AuthProvider: Signing out');
     await supabase.auth.signOut();
   };
 
@@ -188,6 +218,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAdmin,
     isPowerUserOrAdmin
   };
+
+  logger.debug('AuthProvider: Rendering with state', { 
+    hasUser: !!user, 
+    loading, 
+    rolesCount: userRoles.length 
+  });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

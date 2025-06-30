@@ -1,24 +1,23 @@
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext } from 'react';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
-import { Province } from '@/types/dashboard';
-import { AlertLevel } from '@/types';
-import { SupabaseProvince } from '@/types/supabase-types';
+import { Incident, Province } from '@/types';
+import { logger } from '@/utils/logger';
 
 interface SupabaseDataContextType {
   provinces: Province[];
-  incidents: any[];
+  incidents: Incident[];
   loading: boolean;
   error: string | null;
-  refreshData: () => void;
+  refreshData: () => Promise<void>;
   getProvinceById: (id: string) => Province | undefined;
-  getIncidentsByProvince: (provinceId: string) => any[];
-  addIncident: (incident: any) => Promise<void>;
-  reportIncident: (incident: any) => Promise<void>;
-  updateProvinceAlertLevel: (provinceId: string, alertLevel: AlertLevel) => Promise<void>;
-  getCorrelatedIncidents: (incidentId: string) => any[];
-  getIncidentsByConfidence: (minConfidence: number) => any[];
-  getGeotaggedIncidents: () => any[];
+  getIncidentsByProvince: (provinceId: string) => Incident[];
+  addIncident: (incident: Omit<Incident, 'id' | 'timestamp'>) => Promise<void>;
+  reportIncident: (incident: Omit<Incident, 'id' | 'timestamp'>) => Promise<void>;
+  updateProvinceAlertLevel: (provinceId: string, alertLevel: any) => Promise<void>;
+  getCorrelatedIncidents: (incidentId: string) => Incident[];
+  getIncidentsByConfidence: (minConfidence: number) => Incident[];
+  getGeotaggedIncidents: () => Incident[];
   triggerDataIngestion: () => Promise<void>;
 }
 
@@ -26,41 +25,27 @@ const SupabaseDataContext = createContext<SupabaseDataContextType | undefined>(u
 
 export const useSupabaseDataContext = () => {
   const context = useContext(SupabaseDataContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useSupabaseDataContext must be used within a SupabaseDataProvider');
   }
   return context;
 };
 
-interface SupabaseDataProviderProps {
-  children: ReactNode;
-}
-
-export const SupabaseDataProvider: React.FC<SupabaseDataProviderProps> = ({ children }) => {
+export const SupabaseDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  logger.debug('SupabaseDataProvider: Initializing');
+  
   const supabaseData = useSupabaseData();
   
-  // Transform Supabase provinces to match our Province interface
-  const transformedProvinces: Province[] = supabaseData.provinces.map((province: any) => ({
-    id: province.id,
-    name: province.name,
-    code: province.code,
-    alertLevel: province.alertLevel || province.alert_level || AlertLevel.NORMAL,
-    employeeCount: province.employeeCount || province.employee_count || 0,
-    coordinates: province.coordinates,
-    created_at: province.created_at,
-    updated_at: province.updated_at
-  }));
-
-  const contextValue: SupabaseDataContextType = {
-    ...supabaseData,
-    provinces: transformedProvinces
-  };
+  logger.debug('SupabaseDataProvider: Data state', {
+    provincesCount: supabaseData.provinces?.length || 0,
+    incidentsCount: supabaseData.incidents?.length || 0,
+    loading: supabaseData.loading,
+    hasError: !!supabaseData.error
+  });
 
   return (
-    <SupabaseDataContext.Provider value={contextValue}>
+    <SupabaseDataContext.Provider value={supabaseData}>
       {children}
     </SupabaseDataContext.Provider>
   );
 };
-
-export default SupabaseDataProvider;
