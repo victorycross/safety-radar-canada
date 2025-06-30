@@ -127,7 +127,7 @@ export class SecurityValidator {
           type: 'dangerous_file_upload', 
           filename: file.name,
           size: file.size,
-          type: file.type
+          file_type: file.type
         }
       });
     }
