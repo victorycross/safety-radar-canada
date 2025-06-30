@@ -87,17 +87,17 @@ const DataPipelineDiagnostics = () => {
         },
         {
           name: 'Security Storage',
-          status: securityError ? 'error' : (securityAlerts?.length || 0) > 0 ? 'success' : 'error',
+          status: securityError ? 'error' : (securityAlerts?.length || 0) > 0 ? 'success' : 'warning',
           count: securityAlerts?.length || 0,
           lastActivity: securityAlerts?.length ? securityAlerts[0].created_at : null,
-          issues: securityError ? [securityError.message] : (securityAlerts?.length || 0) === 0 ? ['No security alerts stored'] : []
+          issues: securityError ? [securityError.message] : (securityAlerts?.length || 0) === 0 ? ['No recent security alerts - may indicate RSS parsing issues'] : []
         },
         {
           name: 'Weather Storage',
-          status: weatherError ? 'error' : (weatherAlerts?.length || 0) > 0 ? 'success' : 'error',
+          status: weatherError ? 'error' : (weatherAlerts?.length || 0) > 0 ? 'success' : 'warning',
           count: weatherAlerts?.length || 0,
           lastActivity: weatherAlerts?.length ? weatherAlerts[0].created_at : null,
-          issues: weatherError ? [weatherError.message] : (weatherAlerts?.length || 0) === 0 ? ['No weather alerts stored'] : []
+          issues: weatherError ? [weatherError.message] : (weatherAlerts?.length || 0) === 0 ? ['No recent weather alerts - may indicate API configuration issues'] : []
         }
       ];
 
@@ -136,7 +136,7 @@ const DataPipelineDiagnostics = () => {
       console.error('Error testing pipeline:', error);
       toast({
         title: 'Test Failed',
-        description: 'Failed to test data pipeline',
+        description: 'Failed to test data pipeline. Check API configurations.',
         variant: 'destructive'
       });
     } finally {
@@ -210,7 +210,7 @@ const DataPipelineDiagnostics = () => {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <strong>Critical Issues Detected:</strong> The data pipeline has errors that prevent proper data flow.
-            Data may not be reaching the storage tables even if feeds are being polled successfully.
+            Common issues: Missing API keys (OpenWeatherMap), incorrect API endpoints, or RSS parsing problems.
           </AlertDescription>
         </Alert>
       )}
@@ -220,6 +220,7 @@ const DataPipelineDiagnostics = () => {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <strong>Performance Issues:</strong> Some pipeline stages have warnings that may impact data processing efficiency.
+            This often indicates RSS feeds returning 0 items or API configuration issues.
           </AlertDescription>
         </Alert>
       )}
@@ -244,7 +245,7 @@ const DataPipelineDiagnostics = () => {
         <CardContent>
           <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0 lg:space-x-4">
             {pipeline.map((stage, index) => (
-              <React.Fragment key={stage.name}>
+              <div key={stage.name} className="flex flex-col lg:flex-row items-center">
                 <div className="flex flex-col items-center space-y-2 min-w-[160px]">
                   <div className="flex items-center space-x-2">
                     {getStageIcon(stage.status)}
@@ -273,9 +274,9 @@ const DataPipelineDiagnostics = () => {
                 </div>
                 
                 {index < pipeline.length - 1 && (
-                  <ArrowRight className="h-6 w-6 text-muted-foreground hidden lg:block" />
+                  <ArrowRight className="h-6 w-6 text-muted-foreground hidden lg:block mx-2" />
                 )}
-              </React.Fragment>
+              </div>
             ))}
           </div>
         </CardContent>
@@ -325,6 +326,42 @@ const DataPipelineDiagnostics = () => {
           </Card>
         ))}
       </div>
+
+      {/* Configuration Help */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Common Configuration Issues</CardTitle>
+          <CardDescription>
+            Steps to resolve typical pipeline problems
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">OpenWeatherMap API (401 Unauthorized)</h4>
+            <p className="text-xs text-muted-foreground">
+              • Add your OpenWeatherMap API key to Supabase secrets as 'OPENWEATHERMAP_API_KEY'
+              • Update the alert source configuration to include the API key
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">Environment Canada (404 Not Found)</h4>
+            <p className="text-xs text-muted-foreground">
+              • Current endpoint may be incorrect. Try: https://api.weather.gc.ca/collections/alerts/items
+              • Check if GeoMet API structure has changed
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">RSS Feeds Parsing 0 Items</h4>
+            <p className="text-xs text-muted-foreground">
+              • RSS feeds may have changed structure or be temporarily unavailable
+              • Check RSS parser logic in master-ingestion-orchestrator
+              • Verify RSS item extraction patterns
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

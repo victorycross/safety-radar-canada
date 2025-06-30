@@ -11,13 +11,34 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
   let httpStatus: number | undefined;
   
   try {
-    console.log(`Fetching data from: ${source.api_endpoint}`);
+    console.log(`Processing source: ${source.name} (${source.source_type})`);
+    console.log(`API endpoint: ${source.api_endpoint}`);
     
     // Use specialized processing for certain source types
     if (source.source_type === 'weather-geocmet') {
       return await processGeoMetSource(source, supabaseClient);
     } else if (source.source_type === 'security-rss' || source.source_type === 'rss') {
       return await processSecurityRSSSource(source, supabaseClient);
+    }
+    
+    // Skip sources that require API keys but don't have them configured
+    if (source.source_type === 'weather' && source.name.includes('OpenWeatherMap')) {
+      console.log('Skipping OpenWeatherMap - requires API key configuration');
+      
+      await recordHealthMetric(supabaseClient, {
+        source_id: source.id,
+        response_time_ms: 0,
+        success: false,
+        error_message: 'API key required but not configured',
+        records_processed: 0
+      });
+
+      return {
+        source_name: source.name,
+        success: false,
+        error: 'API key required but not configured',
+        records_processed: 0
+      };
     }
     
     // Generic processing for other source types
@@ -45,11 +66,14 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
       };
     }
 
+    console.log(`Fetching data from: ${source.api_endpoint}`);
     const response = await fetch(source.api_endpoint, requestConfig);
     httpStatus = response.status;
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+      console.error(`API request failed for ${source.name}: ${errorMsg}`);
+      throw new Error(errorMsg);
     }
 
     const contentType = response.headers.get('content-type') || '';
@@ -59,6 +83,7 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
       data = await response.json();
     } else if (contentType.includes('xml') || contentType.includes('rss')) {
       const text = await response.text();
+      console.log(`Fetched ${text.length} characters of XML/RSS content`);
       data = await parseXmlData(text, source.source_type);
     } else {
       data = await response.text();
@@ -96,7 +121,7 @@ export async function processSource(source: AlertSource, supabaseClient: any): P
       processedAlerts = await normalizeAlerts(data, source);
     }
     
-    console.log(`Processed ${processedAlerts.length} alerts from ${source.name}`);
+    console.log(`Normalized ${processedAlerts.length} alerts from ${source.name}`);
     
     // Store alerts directly in appropriate tables based on source type
     let storedCount = 0;
