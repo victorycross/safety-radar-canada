@@ -9,6 +9,7 @@ import RequirementsTab from './RequirementsTab';
 import TechnicalTab from './TechnicalTab';
 import FeedAuditDashboard from './FeedAuditDashboard';
 import DataPipelineDiagnostics from './DataPipelineDiagnostics';
+import WeatherAlertsTab from './WeatherAlertsTab';
 
 interface AdminTabsProps {
   activeTab: string;
@@ -18,12 +19,13 @@ interface AdminTabsProps {
 const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-8">
+      <TabsList className="grid w-full grid-cols-9">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="employees">Employees</TabsTrigger>
         <TabsTrigger value="feeds">Feed Management</TabsTrigger>
         <TabsTrigger value="feed-audit">Feed Audit</TabsTrigger>
         <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+        <TabsTrigger value="weather-alerts">Weather Alerts</TabsTrigger>
         <TabsTrigger value="rss-audit">RSS Audit</TabsTrigger>
         <TabsTrigger value="requirements">Requirements</TabsTrigger>
         <TabsTrigger value="technical">Technical</TabsTrigger>
@@ -47,6 +49,10 @@ const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
 
       <TabsContent value="pipeline" className="space-y-4">
         <DataPipelineDiagnostics />
+      </TabsContent>
+
+      <TabsContent value="weather-alerts" className="space-y-4">
+        <WeatherAlertsTab />
       </TabsContent>
 
       <TabsContent value="rss-audit" className="space-y-4">
