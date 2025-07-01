@@ -47,6 +47,43 @@ const DataTemplateDocumentation = () => {
       }
     },
     {
+      name: 'National Security Risk Data',
+      description: 'Security threat assessment with automated RPN calculation and priority assignment',
+      requiredFields: ['threat_category', 'likelihood', 'impact', 'preparedness_gap'],
+      optionalFields: ['assigned_lead', 'current_alerts', 'notes', 'playbook', 'live_feeds', 'last_reviewed'],
+      validationRules: {
+        'likelihood': 'Must be integer between 1 and 5',
+        'impact': 'Must be integer between 1 and 5',
+        'preparedness_gap': 'Must be integer between 1 and 5',
+        'rpn': 'Auto-calculated: likelihood × impact × preparedness_gap',
+        'priority': 'Auto-assigned: high (≥45), medium (25-44), low (<25)',
+        'live_feeds': 'JSON array of feed objects with name, url, description'
+      },
+      permissions: {
+        admin: { canView: true, canCreate: true, canUpdate: true, canDelete: true, canBulkUpdate: true, canArchive: true },
+        power_user: { canView: true, canCreate: false, canUpdate: true, canDelete: false, canBulkUpdate: false, canArchive: false },
+        regular_user: { canView: true, canCreate: false, canUpdate: false, canDelete: false, canBulkUpdate: false, canArchive: false }
+      },
+      relatedComponents: ['SecurityRiskRegisterTab.tsx', 'RiskDetailModal.tsx', 'RiskEditModal.tsx', 'RiskExporter.tsx'],
+      exampleData: {
+        threat_category: 'Cyber Attack on Critical Infrastructure',
+        likelihood: 4,
+        impact: 5,
+        preparedness_gap: 3,
+        assigned_lead: 'National Cyber Security Team',
+        current_alerts: 'Elevated threat level due to recent APT activity',
+        notes: 'Requires immediate attention and enhanced monitoring',
+        playbook: '# Response Playbook\n\n## Immediate Actions\n1. Activate incident response team\n2. Implement enhanced monitoring\n3. Coordinate with critical infrastructure operators',
+        live_feeds: [
+          {
+            name: 'Cyber Threat Intelligence Feed',
+            url: 'https://api.cyberthreat.gov',
+            description: 'Real-time cyber threat indicators'
+          }
+        ]
+      }
+    },
+    {
       name: 'International Hub Data',
       description: 'International office locations with employee counts and status',
       requiredFields: ['name', 'country', 'code', 'employee_count', 'is_active'],
@@ -179,6 +216,7 @@ const DataTemplateDocumentation = () => {
   const getTemplateIcon = (name: string) => {
     switch (name) {
       case 'Province Data': return <MapPin className="h-4 w-4" />;
+      case 'National Security Risk Data': return <Shield className="h-4 w-4" />;
       case 'International Hub Data': return <Globe className="h-4 w-4" />;
       case 'Incident Data': return <AlertTriangle className="h-4 w-4" />;
       case 'Security Alert Data': return <Shield className="h-4 w-4" />;
