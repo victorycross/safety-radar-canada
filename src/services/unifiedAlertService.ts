@@ -69,6 +69,22 @@ export class UnifiedAlertService {
     // Get default province (Ontario) if not specified
     const provinceId = this.config.defaultProvinceId || await this.getDefaultProvinceId();
 
+    // Properly serialize the raw payload to ensure JSON compatibility
+    const rawPayload = {
+      original_alert: {
+        id: alert.id,
+        title: alert.title,
+        description: alert.description,
+        severity: alert.severity,
+        urgency: alert.urgency,
+        area: alert.area,
+        published: alert.published,
+        source: alert.source
+      },
+      integration_source: 'unified_feed',
+      processed_at: new Date().toISOString()
+    };
+
     return {
       title: alert.title,
       description: alert.description,
@@ -78,11 +94,7 @@ export class UnifiedAlertService {
       source: this.mapSourceToIncidentSource(alert.source),
       verification_status: VerificationStatus.UNVERIFIED,
       confidence_score: 0.7, // External alerts get medium confidence
-      raw_payload: {
-        original_alert: alert,
-        integration_source: 'unified_feed',
-        processed_at: new Date().toISOString()
-      },
+      raw_payload: rawPayload,
       geographic_scope: alert.area,
       severity_numeric: this.getSeverityNumeric(alert.severity)
     };
@@ -95,7 +107,7 @@ export class UnifiedAlertService {
       .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       .ilike('title', `%${alert.title.substring(0, 30)}%`)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     return data;
   }
@@ -105,7 +117,7 @@ export class UnifiedAlertService {
       .from('provinces')
       .select('id')
       .eq('code', 'ON')
-      .single();
+      .maybeSingle();
 
     return data?.id || '';
   }
