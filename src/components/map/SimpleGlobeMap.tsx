@@ -51,16 +51,26 @@ const SimpleGlobeMap = () => {
           
           {/* Interactive province overlays */}
           <div className="absolute inset-0">
-            {provinces.map(province => (
-              <ProvinceOverlay
-                key={province.id}
-                province={province}
-                position={provincePositions[province.id as keyof typeof provincePositions]}
-                incidents={getIncidentsForProvince(province.id)}
-                activeProvinceId={activeProvinceId}
-                onHover={handleProvinceHover}
-              />
-            ))}
+            {provinces.map(province => {
+              const position = provincePositions[province.code.toLowerCase() as keyof typeof provincePositions];
+              
+              // Skip rendering if position is not found
+              if (!position) {
+                console.warn(`Position not found for province: ${province.code}`);
+                return null;
+              }
+              
+              return (
+                <ProvinceOverlay
+                  key={province.id}
+                  province={province}
+                  position={position}
+                  incidents={getIncidentsForProvince(province.id)}
+                  activeProvinceId={activeProvinceId}
+                  onHover={handleProvinceHover}
+                />
+              );
+            })}
           </div>
         </div>
         

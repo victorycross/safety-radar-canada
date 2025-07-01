@@ -31,6 +31,11 @@ const ProvinceOverlay = ({
   onHover 
 }: ProvinceOverlayProps) => {
   
+  // Safety check - return null if position is undefined
+  if (!position) {
+    return null;
+  }
+  
   // Get alert level color for the overlay
   const getAlertLevelColor = (alertLevel: AlertLevel) => {
     switch (alertLevel) {
