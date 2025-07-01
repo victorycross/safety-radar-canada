@@ -54,6 +54,10 @@ const SchemaHealthMonitor = () => {
       const tablesWithRLS = rlsData?.filter(t => t.rls_enabled).length || 0;
       const tablesWithoutRLS = rlsData?.filter(t => !t.rls_enabled).map(t => t.table_name) || [];
 
+      // Format current date as MM/dd/yyyy
+      const currentDate = new Date();
+      const formattedDate = `${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getDate().toString().padStart(2, '0')}/${currentDate.getFullYear()}`;
+
       // Use known values from schema documentation instead of querying information_schema
       const health: SchemaHealth = {
         totalTables,
@@ -62,7 +66,7 @@ const SchemaHealthMonitor = () => {
         foreignKeyIntegrity: true, // Would need specific check
         triggerCount: 15, // Known from schema
         functionCount: 12, // Known from schema documentation
-        lastUpdated: new Date().toISOString()
+        lastUpdated: formattedDate
       };
 
       setSchemaHealth(health);
@@ -263,7 +267,7 @@ const SchemaHealthMonitor = () => {
             <div>
               <div className="font-semibold">Health Check</div>
               <div className="text-sm text-muted-foreground">
-                {schemaHealth?.lastUpdated ? new Date(schemaHealth.lastUpdated).toLocaleString() : 'Never'}
+                {schemaHealth?.lastUpdated || 'Never'}
               </div>
             </div>
           </div>
