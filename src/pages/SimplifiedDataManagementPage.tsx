@@ -12,13 +12,16 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Link } from 'react-router-dom';
 import { useSourceManagement } from '@/hooks/useSourceManagement';
 import { useDataIngestion } from '@/hooks/useDataIngestion';
+import DataTemplateDocumentation from '@/components/data-templates/DataTemplateDocumentation';
+import BulkDataImporter from '@/components/data-templates/BulkDataImporter';
 
 const SimplifiedDataManagementPage = () => {
   const { isAdmin } = useAuth();
@@ -53,7 +56,7 @@ const SimplifiedDataManagementPage = () => {
           <div>
             <h1 className="text-3xl font-bold">Data Management</h1>
             <p className="text-muted-foreground mt-2">
-              Manage data sources, processing, and system health
+              Manage data sources, processing, templates, and system health
             </p>
           </div>
           
@@ -69,11 +72,12 @@ const SimplifiedDataManagementPage = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="sources">Data Sources</TabsTrigger>
             <TabsTrigger value="processing">Processing</TabsTrigger>
             <TabsTrigger value="bulk">Bulk Operations</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -281,6 +285,36 @@ const SimplifiedDataManagementPage = () => {
                     </Card>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="templates" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Data Templates & Documentation
+                </CardTitle>
+                <CardDescription>
+                  Access standardized templates, validation rules, and comprehensive documentation
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="documentation" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="documentation">Documentation</TabsTrigger>
+                    <TabsTrigger value="bulk-import">Bulk Import</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="documentation" className="mt-4">
+                    <DataTemplateDocumentation />
+                  </TabsContent>
+
+                  <TabsContent value="bulk-import" className="mt-4">
+                    <BulkDataImporter />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </TabsContent>

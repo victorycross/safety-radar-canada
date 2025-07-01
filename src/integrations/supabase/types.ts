@@ -916,57 +916,6 @@ export type Database = {
           },
         ]
       }
-      toronto_police_incidents: {
-        Row: {
-          category: string | null
-          created_at: string | null
-          division: string | null
-          event_id: string | null
-          id: string
-          latitude: number | null
-          location: unknown | null
-          longitude: number | null
-          neighborhood: string | null
-          occurrence_date: string | null
-          premises_type: string | null
-          raw_data: Json | null
-          report_date: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string | null
-          division?: string | null
-          event_id?: string | null
-          id?: string
-          latitude?: number | null
-          location?: unknown | null
-          longitude?: number | null
-          neighborhood?: string | null
-          occurrence_date?: string | null
-          premises_type?: string | null
-          raw_data?: Json | null
-          report_date?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string | null
-          division?: string | null
-          event_id?: string | null
-          id?: string
-          latitude?: number | null
-          location?: unknown | null
-          longitude?: number | null
-          neighborhood?: string | null
-          occurrence_date?: string | null
-          premises_type?: string | null
-          raw_data?: Json | null
-          report_date?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       travel_integration_config: {
         Row: {
           api_endpoint: string | null
