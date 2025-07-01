@@ -42,7 +42,7 @@ const AdminPage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            Streamlined administration hub for daily operations and system management
+            Comprehensive administration hub for operations, data management, and system oversight
           </p>
         </div>
         <AdminTabs activeTab={activeTab} onTabChange={handleTabChange} />

@@ -12,8 +12,7 @@ import {
   Users,
   MapPin,
   Settings,
-  TrendingUp,
-  Database
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -35,17 +34,9 @@ const Sidebar = () => {
     { name: 'Executive Reports', href: '/report', icon: TrendingUp },
   ] : [];
 
-  // Input & Reporting section - different items based on role
+  // Input & Reporting section - simplified without data management
   const inputSection = [
     { name: 'Report Incident', href: '/report-incident', icon: FileText },
-    // Data Management - for power users and admins
-    ...(isPowerUserOrAdmin() ? [
-      { 
-        name: 'Data Management', 
-        href: isAdmin() ? '/admin?tab=data-management' : '/data-management', 
-        icon: Database 
-      },
-    ] : [])
   ];
 
   // Admin section - for administrators only
@@ -72,8 +63,7 @@ const Sidebar = () => {
           {items.map((item) => {
             const isActive = location.pathname === item.href || 
               (item.href.includes('?tab=') && location.pathname === item.href.split('?')[0] && 
-               location.search.includes(item.href.split('?')[1])) ||
-              (item.href === '/data-management' && location.pathname === '/data-management');
+               location.search.includes(item.href.split('?')[1]));
             const Icon = item.icon;
             
             return (
