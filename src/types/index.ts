@@ -1,3 +1,4 @@
+
 export enum AlertLevel {
   NORMAL = 'normal',
   WARNING = 'warning',
@@ -42,6 +43,9 @@ export interface Incident extends BaseIncident {
   severityNumeric?: number;
   geospatialData?: any;
   correlations?: any[];
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
 }
 
 export interface Province {
