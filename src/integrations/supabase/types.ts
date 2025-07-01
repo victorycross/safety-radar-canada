@@ -1222,6 +1222,10 @@ export type Database = {
         Args: { _user_email: string }
         Returns: undefined
       }
+      recalculate_all_province_totals: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       validate_hub_data_consistency: {
         Args: Record<PropertyKey, never>
         Returns: {

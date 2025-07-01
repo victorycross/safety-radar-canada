@@ -1,47 +1,38 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import BulkEmployeeManagement from './BulkEmployeeManagement';
-import CityLocationManagement from './CityLocationManagement';
+import UnifiedEmployeeManagement from './UnifiedEmployeeManagement';
 import TravelIntegrationDashboard from './TravelIntegrationDashboard';
-import { Users, MapPin, Plane, FileSpreadsheet } from 'lucide-react';
+import { Users, Plane } from 'lucide-react';
 
 const EmployeeManagementTab = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Employee Data Management</h2>
+        <h2 className="text-2xl font-bold mb-2">Employee Operations Management</h2>
         <p className="text-muted-foreground">
-          Manage employee distributions, city-level data, and travel integration systems
+          Unified employee data management and travel integration systems
         </p>
       </div>
 
-      <Tabs defaultValue="city-management" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="city-management" className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            City Management
+      <Tabs defaultValue="employee-data" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="employee-data" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Employee Data
           </TabsTrigger>
           <TabsTrigger value="travel-integration" className="flex items-center gap-2">
             <Plane className="h-4 w-4" />
             Travel Integration
           </TabsTrigger>
-          <TabsTrigger value="bulk-operations" className="flex items-center gap-2">
-            <FileSpreadsheet className="h-4 w-4" />
-            Bulk Operations
-          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="city-management" className="space-y-4">
-          <CityLocationManagement />
+        <TabsContent value="employee-data" className="space-y-4">
+          <UnifiedEmployeeManagement />
         </TabsContent>
 
         <TabsContent value="travel-integration" className="space-y-4">
           <TravelIntegrationDashboard />
-        </TabsContent>
-
-        <TabsContent value="bulk-operations" className="space-y-4">
-          <BulkEmployeeManagement />
         </TabsContent>
       </Tabs>
     </div>

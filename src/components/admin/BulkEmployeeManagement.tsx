@@ -9,7 +9,7 @@ import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { bulkUpdateEmployeeCounts } from '@/services/employeeService';
 import { fetchCities, updateEmployeeLocation } from '@/services/cityService';
 import { toast } from '@/components/ui/use-toast';
-import { Download, Upload, FileText, MapPin, Users } from 'lucide-react';
+import { Download, Upload, FileText, MapPin, Users, AlertTriangle } from 'lucide-react';
 
 const BulkEmployeeManagement = () => {
   const { provinces, refreshData } = useSupabaseDataContext();
@@ -123,7 +123,7 @@ const BulkEmployeeManagement = () => {
       if (failed === 0) {
         toast({
           title: "Bulk Update Successful",
-          description: `Successfully updated ${successful} provinces`,
+          description: `Successfully updated ${successful} provinces. Data distributed to city-level records.`,
         });
         setCsvData('');
         await refreshData();
@@ -333,10 +333,22 @@ const BulkEmployeeManagement = () => {
                 Province-Level Bulk Management
               </CardTitle>
               <CardDescription>
-                Upload CSV data to update multiple provinces at once
+                Upload CSV data to update multiple provinces at once. Data will be distributed to city-level records.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <Card className="border-amber-200 bg-amber-50">
+                <CardContent className="pt-4">
+                  <div className="flex items-start gap-2 text-amber-800">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-medium">Legacy Operation</p>
+                      <p>Province bulk updates distribute data to the first city found in each province. For precise control, use city-level management.</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <div className="flex gap-2">
                 <Button onClick={downloadCSVTemplate} variant="outline" className="flex-1">
                   <Download className="mr-2 h-4 w-4" />
@@ -379,7 +391,7 @@ const BulkEmployeeManagement = () => {
                 City-Level Bulk Management
               </CardTitle>
               <CardDescription>
-                Upload CSV data to update city-level employee distributions
+                Upload CSV data to update city-level employee distributions. This is the recommended approach.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

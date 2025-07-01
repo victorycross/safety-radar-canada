@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Users, Plane, Home, AlertTriangle } from 'lucide-react';
+import { MapPin, Users, Plane, Home, AlertTriangle, CheckCircle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { 
@@ -92,7 +92,7 @@ const CityLocationManagement = () => {
 
       toast({
         title: 'Location Updated',
-        description: `Employee counts for ${selectedCityData?.name} have been updated`,
+        description: `Employee counts for ${selectedCityData?.name} have been updated. Province totals will sync automatically.`,
       });
 
       await loadData();
@@ -115,6 +115,22 @@ const CityLocationManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Primary Source Indicator */}
+      <Card className="border-green-200 bg-green-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-800">
+            <CheckCircle className="h-5 w-5" />
+            Primary Employee Data Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-green-700">
+          <div className="space-y-2 text-sm">
+            <p><strong>Authoritative Source:</strong> All province totals are calculated from this city-level data</p>
+            <p><strong>Real-time Sync:</strong> Province dashboard updates automatically when you make changes here</p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -188,6 +204,9 @@ const CityLocationManagement = () => {
                     value={homeBaseCount}
                     onChange={(e) => setHomeBaseCount(parseInt(e.target.value) || 0)}
                   />
+                  <div className="text-xs text-muted-foreground">
+                    Permanent employees based in this city
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -202,6 +221,9 @@ const CityLocationManagement = () => {
                     value={currentLocationCount}
                     onChange={(e) => setCurrentLocationCount(parseInt(e.target.value) || 0)}
                   />
+                  <div className="text-xs text-muted-foreground">
+                    Temporary visitors currently in this city
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -216,6 +238,9 @@ const CityLocationManagement = () => {
                     value={travelAwayCount}
                     onChange={(e) => setTravelAwayCount(parseInt(e.target.value) || 0)}
                   />
+                  <div className="text-xs text-muted-foreground">
+                    City residents currently traveling elsewhere
+                  </div>
                 </div>
               </div>
 
@@ -225,6 +250,9 @@ const CityLocationManagement = () => {
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   Home Base: {homeBaseCount} | Current: {currentLocationCount} | Away: {travelAwayCount}
+                </div>
+                <div className="text-xs text-blue-600 mt-1">
+                  Note: Home Base count contributes to province totals on the dashboard
                 </div>
               </div>
 
