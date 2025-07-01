@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +16,23 @@ import {
   FileText
 } from 'lucide-react';
 
+interface TableColumn {
+  name: string;
+  type: string;
+  nullable: boolean;
+  description: string;
+}
+
+interface TableInfo {
+  name: string;
+  description: string;
+  columns: TableColumn[];
+  relationships: string[];
+  component: string;
+  template: string;
+  special?: string;
+}
+
 const DatabaseSchemaDocumentation = () => {
   const [expandedTables, setExpandedTables] = useState<Record<string, boolean>>({});
 
@@ -27,7 +43,7 @@ const DatabaseSchemaDocumentation = () => {
     }));
   };
 
-  const coreEntities = [
+  const coreEntities: TableInfo[] = [
     {
       name: 'provinces',
       description: 'Canadian provinces and territories with employee counts and alert levels',
@@ -78,7 +94,7 @@ const DatabaseSchemaDocumentation = () => {
     }
   ];
 
-  const securityEntities = [
+  const securityEntities: TableInfo[] = [
     {
       name: 'national_security_risks',
       description: 'National security threat assessment and risk management registry',
@@ -138,7 +154,7 @@ const DatabaseSchemaDocumentation = () => {
     }
   ];
 
-  const incidentEntities = [
+  const incidentEntities: TableInfo[] = [
     {
       name: 'incidents',
       description: 'Security incidents within Canadian provinces',
@@ -206,7 +222,7 @@ const DatabaseSchemaDocumentation = () => {
     }
   ];
 
-  const alertEntities = [
+  const alertEntities: TableInfo[] = [
     {
       name: 'weather_alerts_ingest',
       description: 'Weather-related emergency alerts and warnings',
@@ -308,7 +324,7 @@ const DatabaseSchemaDocumentation = () => {
     }
   ];
 
-  const employeeEntities = [
+  const employeeEntities: TableInfo[] = [
     {
       name: 'employee_locations',
       description: 'Employee distribution across Canadian cities with travel tracking',
@@ -377,7 +393,7 @@ const DatabaseSchemaDocumentation = () => {
     }
   ];
 
-  const systemEntities = [
+  const systemEntities: TableInfo[] = [
     {
       name: 'profiles',
       description: 'User profile information and preferences',
@@ -481,7 +497,7 @@ ${allTables
     URL.revokeObjectURL(url);
   };
 
-  const TableCard = ({ table }: { table: any }) => (
+  const TableCard = ({ table }: { table: TableInfo }) => (
     <Card className="mb-4">
       <Collapsible
         open={expandedTables[table.name]}
@@ -519,7 +535,7 @@ ${allTables
                   Columns
                 </h4>
                 <div className="space-y-2">
-                  {table.columns.map((col: any, idx: number) => (
+                  {table.columns.map((col, idx) => (
                     <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                       <div className="flex items-center gap-3">
                         <Badge variant={col.nullable ? "secondary" : "default"}>
@@ -540,7 +556,7 @@ ${allTables
                     Relationships
                   </h4>
                   <div className="flex flex-wrap gap-2">
-                    {table.relationships.map((rel: string) => (
+                    {table.relationships.map((rel) => (
                       <Badge key={rel} variant="outline">
                         {rel}
                       </Badge>
