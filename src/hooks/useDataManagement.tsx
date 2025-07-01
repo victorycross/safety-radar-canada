@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -221,38 +222,134 @@ export const useDataManagement = () => {
   };
 
   // API Source Management
-  const createAPISource = async (sourceData: Omit<APISource, 'id'>) => {
+  const fetchAPISources = async (): Promise<APISource[]> => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('alert_sources')
-        .insert([{
-          name: sourceData.name,
-          source_type: sourceData.type,
-          api_endpoint: sourceData.endpoint,
-          is_active: sourceData.is_active,
-          configuration: {
-            ...sourceData.configuration,
-            authentication: sourceData.authentication,
-            source_category: 'api'
-          }
-        }])
-        .select()
+        .select('*')
+        .neq('source_type', 'rss')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data.map(item => {
+        const config = item.configuration as any;
+        return {
+          id: item.id,
+          name: item.name,
+          endpoint: item.api_endpoint,
+          type: item.source_type,
+          is_active: item.is_active,
+          authentication: config?.authentication || {},
+          configuration: config || {}
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching API sources:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch API sources',
+        variant: 'destructive'
+      });
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAPISource = async (id: string): Promise<APISource | null> => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('alert_sources')
+        .select('*')
+        .eq('id', id)
+        .neq('source_type', 'rss')
         .single();
 
       if (error) throw error;
 
-      toast({
-        title: 'API Source Created',
-        description: `${sourceData.name} has been added successfully`,
-      });
-
-      return data;
+      const config = data.configuration as any;
+      return {
+        id: data.id,
+        name: data.name,
+        endpoint: data.api_endpoint,
+        type: data.source_type,
+        is_active: data.is_active,
+        authentication: config?.authentication || {},
+        configuration: config || {}
+      };
     } catch (error) {
-      console.error('Error creating API source:', error);
+      console.error('Error fetching API source:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create API source',
+        description: 'Failed to fetch API source',
+        variant: 'destructive'
+      });
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateAPISource = async (id: string, updates: Partial<APISource>) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('alert_sources')
+        .update({
+          name: updates.name,
+          api_endpoint: updates.endpoint,
+          source_type: updates.type,
+          is_active: updates.is_active,
+          configuration: {
+            ...updates.configuration,
+            authentication: updates.authentication,
+            source_category: 'api'
+          },
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'API Source Updated',
+        description: 'Source has been updated successfully',
+      });
+    } catch (error) {
+      console.error('Error updating API source:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update API source',
+        variant: 'destructive'
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteAPISource = async (id: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('alert_sources')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'API Source Deleted',
+        description: 'Source has been removed successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting API source:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete API source',
         variant: 'destructive'
       });
       throw error;
@@ -268,6 +365,10 @@ export const useDataManagement = () => {
     createRSSFeed,
     updateRSSFeed,
     deleteRSSFeed,
-    createAPISource
+    fetchAPISources,
+    fetchAPISource,
+    createAPISource,
+    updateAPISource,
+    deleteAPISource
   };
 };

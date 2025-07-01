@@ -16,14 +16,17 @@ import {
 import RSSFeedModal from '../modals/RSSFeedModal';
 import APISourceModal from '../modals/APISourceModal';
 import FeedListModal from '../modals/FeedListModal';
-import { RSSFeed } from '@/hooks/useDataManagement';
+import APISourceListModal from '../modals/APISourceListModal';
+import { RSSFeed, APISource } from '@/hooks/useDataManagement';
 
 const InputsManagementTab = () => {
   const [rssModalOpen, setRssModalOpen] = useState(false);
   const [apiModalOpen, setApiModalOpen] = useState(false);
   const [feedListModalOpen, setFeedListModalOpen] = useState(false);
+  const [apiSourceListModalOpen, setApiSourceListModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedFeed, setSelectedFeed] = useState<RSSFeed | null>(null);
+  const [selectedAPISource, setSelectedAPISource] = useState<APISource | null>(null);
 
   const handleOpenRSSModal = (mode: 'create' | 'edit' = 'create', feed?: RSSFeed) => {
     setModalMode(mode);
@@ -31,8 +34,9 @@ const InputsManagementTab = () => {
     setRssModalOpen(true);
   };
 
-  const handleOpenAPIModal = (mode: 'create' | 'edit' = 'create') => {
+  const handleOpenAPIModal = (mode: 'create' | 'edit' = 'create', source?: APISource) => {
     setModalMode(mode);
+    setSelectedAPISource(source || null);
     setApiModalOpen(true);
   };
 
@@ -40,18 +44,28 @@ const InputsManagementTab = () => {
     setFeedListModalOpen(true);
   };
 
+  const handleOpenAPIListModal = () => {
+    setApiSourceListModalOpen(true);
+  };
+
   const handleEditFeed = (feed: RSSFeed) => {
     handleOpenRSSModal('edit', feed);
+  };
+
+  const handleEditAPISource = (source: APISource) => {
+    handleOpenAPIModal('edit', source);
   };
 
   const handleModalSuccess = () => {
     // Refresh data or update UI as needed
     console.log('Operation successful');
     setSelectedFeed(null);
+    setSelectedAPISource(null);
   };
 
   const handleModalClose = () => {
     setSelectedFeed(null);
+    setSelectedAPISource(null);
   };
 
   return (
@@ -228,7 +242,7 @@ const InputsManagementTab = () => {
                   <Plus className="h-4 w-4 mr-2" />
                   Add API Source
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => handleOpenAPIModal('edit')}>
+                <Button variant="outline" className="w-full" onClick={handleOpenAPIListModal}>
                   <Settings className="h-4 w-4 mr-2" />
                   Configure APIs
                 </Button>
@@ -293,15 +307,25 @@ const InputsManagementTab = () => {
 
       <APISourceModal
         isOpen={apiModalOpen}
-        onClose={() => setApiModalOpen(false)}
+        onClose={() => {
+          setApiModalOpen(false);
+          handleModalClose();
+        }}
         onSuccess={handleModalSuccess}
         mode={modalMode}
+        source={selectedAPISource}
       />
 
       <FeedListModal
         isOpen={feedListModalOpen}
         onClose={() => setFeedListModalOpen(false)}
         onEditFeed={handleEditFeed}
+      />
+
+      <APISourceListModal
+        isOpen={apiSourceListModalOpen}
+        onClose={() => setApiSourceListModalOpen(false)}
+        onEditSource={handleEditAPISource}
       />
     </div>
   );

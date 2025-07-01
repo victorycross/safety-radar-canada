@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,15 +24,40 @@ const APISourceModal: React.FC<APISourceModalProps> = ({
   source,
   mode
 }) => {
-  const { createAPISource, loading } = useDataManagement();
+  const { createAPISource, updateAPISource, loading } = useDataManagement();
   const [formData, setFormData] = useState({
-    name: source?.name || '',
-    endpoint: source?.endpoint || '',
-    type: source?.type || 'rest',
-    is_active: source?.is_active ?? true,
-    authentication: source?.authentication || {},
-    configuration: source?.configuration || {}
+    name: '',
+    endpoint: '',
+    type: 'rest',
+    is_active: true,
+    authentication: {},
+    configuration: {}
   });
+
+  // Reset form when modal opens/closes or source changes
+  useEffect(() => {
+    if (isOpen) {
+      if (mode === 'edit' && source) {
+        setFormData({
+          name: source.name,
+          endpoint: source.endpoint,
+          type: source.type,
+          is_active: source.is_active,
+          authentication: source.authentication || {},
+          configuration: source.configuration || {}
+        });
+      } else {
+        setFormData({
+          name: '',
+          endpoint: '',
+          type: 'rest',
+          is_active: true,
+          authentication: {},
+          configuration: {}
+        });
+      }
+    }
+  }, [isOpen, mode, source]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,8 +65,9 @@ const APISourceModal: React.FC<APISourceModalProps> = ({
     try {
       if (mode === 'create') {
         await createAPISource(formData);
+      } else if (source) {
+        await updateAPISource(source.id, formData);
       }
-      // Edit functionality would be implemented similarly
       
       onSuccess();
       onClose();
@@ -54,6 +80,15 @@ const APISourceModal: React.FC<APISourceModalProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleAuthConfigChange = (value: string) => {
+    try {
+      const parsed = JSON.parse(value);
+      handleChange('authentication', parsed);
+    } catch {
+      // Invalid JSON, don't update
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
@@ -62,7 +97,10 @@ const APISourceModal: React.FC<APISourceModalProps> = ({
             {mode === 'create' ? 'Add API Source' : 'Edit API Source'}
           </DialogTitle>
           <DialogDescription>
-            Configure the API endpoint for automated data collection.
+            {mode === 'create' 
+              ? 'Configure the API endpoint for automated data collection.'
+              : 'Update the API source configuration.'
+            }
           </DialogDescription>
         </DialogHeader>
         
@@ -110,14 +148,7 @@ const APISourceModal: React.FC<APISourceModalProps> = ({
             <Textarea
               id="auth_config"
               value={JSON.stringify(formData.authentication, null, 2)}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  handleChange('authentication', parsed);
-                } catch {
-                  // Invalid JSON, don't update
-                }
-              }}
+              onChange={(e) => handleAuthConfigChange(e.target.value)}
               placeholder='{"type": "bearer", "token": "your-token"}'
               rows={3}
             />
