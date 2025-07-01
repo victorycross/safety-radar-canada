@@ -151,7 +151,7 @@ const HubEmployeeManagement: React.FC<HubEmployeeManagementProps> = ({ onDataUpd
                 {hubs.map(hub => (
                   <SelectItem key={hub.id} value={hub.id}>
                     {hub.name} ({hub.code}) - {hub.country}
-                    {hub.flag_emoji && ` ${hub.flag_emoji}`}
+                    {hub.flagEmoji && ` ${hub.flagEmoji}`}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -166,8 +166,8 @@ const HubEmployeeManagement: React.FC<HubEmployeeManagementProps> = ({ onDataUpd
                   <Badge variant="outline">
                     {selectedHubData.country}
                   </Badge>
-                  {selectedHubData.flag_emoji && (
-                    <span className="text-lg">{selectedHubData.flag_emoji}</span>
+                  {selectedHubData.flagEmoji && (
+                    <span className="text-lg">{selectedHubData.flagEmoji}</span>
                   )}
                 </div>
               </div>
