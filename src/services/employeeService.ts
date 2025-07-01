@@ -79,3 +79,61 @@ export const bulkUpdateEmployeeCounts = async (updates: ProvinceEmployeeUpdate[]
   
   return results;
 };
+
+// Validate data consistency between city and province totals
+export const validateDataConsistency = async (): Promise<{
+  isConsistent: boolean;
+  discrepancies: Array<{
+    provinceId: string;
+    provinceName: string;
+    provinceTotal: number;
+    cityTotal: number;
+    difference: number;
+  }>;
+}> => {
+  try {
+    // Get province totals
+    const { data: provinces, error: provincesError } = await supabase
+      .from('provinces')
+      .select('id, name, employee_count');
+    
+    if (provincesError) throw provincesError;
+    
+    // Get city totals grouped by province
+    const { data: cityTotals, error: cityError } = await supabase
+      .from('employee_locations')
+      .select('province_id, home_base_count');
+    
+    if (cityError) throw cityError;
+    
+    // Calculate totals by province
+    const cityTotalsByProvince = cityTotals?.reduce((acc, location) => {
+      acc[location.province_id] = (acc[location.province_id] || 0) + location.home_base_count;
+      return acc;
+    }, {} as Record<string, number>) || {};
+    
+    const discrepancies = [];
+    let isConsistent = true;
+    
+    for (const province of provinces || []) {
+      const cityTotal = cityTotalsByProvince[province.id] || 0;
+      const difference = Math.abs(province.employee_count - cityTotal);
+      
+      if (difference > 0) {
+        isConsistent = false;
+        discrepancies.push({
+          provinceId: province.id,
+          provinceName: province.name,
+          provinceTotal: province.employee_count,
+          cityTotal,
+          difference
+        });
+      }
+    }
+    
+    return { isConsistent, discrepancies };
+  } catch (error) {
+    console.error('Error validating data consistency:', error);
+    throw error;
+  }
+};

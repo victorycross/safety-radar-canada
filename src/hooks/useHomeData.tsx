@@ -52,6 +52,20 @@ export const useHomeData = (): DashboardData => {
     loadProvinceData();
   }, [supabaseProvinces]);
 
+  // Listen for employee data updates
+  useEffect(() => {
+    const handleEmployeeDataUpdate = () => {
+      // Refresh both Supabase data and province data
+      refreshSupabaseData();
+    };
+
+    window.addEventListener('employeeDataUpdated', handleEmployeeDataUpdate);
+    
+    return () => {
+      window.removeEventListener('employeeDataUpdated', handleEmployeeDataUpdate);
+    };
+  }, [refreshSupabaseData]);
+
   // Extract actual province IDs for the hook
   const actualProvinceIds = provinces.map(p => p.id);
   

@@ -7,6 +7,7 @@ import { AlertTriangle, Database, RefreshCw, Users, MapPin } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast';
 import CityLocationManagement from './CityLocationManagement';
 import BulkEmployeeManagement from './BulkEmployeeManagement';
+import DataConsistencyValidator from './DataConsistencyValidator';
 import { recalculateProvincesTotals } from '@/services/employeeService';
 
 const UnifiedEmployeeManagement = () => {
@@ -32,6 +33,11 @@ const UnifiedEmployeeManagement = () => {
     }
   };
 
+  const handleDataFixed = () => {
+    // This will trigger a refresh of the parent components
+    window.dispatchEvent(new CustomEvent('employeeDataUpdated'));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -51,6 +57,9 @@ const UnifiedEmployeeManagement = () => {
           {isRecalculating ? 'Recalculating...' : 'Sync Province Totals'}
         </Button>
       </div>
+
+      {/* Data Consistency Validator */}
+      <DataConsistencyValidator onDataFixed={handleDataFixed} />
 
       {/* Data Architecture Info Card */}
       <Card className="border-blue-200 bg-blue-50">
@@ -84,7 +93,7 @@ const UnifiedEmployeeManagement = () => {
         </TabsList>
 
         <TabsContent value="city-management" className="space-y-4">
-          <CityLocationManagement />
+          <CityLocationManagement onDataUpdated={handleDataFixed} />
         </TabsContent>
 
         <TabsContent value="bulk-operations" className="space-y-4">
@@ -100,7 +109,7 @@ const UnifiedEmployeeManagement = () => {
               </CardDescription>
             </CardHeader>
           </Card>
-          <BulkEmployeeManagement />
+          <BulkEmployeeManagement onDataUpdated={handleDataFixed} />
         </TabsContent>
       </Tabs>
     </div>

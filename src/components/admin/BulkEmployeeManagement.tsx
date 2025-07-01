@@ -11,7 +11,11 @@ import { fetchCities, updateEmployeeLocation } from '@/services/cityService';
 import { toast } from '@/components/ui/use-toast';
 import { Download, Upload, FileText, MapPin, Users, AlertTriangle } from 'lucide-react';
 
-const BulkEmployeeManagement = () => {
+interface BulkEmployeeManagementProps {
+  onDataUpdated?: () => void;
+}
+
+const BulkEmployeeManagement: React.FC<BulkEmployeeManagementProps> = ({ onDataUpdated }) => {
   const { provinces, refreshData } = useSupabaseDataContext();
   const [csvData, setCsvData] = useState<string>('');
   const [cityCsvData, setCityCsvData] = useState<string>('');
@@ -127,6 +131,12 @@ const BulkEmployeeManagement = () => {
         });
         setCsvData('');
         await refreshData();
+        
+        // Notify parent and dispatch event
+        if (onDataUpdated) {
+          onDataUpdated();
+        }
+        window.dispatchEvent(new CustomEvent('employeeDataUpdated'));
       } else {
         toast({
           title: "Partial Success",
@@ -292,6 +302,12 @@ const BulkEmployeeManagement = () => {
         });
         setCityCsvData('');
         await refreshData();
+        
+        // Notify parent and dispatch event
+        if (onDataUpdated) {
+          onDataUpdated();
+        }
+        window.dispatchEvent(new CustomEvent('employeeDataUpdated'));
       } else {
         toast({
           title: "Partial Success",

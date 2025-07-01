@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,11 @@ import {
   type EmployeeLocation 
 } from '@/services/cityService';
 
-const CityLocationManagement = () => {
+interface CityLocationManagementProps {
+  onDataUpdated?: () => void;
+}
+
+const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataUpdated }) => {
   const { provinces, refreshData } = useSupabaseDataContext();
   const [cities, setCities] = useState<City[]>([]);
   const [employeeLocations, setEmployeeLocations] = useState<EmployeeLocation[]>([]);
@@ -97,6 +100,14 @@ const CityLocationManagement = () => {
 
       await loadData();
       await refreshData(); // Refresh province totals
+      
+      // Notify parent component
+      if (onDataUpdated) {
+        onDataUpdated();
+      }
+      
+      // Dispatch custom event for dashboard refresh
+      window.dispatchEvent(new CustomEvent('employeeDataUpdated'));
     } catch (error) {
       console.error('Error updating location:', error);
       toast({
