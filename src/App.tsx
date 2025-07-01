@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
@@ -12,6 +13,7 @@ import HubsPage from '@/pages/HubsPage';
 import HubDetailPage from '@/pages/HubDetailPage';
 import LocationStatusPage from '@/pages/LocationStatusPage';
 import ReportIncidentPage from '@/pages/ReportIncidentPage';
+import SimplifiedDataManagementPage from '@/pages/SimplifiedDataManagementPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { Navigate } from 'react-router-dom';
@@ -170,6 +172,13 @@ const AppContent = () => {
               </ProtectedRoute>
             } />
             
+            {/* Power user and admin routes */}
+            <Route path="/data-management" element={
+              <ProtectedRoute allowedRoles={['admin', 'power_user']}>
+                <SimplifiedDataManagementPage />
+              </ProtectedRoute>
+            } />
+            
             {/* Routes available to all authenticated users */}
             <Route path="/alert-ready" element={<AlertReadyPage />} />
             <Route path="/location-status" element={<LocationStatusPage />} />
@@ -209,6 +218,7 @@ const AppContent = () => {
           <Route path="/incidents" element={<IncidentsPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="/report-incident" element={<ReportIncidentPage />} />
+          <Route path="/data-management" element={<SimplifiedDataManagementPage />} />
           <Route path="/employees" element={<Navigate to="/location-status" replace />} />
           <Route path="/hubs" element={<HubsPage />} />
           <Route path="/hub/:hubId" element={<HubDetailPage />} />

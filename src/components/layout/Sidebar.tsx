@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
   const location = useLocation();
-  const { user, isAdmin, hasRole } = useAuth();
+  const { user, isAdmin, isPowerUserOrAdmin } = useAuth();
 
   // Dashboard & Monitoring section - for all authenticated users
   const dashboardSection = [
@@ -38,9 +38,13 @@ const Sidebar = () => {
   // Input & Reporting section - different items based on role
   const inputSection = [
     { name: 'Report Incident', href: '/report-incident', icon: FileText },
-    // Data Management - only for admins
-    ...(isAdmin() ? [
-      { name: 'Data Management', href: '/admin?tab=data-management', icon: Database },
+    // Data Management - for power users and admins
+    ...(isPowerUserOrAdmin() ? [
+      { 
+        name: 'Data Management', 
+        href: isAdmin() ? '/admin?tab=data-management' : '/data-management', 
+        icon: Database 
+      },
     ] : [])
   ];
 
@@ -68,7 +72,8 @@ const Sidebar = () => {
           {items.map((item) => {
             const isActive = location.pathname === item.href || 
               (item.href.includes('?tab=') && location.pathname === item.href.split('?')[0] && 
-               location.search.includes(item.href.split('?')[1]));
+               location.search.includes(item.href.split('?')[1])) ||
+              (item.href === '/data-management' && location.pathname === '/data-management');
             const Icon = item.icon;
             
             return (
