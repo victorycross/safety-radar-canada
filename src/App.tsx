@@ -12,6 +12,7 @@ import HubsPage from '@/pages/HubsPage';
 import HubDetailPage from '@/pages/HubDetailPage';
 import LocationStatusPage from '@/pages/LocationStatusPage';
 import ReportIncidentPage from '@/pages/ReportIncidentPage';
+import ProvinceDetailPage from '@/pages/ProvinceDetailPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { Navigate } from 'react-router-dom';
@@ -176,6 +177,7 @@ const AppContent = () => {
             <Route path="/report-incident" element={<ReportIncidentPage />} />
             <Route path="/hubs" element={<HubsPage />} />
             <Route path="/hub/:hubId" element={<HubDetailPage />} />
+            <Route path="/province/:id" element={<ProvinceDetailPage />} />
             
             {/* Redirects */}
             <Route path="/employees" element={<Navigate to="/location-status" replace />} />
@@ -215,6 +217,7 @@ const AppContent = () => {
           <Route path="/employees" element={<Navigate to="/location-status" replace />} />
           <Route path="/hubs" element={<HubsPage />} />
           <Route path="/hub/:hubId" element={<HubDetailPage />} />
+          <Route path="/province/:id" element={<ProvinceDetailPage />} />
           
           {/* Data Management Consolidation - redirect to admin */}
           <Route path="/data-management" element={<Navigate to="/admin?tab=data-management" replace />} />
