@@ -1,6 +1,5 @@
 
 // Main entry point for config-driven normalization
-export { SourceConfiguration } from './config-driven/types.ts';
 export { 
   normalizeWithConfiguration, 
   normalizeAlertBatchWithConfig 

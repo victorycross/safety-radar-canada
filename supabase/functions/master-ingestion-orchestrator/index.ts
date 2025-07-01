@@ -3,7 +3,20 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { processSource } from './source-processor.ts';
 import { shouldPollSource, recordHealthMetric } from './health-metrics.ts';
 import { runCorrelationAnalysis } from './correlation-analysis.ts';
-import { AlertSource } from './types.ts';
+
+// Define the AlertSource interface locally to avoid import issues
+interface AlertSource {
+  id: string;
+  name: string;
+  source_type: string;
+  api_endpoint: string;
+  is_active: boolean;
+  polling_interval: number;
+  last_poll_at: string | null;
+  configuration: any;
+  created_at: string;
+  updated_at: string;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
