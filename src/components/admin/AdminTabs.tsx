@@ -2,15 +2,11 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OverviewTab from './OverviewTab';
-import EmployeeManagementTab from './EmployeeManagementTab';
-import FeedManagementTab from './FeedManagementTab';
-import RSSFeedAuditTab from './RSSFeedAuditTab';
-import RequirementsTab from './RequirementsTab';
-import TechnicalTab from './TechnicalTab';
-import FeedAuditDashboard from './FeedAuditDashboard';
-import DataPipelineDiagnostics from './DataPipelineDiagnostics';
-import WeatherAlertsTab from './WeatherAlertsTab';
-import HubManagementTab from './HubManagementTab';
+import OperationsTab from './OperationsTab';
+import DataSourcesTab from './DataSourcesTab';
+import MonitoringTab from './MonitoringTab';
+import SystemHealthTab from './SystemHealthTab';
+import DocumentationTab from './DocumentationTab';
 
 interface AdminTabsProps {
   activeTab: string;
@@ -20,57 +16,37 @@ interface AdminTabsProps {
 const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-10">
+      <TabsList className="grid w-full grid-cols-6">
         <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="employees">Employees</TabsTrigger>
-        <TabsTrigger value="hubs">Hub Management</TabsTrigger>
-        <TabsTrigger value="feeds">Feed Management</TabsTrigger>
-        <TabsTrigger value="feed-audit">Feed Audit</TabsTrigger>
-        <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-        <TabsTrigger value="weather-alerts">Weather Alerts</TabsTrigger>
-        <TabsTrigger value="rss-audit">RSS Audit</TabsTrigger>
-        <TabsTrigger value="requirements">Requirements</TabsTrigger>
-        <TabsTrigger value="technical">Technical</TabsTrigger>
+        <TabsTrigger value="operations">Operations</TabsTrigger>
+        <TabsTrigger value="data-sources">Data Sources</TabsTrigger>
+        <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+        <TabsTrigger value="system-health">System Health</TabsTrigger>
+        <TabsTrigger value="documentation">Documentation</TabsTrigger>
       </TabsList>
       
       <TabsContent value="overview" className="space-y-4">
         <OverviewTab />
       </TabsContent>
       
-      <TabsContent value="employees" className="space-y-4">
-        <EmployeeManagementTab />
+      <TabsContent value="operations" className="space-y-4">
+        <OperationsTab />
       </TabsContent>
 
-      <TabsContent value="hubs" className="space-y-4">
-        <HubManagementTab />
-      </TabsContent>
-      
-      <TabsContent value="feeds" className="space-y-4">
-        <FeedManagementTab />
+      <TabsContent value="data-sources" className="space-y-4">
+        <DataSourcesTab />
       </TabsContent>
 
-      <TabsContent value="feed-audit" className="space-y-4">
-        <FeedAuditDashboard />
+      <TabsContent value="monitoring" className="space-y-4">
+        <MonitoringTab />
       </TabsContent>
 
-      <TabsContent value="pipeline" className="space-y-4">
-        <DataPipelineDiagnostics />
+      <TabsContent value="system-health" className="space-y-4">
+        <SystemHealthTab />
       </TabsContent>
 
-      <TabsContent value="weather-alerts" className="space-y-4">
-        <WeatherAlertsTab />
-      </TabsContent>
-
-      <TabsContent value="rss-audit" className="space-y-4">
-        <RSSFeedAuditTab />
-      </TabsContent>
-      
-      <TabsContent value="requirements" className="space-y-4">
-        <RequirementsTab />
-      </TabsContent>
-      
-      <TabsContent value="technical" className="space-y-4">
-        <TechnicalTab />
+      <TabsContent value="documentation" className="space-y-4">
+        <DocumentationTab />
       </TabsContent>
     </Tabs>
   );

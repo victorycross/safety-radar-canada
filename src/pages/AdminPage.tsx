@@ -15,7 +15,7 @@ const AdminPage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            Manage system configuration, data sources, and monitoring
+            Manage system configuration, operations, and monitoring
           </p>
         </div>
         <AdminTabs activeTab={activeTab} onTabChange={setActiveTab} />

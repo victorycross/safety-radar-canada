@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      alert_archive_log: {
+        Row: {
+          action: string
+          alert_id: string
+          alert_table: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          performed_by: string
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          alert_id: string
+          alert_table: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          performed_by: string
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          alert_id?: string
+          alert_table?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          performed_by?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       alert_correlations: {
         Row: {
           confidence_score: number
@@ -385,6 +418,9 @@ export type Database = {
       hub_incidents: {
         Row: {
           alert_level: string | null
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           confidence_score: number | null
           created_at: string | null
           description: string | null
@@ -401,6 +437,9 @@ export type Database = {
         }
         Insert: {
           alert_level?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           confidence_score?: number | null
           created_at?: string | null
           description?: string | null
@@ -417,6 +456,9 @@ export type Database = {
         }
         Update: {
           alert_level?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           confidence_score?: number | null
           created_at?: string | null
           description?: string | null
@@ -444,6 +486,9 @@ export type Database = {
       incidents: {
         Row: {
           alert_level: string
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           confidence_score: number | null
           correlation_id: string | null
           created_at: string
@@ -463,6 +508,9 @@ export type Database = {
         }
         Insert: {
           alert_level?: string
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           confidence_score?: number | null
           correlation_id?: string | null
           created_at?: string
@@ -482,6 +530,9 @@ export type Database = {
         }
         Update: {
           alert_level?: string
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           confidence_score?: number | null
           correlation_id?: string | null
           created_at?: string
@@ -676,6 +727,9 @@ export type Database = {
       }
       security_alerts_ingest: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           category: string
           created_at: string
           id: string
@@ -689,6 +743,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           category?: string
           created_at?: string
           id: string
@@ -702,6 +759,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           category?: string
           created_at?: string
           id?: string
@@ -978,6 +1038,9 @@ export type Database = {
       }
       weather_alerts_ingest: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           created_at: string
           description: string | null
           event_type: string | null
@@ -990,6 +1053,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           description?: string | null
           event_type?: string | null
@@ -1002,6 +1068,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           description?: string | null
           event_type?: string | null
