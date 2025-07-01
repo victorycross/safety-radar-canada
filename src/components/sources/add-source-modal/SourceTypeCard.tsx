@@ -8,7 +8,7 @@ interface SourceType {
   description: string;
   icon: any;
   defaultConfig: {
-    method: string;
+    method?: string;
     pollInterval: number;
     timeout: number;
   };
