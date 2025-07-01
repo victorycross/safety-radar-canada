@@ -40,10 +40,17 @@ Deno.serve(async (req) => {
     const results = [];
     let totalProcessed = 0;
 
-    // Process each source
+    // Process each source with enhanced logging
     for (const source of sources || []) {
       try {
         console.log(`🔄 Processing source: ${source.name} (${source.source_type})`);
+        console.log(`🔄 Source details:`, JSON.stringify({
+          id: source.id,
+          name: source.name,
+          type: source.source_type,
+          endpoint: source.api_endpoint,
+          last_poll: source.last_poll_at
+        }, null, 2));
         
         const shouldPoll = shouldPollSource(source);
         if (!shouldPoll) {
@@ -51,11 +58,24 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        console.log(`▶️ Starting processing for ${source.name}...`);
         const result = await processSource(source, supabaseClient);
+        
+        console.log(`✅ Processing result for ${source.name}:`, JSON.stringify(result, null, 2));
+        
         results.push(result);
         totalProcessed += result.records_processed || 0;
 
         console.log(`✅ Successfully processed ${source.name}: ${result.records_processed} records`);
+
+        // Record successful health metric with detailed info
+        await recordHealthMetric(supabaseClient, {
+          source_id: source.id,
+          response_time_ms: result.response_time_ms || 0,
+          success: result.success,
+          error_message: result.error || null,
+          records_processed: result.records_processed || 0
+        });
 
         // Update the source's last_poll_at timestamp
         await supabaseClient
@@ -68,13 +88,19 @@ Deno.serve(async (req) => {
 
       } catch (error) {
         console.error(`❌ Error processing source ${source.name}:`, error);
+        console.error(`❌ Error details:`, JSON.stringify({
+          message: error.message,
+          stack: error.stack,
+          source: source.name,
+          source_type: source.source_type
+        }, null, 2));
         
-        // Record failed health metric
+        // Record failed health metric with enhanced details
         await recordHealthMetric(supabaseClient, {
           source_id: source.id,
           response_time_ms: 0,
           success: false,
-          error_message: error.message,
+          error_message: `${error.message} - Stack: ${error.stack?.substring(0, 500)}`,
           records_processed: 0
         });
 
@@ -105,6 +131,12 @@ Deno.serve(async (req) => {
     }
 
     console.log(`🏁 Processing complete. Total records processed: ${totalProcessed}`);
+    console.log(`🏁 Final results summary:`, JSON.stringify({
+      total_sources: results.length,
+      successful_sources: results.filter(r => r.success).length,
+      failed_sources: results.filter(r => !r.success).length,
+      total_records: totalProcessed
+    }, null, 2));
 
     return new Response(
       JSON.stringify({
@@ -124,10 +156,16 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('💥 Master orchestrator error:', error);
+    console.error('💥 Error details:', JSON.stringify({
+      message: error.message,
+      stack: error.stack
+    }, null, 2));
+    
     return new Response(
       JSON.stringify({ 
         success: false,
         error: error.message,
+        error_details: error.stack,
         timestamp: new Date().toISOString()
       }),
       { 
