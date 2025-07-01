@@ -5,13 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Settings, 
-  FileText, 
   Users, 
   Shield, 
   Bell,
   Database,
   Key,
-  Book
+  FileText
 } from 'lucide-react';
 import DocumentationTab from './DocumentationTab';
 
@@ -23,7 +22,7 @@ const SettingsDocumentationTab = () => {
       <div>
         <h2 className="text-2xl font-bold">Settings & Documentation</h2>
         <p className="text-muted-foreground">
-          System configuration, user management, and documentation resources
+          System configuration, user management, and comprehensive documentation resources
         </p>
       </div>
 
