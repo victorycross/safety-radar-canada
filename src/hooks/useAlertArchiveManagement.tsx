@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Alert {
   id: string;
@@ -20,10 +21,13 @@ export const useAlertArchiveManagement = () => {
   const [archivedAlerts, setArchivedAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const fetchAlerts = async () => {
     setLoading(true);
     try {
+      console.log('Fetching alerts...');
+      
       // Fetch from multiple alert tables
       const [securityAlerts, weatherAlerts, incidents, hubIncidents] = await Promise.all([
         supabase.from('security_alerts_ingest').select('*'),
@@ -31,6 +35,19 @@ export const useAlertArchiveManagement = () => {
         supabase.from('incidents').select('*'),
         supabase.from('hub_incidents').select('*')
       ]);
+
+      console.log('Fetch results:', {
+        security: securityAlerts.data?.length || 0,
+        weather: weatherAlerts.data?.length || 0,
+        incidents: incidents.data?.length || 0,
+        hubIncidents: hubIncidents.data?.length || 0
+      });
+
+      // Check for errors in fetch operations
+      if (securityAlerts.error) console.error('Security alerts error:', securityAlerts.error);
+      if (weatherAlerts.error) console.error('Weather alerts error:', weatherAlerts.error);
+      if (incidents.error) console.error('Incidents error:', incidents.error);
+      if (hubIncidents.error) console.error('Hub incidents error:', hubIncidents.error);
 
       // Transform and combine alerts
       const allAlerts: Alert[] = [];
@@ -132,41 +149,37 @@ export const useAlertArchiveManagement = () => {
       allAlerts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       allArchivedAlerts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+      console.log('Processed alerts:', {
+        active: allAlerts.length,
+        archived: allArchivedAlerts.length
+      });
+
       setAlerts(allAlerts);
       setArchivedAlerts(allArchivedAlerts);
     } catch (error) {
       console.error('Error fetching alerts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch alerts. Please try again.',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const logArchiveAction = async (alertIds: string[], action: 'archive' | 'unarchive' | 'delete', reason: string) => {
-    if (!user?.id) return;
-
-    const logEntries = alertIds.map(alertId => {
-      const alert = [...alerts, ...archivedAlerts].find(a => a.id === alertId);
-      return {
-        alert_table: alert?.table_name || 'unknown',
-        alert_id: alertId,
-        action,
-        performed_by: user.id,
-        reason,
-        metadata: { timestamp: new Date().toISOString() }
-      };
-    });
-
-    await supabase.from('alert_archive_log').insert(logEntries);
-  };
-
   const archiveAlerts = async (alertIds: string[], reason: string) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.error('No authenticated user found');
+      toast({
+        title: 'Authentication Error',
+        description: 'You must be logged in to archive alerts.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-    const archiveData = {
-      archived_at: new Date().toISOString(),
-      archived_by: user.id,
-      archive_reason: reason
-    };
+    console.log('Archiving alerts:', { alertIds, reason, userId: user.id });
 
     // Group alerts by table
     const alertsByTable = new Map<string, string[]>();
@@ -180,28 +193,58 @@ export const useAlertArchiveManagement = () => {
       }
     });
 
-    // Update each table explicitly
+    console.log('Alerts grouped by table:', Object.fromEntries(alertsByTable));
+
+    // Process each table using the bulk archive function
+    const results = [];
     for (const [tableName, ids] of alertsByTable) {
-      if (tableName === 'security_alerts_ingest') {
-        await supabase.from('security_alerts_ingest').update(archiveData).in('id', ids);
-      } else if (tableName === 'weather_alerts_ingest') {
-        await supabase.from('weather_alerts_ingest').update(archiveData).in('id', ids);
-      } else if (tableName === 'incidents') {
-        await supabase.from('incidents').update(archiveData).in('id', ids);
-      } else if (tableName === 'hub_incidents') {
-        await supabase.from('hub_incidents').update(archiveData).in('id', ids);
+      try {
+        console.log(`Calling bulk_archive_alerts for table: ${tableName} with ${ids.length} alerts`);
+        
+        const { data, error } = await supabase.rpc('bulk_archive_alerts', {
+          alert_table_name: tableName,
+          alert_ids: ids,
+          archive_reason: reason,
+          user_id: user.id
+        });
+
+        if (error) {
+          console.error(`Error archiving ${tableName}:`, error);
+          throw error;
+        }
+
+        console.log(`Archive result for ${tableName}:`, data);
+        results.push(data);
+
+        if (!data.success) {
+          throw new Error(data.error || `Failed to archive alerts in ${tableName}`);
+        }
+      } catch (error) {
+        console.error(`Failed to archive alerts in ${tableName}:`, error);
+        toast({
+          title: 'Archive Error',
+          description: `Failed to archive ${tableName} alerts: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          variant: 'destructive'
+        });
+        throw error;
       }
     }
 
-    await logArchiveAction(alertIds, 'archive', reason);
+    console.log('All archive operations completed successfully:', results);
   };
 
   const unarchiveAlerts = async (alertIds: string[], reason: string) => {
-    const unarchiveData = {
-      archived_at: null,
-      archived_by: null,
-      archive_reason: null
-    };
+    if (!user?.id) {
+      console.error('No authenticated user found');
+      toast({
+        title: 'Authentication Error',
+        description: 'You must be logged in to unarchive alerts.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    console.log('Unarchiving alerts:', { alertIds, reason, userId: user.id });
 
     // Group alerts by table
     const alertsByTable = new Map<string, string[]>();
@@ -215,23 +258,57 @@ export const useAlertArchiveManagement = () => {
       }
     });
 
-    // Update each table explicitly
+    // Process each table using the bulk unarchive function
+    const results = [];
     for (const [tableName, ids] of alertsByTable) {
-      if (tableName === 'security_alerts_ingest') {
-        await supabase.from('security_alerts_ingest').update(unarchiveData).in('id', ids);
-      } else if (tableName === 'weather_alerts_ingest') {
-        await supabase.from('weather_alerts_ingest').update(unarchiveData).in('id', ids);
-      } else if (tableName === 'incidents') {
-        await supabase.from('incidents').update(unarchiveData).in('id', ids);
-      } else if (tableName === 'hub_incidents') {
-        await supabase.from('hub_incidents').update(unarchiveData).in('id', ids);
+      try {
+        console.log(`Calling bulk_unarchive_alerts for table: ${tableName} with ${ids.length} alerts`);
+        
+        const { data, error } = await supabase.rpc('bulk_unarchive_alerts', {
+          alert_table_name: tableName,
+          alert_ids: ids,
+          unarchive_reason: reason,
+          user_id: user.id
+        });
+
+        if (error) {
+          console.error(`Error unarchiving ${tableName}:`, error);
+          throw error;
+        }
+
+        console.log(`Unarchive result for ${tableName}:`, data);
+        results.push(data);
+
+        if (!data.success) {
+          throw new Error(data.error || `Failed to unarchive alerts in ${tableName}`);
+        }
+      } catch (error) {
+        console.error(`Failed to unarchive alerts in ${tableName}:`, error);
+        toast({
+          title: 'Unarchive Error',
+          description: `Failed to unarchive ${tableName} alerts: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          variant: 'destructive'
+        });
+        throw error;
       }
     }
 
-    await logArchiveAction(alertIds, 'unarchive', reason);
+    console.log('All unarchive operations completed successfully:', results);
   };
 
   const deleteAlerts = async (alertIds: string[], reason: string) => {
+    if (!user?.id) {
+      console.error('No authenticated user found');
+      toast({
+        title: 'Authentication Error',
+        description: 'You must be logged in to delete alerts.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    console.log('Deleting alerts:', { alertIds, reason, userId: user.id });
+
     // Group alerts by table
     const alertsByTable = new Map<string, string[]>();
     alertIds.forEach(alertId => {
@@ -244,23 +321,63 @@ export const useAlertArchiveManagement = () => {
       }
     });
 
-    await logArchiveAction(alertIds, 'delete', reason);
+    // Log the delete action first
+    try {
+      const logEntries = alertIds.map(alertId => {
+        const alert = archivedAlerts.find(a => a.id === alertId);
+        return {
+          alert_table: alert?.table_name || 'unknown',
+          alert_id: alertId,
+          action: 'delete',
+          performed_by: user.id,
+          reason,
+          metadata: { timestamp: new Date().toISOString() }
+        };
+      });
+
+      await supabase.from('alert_archive_log').insert(logEntries);
+    } catch (error) {
+      console.error('Failed to log delete action:', error);
+    }
 
     // Delete from each table explicitly
     for (const [tableName, ids] of alertsByTable) {
-      if (tableName === 'security_alerts_ingest') {
-        await supabase.from('security_alerts_ingest').delete().in('id', ids);
-      } else if (tableName === 'weather_alerts_ingest') {
-        await supabase.from('weather_alerts_ingest').delete().in('id', ids);
-      } else if (tableName === 'incidents') {
-        await supabase.from('incidents').delete().in('id', ids);
-      } else if (tableName === 'hub_incidents') {
-        await supabase.from('hub_incidents').delete().in('id', ids);
+      try {
+        console.log(`Deleting from ${tableName}:`, ids);
+        
+        let deleteResult;
+        if (tableName === 'security_alerts_ingest') {
+          deleteResult = await supabase.from('security_alerts_ingest').delete().in('id', ids);
+        } else if (tableName === 'weather_alerts_ingest') {
+          deleteResult = await supabase.from('weather_alerts_ingest').delete().in('id', ids);
+        } else if (tableName === 'incidents') {
+          deleteResult = await supabase.from('incidents').delete().in('id', ids);
+        } else if (tableName === 'hub_incidents') {
+          deleteResult = await supabase.from('hub_incidents').delete().in('id', ids);
+        }
+
+        if (deleteResult?.error) {
+          console.error(`Error deleting from ${tableName}:`, deleteResult.error);
+          throw deleteResult.error;
+        }
+
+        console.log(`Successfully deleted from ${tableName}`);
+      } catch (error) {
+        console.error(`Failed to delete alerts from ${tableName}:`, error);
+        toast({
+          title: 'Delete Error',
+          description: `Failed to delete ${tableName} alerts: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          variant: 'destructive'
+        });
+        throw error;
       }
     }
+
+    console.log('All delete operations completed successfully');
   };
 
   const refreshAlerts = () => {
+    console.log('Refreshing alerts...');
     fetchAlerts();
   };
 

@@ -11,14 +11,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Archive, ArchiveRestore } from 'lucide-react';
+import { Archive, ArchiveRestore, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AlertArchiveDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedCount: number;
   action: 'archive' | 'unarchive';
-  onConfirm: (reason: string) => void;
+  onConfirm: (reason: string) => Promise<void>;
 }
 
 const AlertArchiveDialog: React.FC<AlertArchiveDialogProps> = ({
@@ -30,23 +31,36 @@ const AlertArchiveDialog: React.FC<AlertArchiveDialogProps> = ({
 }) => {
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleConfirm = async () => {
-    if (!reason.trim()) return;
+    if (!reason.trim()) {
+      setError('Please provide a reason for this action.');
+      return;
+    }
     
     setIsSubmitting(true);
+    setError(null);
+    
     try {
+      console.log(`${action} dialog: Starting operation with reason:`, reason.trim());
       await onConfirm(reason.trim());
       setReason('');
       onOpenChange(false);
+    } catch (error) {
+      console.error(`${action} dialog: Operation failed:`, error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
-    setReason('');
-    onOpenChange(false);
+    if (!isSubmitting) {
+      setReason('');
+      setError(null);
+      onOpenChange(false);
+    }
   };
 
   return (
@@ -80,15 +94,30 @@ const AlertArchiveDialog: React.FC<AlertArchiveDialogProps> = ({
               id="reason"
               placeholder={`Enter the reason for ${action === 'archive' ? 'archiving' : 'restoring'} these alerts...`}
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => {
+                setReason(e.target.value);
+                if (error) setError(null);
+              }}
               className="mt-1"
               rows={3}
+              disabled={isSubmitting}
             />
           </div>
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+          <Button 
+            variant="outline" 
+            onClick={handleClose} 
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
           <Button

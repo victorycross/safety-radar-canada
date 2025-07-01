@@ -1149,6 +1149,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bulk_archive_alerts: {
+        Args: {
+          alert_table_name: string
+          alert_ids: string[]
+          archive_reason: string
+          user_id?: string
+        }
+        Returns: Json
+      }
+      bulk_unarchive_alerts: {
+        Args: {
+          alert_table_name: string
+          alert_ids: string[]
+          unarchive_reason: string
+          user_id?: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _user_id: string
