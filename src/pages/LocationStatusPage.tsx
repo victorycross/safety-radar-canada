@@ -227,7 +227,7 @@ const LocationStatusPage = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Last Updated:</span>
-                      <span>{new Date(hub.lastUpdate).toLocaleDateString()}</span>
+                      <span>{hub.updated_at ? new Date(hub.updated_at).toLocaleDateString() : 'N/A'}</span>
                     </div>
                   </div>
                 </CardContent>

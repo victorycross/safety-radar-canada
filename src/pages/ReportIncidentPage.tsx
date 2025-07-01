@@ -1,12 +1,51 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import EnhancedIncidentForm from '@/components/report/EnhancedIncidentForm';
 import ReportGuidelines from '@/components/report/ReportGuidelines';
 import EmergencyContacts from '@/components/report/EmergencyContacts';
 import { AlertTriangle, FileText, Phone } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const ReportIncidentPage = () => {
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const { toast } = useToast();
+
+  const handleFormDataChange = (data: Record<string, any>) => {
+    setFormData(prev => ({ ...prev, ...data }));
+  };
+
+  const handleSaveDraft = () => {
+    // Save form data to localStorage or send to backend
+    localStorage.setItem('incident_draft', JSON.stringify(formData));
+    toast({
+      title: "Draft Saved",
+      description: "Your incident report draft has been saved locally.",
+    });
+  };
+
+  const handleSubmit = (data: any) => {
+    // Handle form submission
+    console.log('Incident report submitted:', data);
+    // Clear form after successful submission
+    setFormData({});
+    // Remove draft from localStorage
+    localStorage.removeItem('incident_draft');
+  };
+
+  // Load draft on component mount
+  React.useEffect(() => {
+    const savedDraft = localStorage.getItem('incident_draft');
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        setFormData(parsedDraft);
+      } catch (error) {
+        console.error('Error loading draft:', error);
+      }
+    }
+  }, []);
+
   return (
     <div className="space-y-6">
       <div>
@@ -49,7 +88,12 @@ const ReportIncidentPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <EnhancedIncidentForm />
+              <EnhancedIncidentForm
+                formData={formData}
+                onFormDataChange={handleFormDataChange}
+                onSaveDraft={handleSaveDraft}
+                onSubmit={handleSubmit}
+              />
             </CardContent>
           </Card>
         </div>
