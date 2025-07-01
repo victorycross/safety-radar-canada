@@ -728,6 +728,60 @@ export type Database = {
           },
         ]
       }
+      national_security_risks: {
+        Row: {
+          assigned_lead: string | null
+          created_at: string | null
+          current_alerts: string | null
+          id: string
+          impact: number
+          last_reviewed: string | null
+          likelihood: number
+          live_feeds: Json | null
+          notes: string | null
+          playbook: string | null
+          preparedness_gap: number
+          priority: Database["public"]["Enums"]["risk_priority"]
+          rpn: number
+          threat_category: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_lead?: string | null
+          created_at?: string | null
+          current_alerts?: string | null
+          id?: string
+          impact: number
+          last_reviewed?: string | null
+          likelihood: number
+          live_feeds?: Json | null
+          notes?: string | null
+          playbook?: string | null
+          preparedness_gap: number
+          priority?: Database["public"]["Enums"]["risk_priority"]
+          rpn?: number
+          threat_category: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_lead?: string | null
+          created_at?: string | null
+          current_alerts?: string | null
+          id?: string
+          impact?: number
+          last_reviewed?: string | null
+          likelihood?: number
+          live_feeds?: Json | null
+          notes?: string | null
+          playbook?: string | null
+          preparedness_gap?: number
+          priority?: Database["public"]["Enums"]["risk_priority"]
+          rpn?: number
+          threat_category?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -1133,6 +1187,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "power_user" | "regular_user"
+      risk_priority: "high" | "medium" | "low"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1249,6 +1304,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "power_user", "regular_user"],
+      risk_priority: ["high", "medium", "low"],
     },
   },
 } as const

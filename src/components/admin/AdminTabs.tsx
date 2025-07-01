@@ -1,38 +1,44 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import DailyOperationsHub from './DailyOperationsHub';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import OperationsTab from './OperationsTab';
 import DataManagementTab from './DataManagementTab';
 import SystemHealthTab from './SystemHealthTab';
 import SettingsDocumentationTab from './SettingsDocumentationTab';
+import SecurityRiskRegisterTab from './SecurityRiskRegisterTab';
 
 interface AdminTabsProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
-const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
+const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="operations">Daily Operations</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-5">
+        <TabsTrigger value="operations">Operations</TabsTrigger>
         <TabsTrigger value="data-management">Data Management</TabsTrigger>
         <TabsTrigger value="system-health">System Health</TabsTrigger>
-        <TabsTrigger value="settings">Settings & Docs</TabsTrigger>
+        <TabsTrigger value="security-risks">Security Risks</TabsTrigger>
+        <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
       
       <TabsContent value="operations" className="space-y-4">
-        <DailyOperationsHub />
+        <OperationsTab />
       </TabsContent>
       
       <TabsContent value="data-management" className="space-y-4">
         <DataManagementTab />
       </TabsContent>
-
+      
       <TabsContent value="system-health" className="space-y-4">
         <SystemHealthTab />
       </TabsContent>
-
+      
+      <TabsContent value="security-risks" className="space-y-4">
+        <SecurityRiskRegisterTab />
+      </TabsContent>
+      
       <TabsContent value="settings" className="space-y-4">
         <SettingsDocumentationTab />
       </TabsContent>
