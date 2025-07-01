@@ -4,14 +4,25 @@ import AdminTabs from '@/components/admin/AdminTabs';
 import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState('command-center');
+  const [activeTab, setActiveTab] = useState('operations');
 
-  // Handle URL query parameters for tab navigation
+  // Handle URL query parameters for tab navigation with new tab names
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
+    
+    // Map old tab names to new simplified structure
+    const tabMapping: Record<string, string> = {
+      'command-center': 'operations',
+      'data-sources': 'data-management',
+      'operations': 'data-management',
+      'monitoring': 'system-health',
+      'documentation': 'settings',
+      'overview': 'operations'
+    };
+    
     if (tabParam) {
-      setActiveTab(tabParam);
+      setActiveTab(tabMapping[tabParam] || tabParam);
     }
   }, []);
 
@@ -31,7 +42,7 @@ const AdminPage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            Manage system configuration, operations, and monitoring
+            Streamlined administration hub for daily operations and system management
           </p>
         </div>
         <AdminTabs activeTab={activeTab} onTabChange={handleTabChange} />

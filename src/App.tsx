@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
@@ -155,11 +154,11 @@ const AppContent = () => {
             <Route path="/hub/:hubId" element={<HubDetailPage />} />
             <Route path="/auth" element={<Navigate to="/" replace />} />
             
-            {/* Redirect legacy admin routes to admin with appropriate tabs */}
-            <Route path="/source-management" element={<Navigate to="/admin?tab=data-sources" replace />} />
-            <Route path="/sources" element={<Navigate to="/admin?tab=data-sources" replace />} />
+            {/* Updated redirects for new simplified admin structure */}
+            <Route path="/source-management" element={<Navigate to="/admin?tab=data-management" replace />} />
+            <Route path="/sources" element={<Navigate to="/admin?tab=data-management" replace />} />
             <Route path="/diagnostics" element={<Navigate to="/admin?tab=system-health" replace />} />
-            <Route path="/widgets" element={<Navigate to="/admin?tab=command-center" replace />} />
+            <Route path="/widgets" element={<Navigate to="/admin?tab=operations" replace />} />
           </Routes>
         </MainLayout>
       </>
@@ -185,11 +184,11 @@ const AppContent = () => {
           <Route path="/hubs" element={<HubsPage />} />
           <Route path="/hub/:hubId" element={<HubDetailPage />} />
           
-          {/* Redirect legacy admin routes */}
-          <Route path="/source-management" element={<Navigate to="/admin?tab=data-sources" replace />} />
-          <Route path="/sources" element={<Navigate to="/admin?tab=data-sources" replace />} />
+          {/* Updated redirects for new simplified admin structure */}
+          <Route path="/source-management" element={<Navigate to="/admin?tab=data-management" replace />} />
+          <Route path="/sources" element={<Navigate to="/admin?tab=data-management" replace />} />
           <Route path="/diagnostics" element={<Navigate to="/admin?tab=system-health" replace />} />
-          <Route path="/widgets" element={<Navigate to="/admin?tab=command-center" replace />} />
+          <Route path="/widgets" element={<Navigate to="/admin?tab=operations" replace />} />
         </Routes>
       </main>
     </div>
