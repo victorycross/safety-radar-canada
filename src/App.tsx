@@ -10,6 +10,8 @@ import EmployeesPage from '@/pages/EmployeesPage';
 import AuthPage from '@/pages/AuthPage';
 import HubsPage from '@/pages/HubsPage';
 import HubDetailPage from '@/pages/HubDetailPage';
+import LocationStatusPage from '@/pages/LocationStatusPage';
+import ReportIncidentPage from '@/pages/ReportIncidentPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { Navigate } from 'react-router-dom';
@@ -146,10 +148,12 @@ const AppContent = () => {
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/alert-ready" element={<AlertReadyPage />} />
+            <Route path="/location-status" element={<LocationStatusPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/incidents" element={<IncidentsPage />} />
             <Route path="/report" element={<ReportPage />} />
-            <Route path="/employees" element={<EmployeesPage />} />
+            <Route path="/report-incident" element={<ReportIncidentPage />} />
+            <Route path="/employees" element={<Navigate to="/location-status" replace />} />
             <Route path="/hubs" element={<HubsPage />} />
             <Route path="/hub/:hubId" element={<HubDetailPage />} />
             <Route path="/auth" element={<Navigate to="/" replace />} />
@@ -177,10 +181,12 @@ const AppContent = () => {
           <Route path="/" element={<Index />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/alert-ready" element={<AlertReadyPage />} />
+          <Route path="/location-status" element={<LocationStatusPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/incidents" element={<IncidentsPage />} />
           <Route path="/report" element={<ReportPage />} />
-          <Route path="/employees" element={<EmployeesPage />} />
+          <Route path="/report-incident" element={<ReportIncidentPage />} />
+          <Route path="/employees" element={<Navigate to="/location-status" replace />} />
           <Route path="/hubs" element={<HubsPage />} />
           <Route path="/hub/:hubId" element={<HubDetailPage />} />
           

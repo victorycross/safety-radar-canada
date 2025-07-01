@@ -10,7 +10,10 @@ import {
   AlertTriangle,
   FileText,
   Users,
-  Globe
+  Globe,
+  MapPin,
+  Settings,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,20 +21,65 @@ const Sidebar = () => {
   const location = useLocation();
   const { user, isAdmin } = useAuth();
 
-  const navigation = [
+  // Dashboard & Monitoring section - for all users
+  const dashboardSection = [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Alert Ready', href: '/alert-ready', icon: AlertTriangle },
-    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-    { name: 'Incidents', href: '/incidents', icon: Activity },
-    { name: 'Report', href: '/report', icon: FileText },
-    { name: 'Employees', href: '/employees', icon: Users },
-    { name: 'International Hubs', href: '/hubs', icon: Globe },
-    ...(isAdmin() ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
+    { name: 'Location Status', href: '/location-status', icon: MapPin },
   ];
+
+  // Analytics & Reporting section - primarily for leadership
+  const analyticsSection = [
+    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'Incident Reports', href: '/incidents', icon: Activity },
+    { name: 'Executive Reports', href: '/report', icon: TrendingUp },
+  ];
+
+  // Input & Reporting section - for data entry
+  const inputSection = [
+    { name: 'Report Incident', href: '/report-incident', icon: FileText },
+    { name: 'International Hubs', href: '/hubs', icon: Globe },
+  ];
+
+  // Admin section - for administrators only
+  const adminSection = isAdmin() ? [
+    { name: 'Admin', href: '/admin', icon: Shield },
+  ] : [];
 
   if (!user) {
     return null;
   }
+
+  const renderNavigationSection = (title: string, items: typeof dashboardSection) => (
+    <div className="mb-6">
+      <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+        {title}
+      </h3>
+      <ul className="space-y-1">
+        {items.map((item) => {
+          const isActive = location.pathname === item.href;
+          const Icon = item.icon;
+          
+          return (
+            <li key={item.name}>
+              <Link
+                to={item.href}
+                className={cn(
+                  'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                  isActive
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                )}
+              >
+                <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                {item.name}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 h-full">
@@ -46,29 +94,10 @@ const Sidebar = () => {
       </div>
       
       <nav className="px-3 pb-6">
-        <ul className="space-y-1">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
-            const Icon = item.icon;
-            
-            return (
-              <li key={item.name}>
-                <Link
-                  to={item.href}
-                  className={cn(
-                    'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                    isActive
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  )}
-                >
-                  <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  {item.name}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        {renderNavigationSection('Dashboard & Monitoring', dashboardSection)}
+        {renderNavigationSection('Analytics & Reporting', analyticsSection)}
+        {renderNavigationSection('Input & Reporting', inputSection)}
+        {adminSection.length > 0 && renderNavigationSection('Administration', adminSection)}
       </nav>
     </div>
   );
