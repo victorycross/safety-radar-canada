@@ -17,12 +17,11 @@ interface AdminTabsProps {
 const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-7">
+      <TabsList className="grid w-full grid-cols-6">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="command-center">Command Center</TabsTrigger>
-        <TabsTrigger value="operations">Operations</TabsTrigger>
         <TabsTrigger value="data-sources">Data Sources</TabsTrigger>
-        <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+        <TabsTrigger value="operations">Operations</TabsTrigger>
         <TabsTrigger value="system-health">System Health</TabsTrigger>
         <TabsTrigger value="documentation">Documentation</TabsTrigger>
       </TabsList>
@@ -35,16 +34,12 @@ const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, onTabChange }) => {
         <CommandCenterTab />
       </TabsContent>
       
-      <TabsContent value="operations" className="space-y-4">
-        <OperationsTab />
-      </TabsContent>
-
       <TabsContent value="data-sources" className="space-y-4">
         <DataSourcesTab />
       </TabsContent>
 
-      <TabsContent value="monitoring" className="space-y-4">
-        <MonitoringTab />
+      <TabsContent value="operations" className="space-y-4">
+        <OperationsTab />
       </TabsContent>
 
       <TabsContent value="system-health" className="space-y-4">

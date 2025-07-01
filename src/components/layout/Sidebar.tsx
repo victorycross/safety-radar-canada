@@ -10,9 +10,6 @@ import {
   AlertTriangle,
   FileText,
   Users,
-  Settings,
-  Database,
-  Stethoscope,
   Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -29,9 +26,6 @@ const Sidebar = () => {
     { name: 'Report', href: '/report', icon: FileText },
     { name: 'Employees', href: '/employees', icon: Users },
     { name: 'International Hubs', href: '/hubs', icon: Globe },
-    { name: 'Source Management', href: '/source-management', icon: Database },
-    { name: 'Widgets', href: '/widgets', icon: Settings },
-    { name: 'Diagnostics', href: '/diagnostics', icon: Stethoscope },
     ...(isAdmin() ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
   ];
 

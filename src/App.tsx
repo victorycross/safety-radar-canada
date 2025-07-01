@@ -3,15 +3,12 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
 import AdminPage from '@/pages/AdminPage';
-import UnifiedSourceManagementPage from "./pages/UnifiedSourceManagementPage";
 import AlertReadyPage from '@/pages/AlertReadyPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
 import IncidentsPage from '@/pages/IncidentsPage';
 import ReportPage from '@/pages/ReportPage';
 import EmployeesPage from '@/pages/EmployeesPage';
-import WidgetPage from '@/pages/WidgetPage';
 import AuthPage from '@/pages/AuthPage';
-import DiagnosticsPage from '@/pages/DiagnosticsPage';
 import HubsPage from '@/pages/HubsPage';
 import HubDetailPage from '@/pages/HubDetailPage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -149,18 +146,20 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<AdminPage />} />
-            <Route path="/source-management" element={<UnifiedSourceManagementPage />} />
-            <Route path="/sources" element={<Navigate to="/source-management" replace />} />
             <Route path="/alert-ready" element={<AlertReadyPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/incidents" element={<IncidentsPage />} />
             <Route path="/report" element={<ReportPage />} />
             <Route path="/employees" element={<EmployeesPage />} />
-            <Route path="/widgets" element={<WidgetPage />} />
-            <Route path="/diagnostics" element={<DiagnosticsPage />} />
             <Route path="/hubs" element={<HubsPage />} />
             <Route path="/hub/:hubId" element={<HubDetailPage />} />
             <Route path="/auth" element={<Navigate to="/" replace />} />
+            
+            {/* Redirect legacy admin routes to admin with appropriate tabs */}
+            <Route path="/source-management" element={<Navigate to="/admin?tab=data-sources" replace />} />
+            <Route path="/sources" element={<Navigate to="/admin?tab=data-sources" replace />} />
+            <Route path="/diagnostics" element={<Navigate to="/admin?tab=system-health" replace />} />
+            <Route path="/widgets" element={<Navigate to="/admin?tab=command-center" replace />} />
           </Routes>
         </MainLayout>
       </>
@@ -178,17 +177,19 @@ const AppContent = () => {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/" element={<Index />} />
           <Route path="/admin" element={<AdminPage />} />
-          <Route path="/source-management" element={<UnifiedSourceManagementPage />} />
-          <Route path="/sources" element={<Navigate to="/source-management" replace />} />
           <Route path="/alert-ready" element={<AlertReadyPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/incidents" element={<IncidentsPage />} />
           <Route path="/report" element={<ReportPage />} />
           <Route path="/employees" element={<EmployeesPage />} />
-          <Route path="/widgets" element={<WidgetPage />} />
-          <Route path="/diagnostics" element={<DiagnosticsPage />} />
           <Route path="/hubs" element={<HubsPage />} />
           <Route path="/hub/:hubId" element={<HubDetailPage />} />
+          
+          {/* Redirect legacy admin routes */}
+          <Route path="/source-management" element={<Navigate to="/admin?tab=data-sources" replace />} />
+          <Route path="/sources" element={<Navigate to="/admin?tab=data-sources" replace />} />
+          <Route path="/diagnostics" element={<Navigate to="/admin?tab=system-health" replace />} />
+          <Route path="/widgets" element={<Navigate to="/admin?tab=command-center" replace />} />
         </Routes>
       </main>
     </div>

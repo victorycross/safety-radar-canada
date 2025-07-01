@@ -1,157 +1,123 @@
 
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import DiagnosticsPage from '@/pages/DiagnosticsPage';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SystemDiagnostics from '@/components/diagnostics/SystemDiagnostics';
+import { Activity, Server, Database, Shield } from 'lucide-react';
 
 const SystemHealthTab = () => {
-  const [activeSubTab, setActiveSubTab] = useState('diagnostics');
-
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">System Health & Diagnostics</h2>
-        <p className="text-muted-foreground">Monitor system performance, security, and technical status</p>
+        <p className="text-muted-foreground">
+          Monitor system performance, run diagnostics, and view health metrics
+        </p>
       </div>
-      
-      <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+
+      <Tabs defaultValue="diagnostics" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="diagnostics">System Diagnostics</TabsTrigger>
-          <TabsTrigger value="technical">Technical Info</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="security">Security Status</TabsTrigger>
+          <TabsTrigger value="database">Database Health</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="diagnostics" className="space-y-4">
-          <div className="container mx-auto px-4 py-6">
-            <DiagnosticsPage />
+          <SystemDiagnostics />
+        </TabsContent>
+
+        <TabsContent value="performance" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">CPU Usage</CardTitle>
+                <Server className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">23%</div>
+                <p className="text-xs text-muted-foreground">Normal operating range</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Memory Usage</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">67%</div>
+                <p className="text-xs text-muted-foreground">Within acceptable limits</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Response Time</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">142ms</div>
+                <p className="text-xs text-muted-foreground">Average response time</p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
-        
-        <TabsContent value="technical" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Application Information</CardTitle>
-                <CardDescription>Current system configuration and build details</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Environment:</span>
-                    <span>Production</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Build Version:</span>
-                    <span>2.1.0</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Last Deployment:</span>
-                    <span>{new Date().toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Framework:</span>
-                    <span>React 18.3.1</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Database:</span>
-                    <span>Supabase PostgreSQL</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Security Configuration</CardTitle>
-                <CardDescription>Current security settings and policies</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Authentication:</span>
-                    <span className="text-green-600">Enabled</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Row Level Security:</span>
-                    <span className="text-green-600">Active</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Session Security:</span>
-                    <span className="text-green-600">Monitored</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">API Rate Limiting:</span>
-                    <span className="text-green-600">Enabled</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Audit Logging:</span>
-                    <span className="text-green-600">Active</span>
-                  </div>
+        <TabsContent value="security" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Security Overview
+              </CardTitle>
+              <CardDescription>Current security status and recent events</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span>SSL Certificate</span>
+                  <span className="text-green-600 font-medium">Valid</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex justify-between items-center">
+                  <span>Authentication System</span>
+                  <span className="text-green-600 font-medium">Operational</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Last Security Scan</span>
+                  <span className="text-muted-foreground">2 hours ago</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Data Integration Status</CardTitle>
-                <CardDescription>Status of external data sources and feeds</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Alert Ready API:</span>
-                    <span className="text-green-600">Connected</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">BC Emergency:</span>
-                    <span className="text-green-600">Active</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Weather Alerts:</span>
-                    <span className="text-green-600">Syncing</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">RSS Feeds:</span>
-                    <span className="text-yellow-600">Monitoring</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Travel APIs:</span>
-                    <span className="text-blue-600">Configured</span>
-                  </div>
+        <TabsContent value="database" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Database Health
+              </CardTitle>
+              <CardDescription>Database performance and connectivity status</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span>Connection Status</span>
+                  <span className="text-green-600 font-medium">Connected</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance Metrics</CardTitle>
-                <CardDescription>System performance and resource usage</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Avg Response Time:</span>
-                    <span className="text-green-600">&lt; 200ms</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Database Queries:</span>
-                    <span className="text-green-600">Optimized</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Cache Hit Rate:</span>
-                    <span className="text-green-600">94%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Error Rate:</span>
-                    <span className="text-green-600">&lt; 0.1%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Uptime:</span>
-                    <span className="text-green-600">99.9%</span>
-                  </div>
+                <div className="flex justify-between items-center">
+                  <span>Query Performance</span>
+                  <span className="text-green-600 font-medium">Optimal</span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="flex justify-between items-center">
+                  <span>Storage Usage</span>
+                  <span className="text-muted-foreground">34% of allocated</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
