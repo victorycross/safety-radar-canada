@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Index from '@/pages/Index';
@@ -19,6 +20,7 @@ import { Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { SessionManager } from '@/components/auth/SessionManager';
 import { SupabaseDataProvider } from '@/context/SupabaseDataProvider';
+import { SecurityProvider } from '@/context/SecurityContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import MainLayout from '@/components/layout/MainLayout';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -204,10 +206,12 @@ function App() {
         <AuthProvider>
           <SessionManager>
             <SupabaseDataProvider>
-              <Toaster />
-              <Router>
-                <AppContent />
-              </Router>
+              <SecurityProvider>
+                <Toaster />
+                <Router>
+                  <AppContent />
+                </Router>
+              </SecurityProvider>
             </SupabaseDataProvider>
           </SessionManager>
         </AuthProvider>
