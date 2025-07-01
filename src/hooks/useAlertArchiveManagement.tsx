@@ -221,8 +221,8 @@ export const useAlertArchiveManagement = () => {
 
         console.log(`Archive result for ${tableName}:`, data);
         
-        // Type assertion for the response data
-        const response = data as BulkOperationResponse;
+        // Type assertion for the response data - convert through unknown first
+        const response = data as unknown as BulkOperationResponse;
         results.push(response);
 
         if (!response.success) {
@@ -287,8 +287,8 @@ export const useAlertArchiveManagement = () => {
 
         console.log(`Unarchive result for ${tableName}:`, data);
         
-        // Type assertion for the response data
-        const response = data as BulkOperationResponse;
+        // Type assertion for the response data - convert through unknown first
+        const response = data as unknown as BulkOperationResponse;
         results.push(response);
 
         if (!response.success) {
