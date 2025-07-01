@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AlertsList from '@/components/alert-ready/AlertsList';
 import BCAlertslist from '@/components/alert-ready/BCAlertslist';
@@ -18,10 +17,13 @@ import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import AlertDetailModal from '@/components/alerts/AlertDetailModal';
 import { Badge } from '@/components/ui/badge';
 import { useSearchParams } from 'react-router-dom';
+import LocationContext from '@/components/alert-ready/LocationContext';
+import AlertLocationMap from '@/components/alert-ready/AlertLocationMap';
 
 const AlertReadyPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all-alerts');
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   
   const { alerts: allAlerts, loading: allLoading, error: allError, fetchAlerts: fetchAllAlerts } = useAllAlertSources();
   const { alerts: bcAlerts, loading: bcLoading, error: bcError, fetchAlerts: fetchBCAlerts } = useBCAlerts();
@@ -49,6 +51,18 @@ const AlertReadyPage = () => {
     archiveAlert
   } = useAlertManagement(getCurrentAlerts());
 
+  // Handle location filtering
+  const handleLocationFilter = (location: string | null) => {
+    setSelectedLocation(location);
+    if (location) {
+      updateFilters({ area: location });
+    } else {
+      // Clear area filter but keep other filters
+      const { area, ...otherFilters } = filters;
+      updateFilters(otherFilters);
+    }
+  };
+
   // Handle URL-based filtering for location-specific alerts
   React.useEffect(() => {
     const locationFilter = searchParams.get('location');
@@ -60,6 +74,7 @@ const AlertReadyPage = () => {
         provinceId: locationType === 'province' ? locationFilter : undefined,
         hubId: locationType === 'hub' ? locationFilter : undefined 
       });
+      setSelectedLocation(locationFilter);
     }
   }, [searchParams, updateFilters]);
 
@@ -70,6 +85,7 @@ const AlertReadyPage = () => {
     newSearchParams.delete('location');
     newSearchParams.delete('type');
     setSearchParams(newSearchParams);
+    setSelectedLocation(null);
     clearFilters();
   };
 
@@ -154,6 +170,19 @@ const AlertReadyPage = () => {
       <CriticalAlertsSummary 
         alerts={allAlerts} 
         loading={allLoading} 
+      />
+
+      {/* Location Context and Mapping */}
+      <LocationContext
+        alerts={getCurrentAlerts()}
+        onLocationFilter={handleLocationFilter}
+        selectedLocation={selectedLocation}
+      />
+
+      <AlertLocationMap
+        alerts={getCurrentAlerts()}
+        onLocationClick={handleLocationFilter}
+        selectedLocation={selectedLocation}
       />
 
       {/* Unified Alert Integration Controls */}
