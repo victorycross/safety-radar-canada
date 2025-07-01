@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,8 @@ import {
   Database,
   Users,
   Plus,
-  Settings
+  Settings,
+  ExternalLink
 } from 'lucide-react';
 import RSSFeedModal from '../modals/RSSFeedModal';
 import APISourceModal from '../modals/APISourceModal';
@@ -24,6 +25,7 @@ import CommunicationTemplateListModal from '../modals/CommunicationTemplateListM
 import { RSSFeed, APISource, SystemIntegration, CommunicationTemplate } from '@/hooks/useDataManagement';
 
 const InputsManagementTab = () => {
+  const navigate = useNavigate();
   const [rssModalOpen, setRssModalOpen] = useState(false);
   const [apiModalOpen, setApiModalOpen] = useState(false);
   const [feedListModalOpen, setFeedListModalOpen] = useState(false);
@@ -93,6 +95,19 @@ const InputsManagementTab = () => {
     setSelectedCommunicationTemplate(null);
   };
 
+  const handleEmployeeFormsClick = () => {
+    navigate('/admin?tab=operations');
+  };
+
+  const handleIncidentReportsClick = () => {
+    navigate('/report-incident');
+  };
+
+  const handleCustomFormsClick = () => {
+    // For now, open the communication templates as a starting point for custom forms
+    setCommunicationTemplateListModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -115,27 +130,41 @@ const InputsManagementTab = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2"
+              onClick={handleEmployeeFormsClick}
+            >
               <Users className="h-6 w-6" />
               <div className="text-center">
                 <div className="font-medium">Employee Forms</div>
-                <div className="text-xs opacity-75">Manual employee data entry</div>
+                <div className="text-xs opacity-75">Access employee management</div>
+                <ExternalLink className="h-3 w-3 mt-1 mx-auto opacity-50" />
               </div>
             </Button>
 
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2"
+              onClick={handleIncidentReportsClick}
+            >
               <FileText className="h-6 w-6" />
               <div className="text-center">
                 <div className="font-medium">Incident Reports</div>
-                <div className="text-xs opacity-75">Manual incident logging</div>
+                <div className="text-xs opacity-75">Report new incidents</div>
+                <ExternalLink className="h-3 w-3 mt-1 mx-auto opacity-50" />
               </div>
             </Button>
 
-            <Button variant="outline" className="h-20 flex-col gap-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2"
+              onClick={handleCustomFormsClick}
+            >
               <Plus className="h-6 w-6" />
               <div className="text-center">
-                <div className="font-medium">Custom Forms</div>
-                <div className="text-xs opacity-75">Create new input forms</div>
+                <div className="font-medium">Custom Templates</div>
+                <div className="text-xs opacity-75">Manage communication templates</div>
               </div>
             </Button>
           </div>
