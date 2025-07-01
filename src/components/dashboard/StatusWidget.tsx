@@ -5,12 +5,15 @@ import { AlertLevel } from "@/types";
 import { Badge } from "../ui/badge";
 import { useSupabaseDataContext } from "@/context/SupabaseDataProvider";
 import { Skeleton } from "../ui/skeleton";
+import { Button } from "../ui/button";
+import { Eye, AlertTriangle } from "lucide-react";
 
 interface StatusWidgetProps {
   provinceId: string;
+  onViewAlerts?: (provinceId: string, provinceName: string) => void;
 }
 
-const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId }) => {
+const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId, onViewAlerts }) => {
   const { getProvinceById, getIncidentsByProvince, loading } = useSupabaseDataContext();
   
   if (loading) {
@@ -33,13 +36,13 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId }) => {
   const getStatusColor = () => {
     switch (province.alertLevel) {
       case AlertLevel.SEVERE:
-        return "bg-danger";
+        return "bg-red-500";
       case AlertLevel.WARNING:
-        return "bg-warning";
+        return "bg-orange-500";
       case AlertLevel.NORMAL:
-        return "bg-success";
+        return "bg-green-500";
       default:
-        return "bg-muted";
+        return "bg-gray-400";
     }
   };
   
@@ -70,9 +73,15 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId }) => {
     minute: '2-digit',
     hour12: false
   });
+
+  const handleViewAlerts = () => {
+    if (onViewAlerts) {
+      onViewAlerts(provinceId, province.name);
+    }
+  };
   
   return (
-    <Card>
+    <Card className="cursor-pointer transition-all hover:shadow-md">
       <CardHeader className={`${getStatusColor()} text-white`}>
         <CardTitle className="flex justify-between items-center">
           <span>{province.name} Status</span>
@@ -106,9 +115,10 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({ provinceId }) => {
         <div className="text-xs text-muted-foreground">
           Last updated: {currentDate}
         </div>
-        <div className="text-xs font-medium">
-          Security Barometer
-        </div>
+        <Button variant="outline" size="sm" onClick={handleViewAlerts}>
+          <Eye className="h-3 w-3 mr-1" />
+          View Alerts
+        </Button>
       </CardFooter>
     </Card>
   );

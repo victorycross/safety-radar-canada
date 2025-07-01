@@ -14,13 +14,15 @@ interface CriticalAlertsHeroProps {
   visibleAlertProvinces: Province[];
   alertHubs: InternationalHub[];
   loading: boolean;
+  onViewLocationAlerts?: (type: 'province' | 'hub', locationId: string, locationName: string) => void;
 }
 
 const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
   alertProvinces,
   visibleAlertProvinces,
   alertHubs,
-  loading
+  loading,
+  onViewLocationAlerts
 }) => {
   if (loading) {
     return (
@@ -38,6 +40,18 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
   const provinceWarningCount = alertProvinces.filter(p => p.alertLevel === AlertLevel.WARNING).length;
   const hubSevereCount = alertHubs.filter(h => h.alertLevel === AlertLevel.SEVERE).length;
   const hubWarningCount = alertHubs.filter(h => h.alertLevel === AlertLevel.WARNING).length;
+
+  const handleViewAlerts = (provinceId: string, provinceName: string) => {
+    if (onViewLocationAlerts) {
+      onViewLocationAlerts('province', provinceId, provinceName);
+    }
+  };
+
+  const handleHubClick = (hubId: string, hubName: string) => {
+    if (onViewLocationAlerts) {
+      onViewLocationAlerts('hub', hubId, hubName);
+    }
+  };
 
   if (totalAlerts === 0) {
     return (
@@ -121,7 +135,11 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {visibleAlertProvinces.map((province) => (
-                <StatusWidget key={province.id} provinceId={province.id} />
+                <StatusWidget 
+                  key={province.id} 
+                  provinceId={province.id} 
+                  onViewAlerts={handleViewAlerts}
+                />
               ))}
             </div>
           </div>
@@ -137,35 +155,37 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {alertHubs.map((hub) => (
-                <Link key={hub.id} to={`/hub/${hub.id}`}>
-                  <Card className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${
+                <Card 
+                  key={hub.id} 
+                  className={`cursor-pointer transition-all hover:shadow-md border-l-4 ${
                     hub.alertLevel === AlertLevel.SEVERE ? 'border-l-red-500' : 
                     hub.alertLevel === AlertLevel.WARNING ? 'border-l-yellow-500' : 'border-l-green-500'
-                  }`}>
-                    <CardContent className="pt-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-lg">{hub.flagEmoji}</span>
-                          <div>
-                            <div className="font-medium text-sm">{hub.name}</div>
-                            <div className="text-xs text-muted-foreground">{hub.country}</div>
-                          </div>
+                  }`}
+                  onClick={() => handleHubClick(hub.id, hub.name)}
+                >
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg">{hub.flagEmoji}</span>
+                        <div>
+                          <div className="font-medium text-sm">{hub.name}</div>
+                          <div className="text-xs text-muted-foreground">{hub.country}</div>
                         </div>
-                        <Badge
-                          variant={hub.alertLevel === AlertLevel.SEVERE ? 'destructive' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {hub.alertLevel === AlertLevel.SEVERE ? 'Severe' : 'Warning'}
-                        </Badge>
                       </div>
-                      {hub.localIncidents > 0 && (
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          {hub.localIncidents} incident{hub.localIncidents !== 1 ? 's' : ''}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
+                      <Badge
+                        variant={hub.alertLevel === AlertLevel.SEVERE ? 'destructive' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {hub.alertLevel === AlertLevel.SEVERE ? 'Severe' : 'Warning'}
+                      </Badge>
+                    </div>
+                    {hub.localIncidents > 0 && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        {hub.localIncidents} incident{hub.localIncidents !== 1 ? 's' : ''}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>

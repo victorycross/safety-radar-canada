@@ -1,11 +1,15 @@
 
 import React from 'react';
-import DashboardHeader from '@/components/layout/DashboardHeader';
-import CriticalAlertsHero from '@/components/dashboard/CriticalAlertsHero';
-import DashboardTabs from '@/components/dashboard/DashboardTabs';
-import SystemHealthWidget from '@/components/dashboard/SystemHealthWidget';
-import { Province, InternationalHub, DashboardMetrics } from '@/types/dashboard';
-import { useAuth } from '@/components/auth/AuthProvider';
+import { DashboardMetrics } from '@/types/dashboard';
+import { Province, InternationalHub } from '@/types/dashboard';
+import CriticalAlertsHero from './CriticalAlertsHero';
+import { Card, CardContent } from '@/components/ui/card';
+import SimpleGlobeMap from '@/components/map/SimpleGlobeMap';
+import RecentAlerts from './RecentAlerts';
+import EmployeeDistributionChart from './EmployeeDistributionChart';
+import EnhancedMetricsWidget from './EnhancedMetricsWidget';
+import DataStatusIndicator from './DataStatusIndicator';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardContentProps {
   alertProvinces: Province[];
@@ -21,7 +25,6 @@ interface DashboardContentProps {
   onRefreshHubs?: () => void;
   loading: boolean;
   hubsLoading?: boolean;
-  // New processing status props
   lastDataUpdate?: Date;
   isProcessing?: boolean;
   hasDataErrors?: boolean;
@@ -42,69 +45,113 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   incidentsCount,
   metrics,
   onRefresh,
-  onRefreshHubs,
   loading,
-  hubsLoading = false,
   lastDataUpdate,
-  isProcessing = false,
-  hasDataErrors = false,
-  dataSourcesCount = 0,
-  healthySourcesCount = 0,
-  processingQueueCount = 0,
-  systemErrors = 0
+  isProcessing,
+  hasDataErrors,
+  dataSourcesCount,
+  healthySourcesCount,
+  processingQueueCount,
+  systemErrors
 }) => {
-  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  const handleViewLocationAlerts = (type: 'province' | 'hub', locationId: string, locationName: string) => {
+    // Navigate to alert ready page with location filter
+    const searchParams = new URLSearchParams({
+      location: locationName,
+      type: type,
+      tab: 'all-alerts'
+    });
+    navigate(`/alert-ready?${searchParams.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader
-        alertCount={alertProvinces.length + alertHubs.length}
-        visibleProvincesCount={visibleProvincesCount}
-        totalProvinces={totalProvinces}
-        onRefresh={onRefresh}
-        loading={loading}
-        provinces={displayProvinces}
-        internationalHubs={internationalHubs}
-        lastDataUpdate={lastDataUpdate}
-        isProcessing={isProcessing}
-        hasDataErrors={hasDataErrors}
-      />
-      
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-8">
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Data Status Indicator */}
+        <DataStatusIndicator
+          lastUpdate={lastDataUpdate}
+          isProcessing={isProcessing}
+          hasErrors={hasDataErrors}
+          dataSourcesCount={dataSourcesCount}
+          healthySourcesCount={healthySourcesCount}
+          processingQueueCount={processingQueueCount}
+          systemErrors={systemErrors}
+          onRefresh={onRefresh}
+        />
+
         {/* Critical Alerts Hero Section */}
         <CriticalAlertsHero
           alertProvinces={alertProvinces}
           visibleAlertProvinces={visibleAlertProvinces}
           alertHubs={alertHubs}
           loading={loading}
+          onViewLocationAlerts={handleViewLocationAlerts}
         />
 
-        {/* System Health Widget - Admin Only */}
-        {isAdmin() && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-1">
-              <SystemHealthWidget
-                dataSourcesCount={dataSourcesCount}
-                healthySourcesCount={healthySourcesCount}
-                processingQueueCount={processingQueueCount}
-                lastProcessingTime={lastDataUpdate}
-                systemErrors={systemErrors}
-              />
-            </div>
+        {/* Main Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Enhanced Metrics */}
+            <EnhancedMetricsWidget
+              visibleProvincesCount={visibleProvincesCount}
+              totalProvinces={totalProvinces}
+              alertProvincesCount={alertProvinces.length}
+              incidentsCount={incidentsCount}
+              hubsCount={internationalHubs.length}
+              alertHubsCount={alertHubs.length}
+              employeesCount={metrics.employeesCount}
+              hubEmployeesCount={metrics.hubEmployeesCount}
+              loading={loading}
+            />
+
+            {/* Interactive Map */}
+            <SimpleGlobeMap />
+
+            {/* Employee Distribution Chart */}
+            <EmployeeDistributionChart provinces={displayProvinces} />
           </div>
-        )}
 
-        {/* Main Dashboard Content in Tabs */}
-        <DashboardTabs
-          visibleProvincesCount={visibleProvincesCount}
-          totalProvinces={totalProvinces}
-          internationalHubsCount={internationalHubs.length}
-          incidentsCount={incidentsCount}
-          internationalHubs={internationalHubs}
-          hubsLoading={hubsLoading}
-          onRefreshHubs={onRefreshHubs}
-          metrics={metrics}
-        />
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            {/* Recent Alerts Widget */}
+            <RecentAlerts />
+
+            {/* Quick Actions Card */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <h3 className="font-semibold mb-2">Quick Actions</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Access key features and tools
+                  </p>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => navigate('/alert-ready')}
+                      className="w-full text-left p-3 rounded-md hover:bg-gray-100 transition-colors text-sm"
+                    >
+                      📢 View All Alerts
+                    </button>
+                    <button
+                      onClick={() => navigate('/admin')}
+                      className="w-full text-left p-3 rounded-md hover:bg-gray-100 transition-colors text-sm"
+                    >
+                      ⚙️ Admin Panel
+                    </button>
+                    <button
+                      onClick={() => navigate('/report')}
+                      className="w-full text-left p-3 rounded-md hover:bg-gray-100 transition-colors text-sm"
+                    >
+                      📝 Report Incident
+                    </button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
