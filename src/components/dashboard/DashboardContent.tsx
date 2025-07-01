@@ -71,14 +71,11 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Data Status Indicator */}
         <DataStatusIndicator
-          lastUpdate={lastDataUpdate}
+          lastUpdated={lastDataUpdate}
           isProcessing={isProcessing}
           hasErrors={hasDataErrors}
           dataSourcesCount={dataSourcesCount}
           healthySourcesCount={healthySourcesCount}
-          processingQueueCount={processingQueueCount}
-          systemErrors={systemErrors}
-          onRefresh={onRefresh}
         />
 
         {/* Critical Alerts Hero Section */}
@@ -96,14 +93,17 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
           <div className="lg:col-span-2 space-y-6">
             {/* Enhanced Metrics */}
             <EnhancedMetricsWidget
-              visibleProvincesCount={visibleProvincesCount}
-              totalProvinces={totalProvinces}
-              alertProvincesCount={alertProvinces.length}
-              incidentsCount={incidentsCount}
-              hubsCount={internationalHubs.length}
-              alertHubsCount={alertHubs.length}
-              employeesCount={metrics.employeesCount}
-              hubEmployeesCount={metrics.hubEmployeesCount}
+              metrics={{
+                ...metrics,
+                visibleProvincesCount,
+                totalProvinces,
+                alertProvincesCount: alertProvinces.length,
+                incidentsCount,
+                totalHubs: internationalHubs.length,
+                alertHubsCount: alertHubs.length,
+                employeesCount: metrics.employeesCount,
+                hubEmployeesCount: metrics.hubEmployeesCount || 0
+              }}
               loading={loading}
             />
 
@@ -111,7 +111,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
             <SimpleGlobeMap />
 
             {/* Employee Distribution Chart */}
-            <EmployeeDistributionChart provinces={displayProvinces} />
+            <EmployeeDistributionChart />
           </div>
 
           {/* Right Column - Sidebar */}
