@@ -551,7 +551,11 @@ export const useDataManagement = () => {
 
       if (error) throw error;
 
-      return data;
+      // Type assertion to ensure proper type casting
+      return data.map(item => ({
+        ...item,
+        type: item.type as 'email' | 'sms' | 'push'
+      }));
     } catch (error) {
       console.error('Error fetching communication templates:', error);
       toast({
@@ -568,11 +572,15 @@ export const useDataManagement = () => {
   const createCommunicationTemplate = async (templateData: Omit<CommunicationTemplate, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
     setLoading(true);
     try {
+      // Get the current user
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+
       const { data, error } = await supabase
         .from('communication_templates')
         .insert([{
           ...templateData,
-          created_by: supabase.auth.getUser().then(u => u.data.user?.id)
+          created_by: userId
         }])
         .select()
         .single();

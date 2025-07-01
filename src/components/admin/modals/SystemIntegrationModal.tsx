@@ -31,7 +31,8 @@ const SystemIntegrationModal: React.FC<SystemIntegrationModalProps> = ({
     api_endpoint: '',
     is_active: true,
     authentication_config: {},
-    sync_frequency_minutes: 60
+    sync_frequency_minutes: 60,
+    configuration: {}
   });
 
   useEffect(() => {
@@ -43,7 +44,8 @@ const SystemIntegrationModal: React.FC<SystemIntegrationModalProps> = ({
           api_endpoint: integration.api_endpoint || '',
           is_active: integration.is_active,
           authentication_config: integration.authentication_config || {},
-          sync_frequency_minutes: integration.sync_frequency_minutes || 60
+          sync_frequency_minutes: integration.sync_frequency_minutes || 60,
+          configuration: integration.configuration || {}
         });
       } else {
         setFormData({
@@ -52,7 +54,8 @@ const SystemIntegrationModal: React.FC<SystemIntegrationModalProps> = ({
           api_endpoint: '',
           is_active: true,
           authentication_config: {},
-          sync_frequency_minutes: 60
+          sync_frequency_minutes: 60,
+          configuration: {}
         });
       }
     }
