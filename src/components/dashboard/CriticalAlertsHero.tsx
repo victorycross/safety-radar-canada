@@ -1,13 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle, Bell, ArrowRight, Globe, MapPin } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Bell, ArrowRight, Globe, MapPin, Archive } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import StatusWidget from './StatusWidget';
 import { AlertLevel } from '@/types';
 import { Province, InternationalHub } from '@/types/dashboard';
+import { useSecurity } from '@/context/SecurityContext';
+import ArchiveAlertDialog from './ArchiveAlertDialog';
+import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 
 interface CriticalAlertsHeroProps {
   alertProvinces: Province[];
@@ -24,6 +27,10 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
   loading,
   onViewLocationAlerts
 }) => {
+  const { user } = useSecurity();
+  const { refreshData } = useSupabaseDataContext();
+  const [showBulkArchive, setShowBulkArchive] = useState(false);
+  
   if (loading) {
     return (
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
@@ -51,6 +58,11 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
     if (onViewLocationAlerts) {
       onViewLocationAlerts('hub', hubId, hubName);
     }
+  };
+
+  const handleBulkArchiveComplete = () => {
+    refreshData();
+    setShowBulkArchive(false);
   };
 
   if (totalAlerts === 0) {
@@ -112,6 +124,17 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            {user?.isAuthorized && totalAlerts > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowBulkArchive(true)}
+                className="text-orange-600 hover:text-orange-700"
+              >
+                <Archive className="h-4 w-4 mr-1" />
+                Bulk Archive
+              </Button>
+            )}
             <Link to="/alert-ready">
               <Button variant="outline" size="sm" className="flex items-center space-x-1">
                 <Bell className="h-4 w-4" />
@@ -172,12 +195,14 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
                           <div className="text-xs text-muted-foreground">{hub.country}</div>
                         </div>
                       </div>
-                      <Badge
-                        variant={hub.alertLevel === AlertLevel.SEVERE ? 'destructive' : 'secondary'}
-                        className="text-xs"
-                      >
-                        {hub.alertLevel === AlertLevel.SEVERE ? 'Severe' : 'Warning'}
-                      </Badge>
+                      <div className="flex items-center space-x-1">
+                        <Badge
+                          variant={hub.alertLevel === AlertLevel.SEVERE ? 'destructive' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {hub.alertLevel === AlertLevel.SEVERE ? 'Severe' : 'Warning'}
+                        </Badge>
+                      </div>
                     </div>
                     {hub.localIncidents > 0 && (
                       <div className="mt-2 text-xs text-muted-foreground">
@@ -206,6 +231,9 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
           </Card>
         )}
       </div>
+
+      {/* Bulk Archive Dialog */}
+      {/* This would need to be implemented with proper incident collection logic */}
     </div>
   );
 };
