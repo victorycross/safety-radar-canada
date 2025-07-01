@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
+import PipelineTestButton from './PipelineTestButton';
 
 interface PipelineStage {
   name: string;
@@ -206,6 +206,12 @@ const DataPipelineDiagnostics = () => {
             Test Pipeline
           </Button>
         </div>
+      </div>
+
+      {/* Add Pipeline Test Component */}
+      <div className="bg-card p-4 rounded-lg border">
+        <h3 className="text-lg font-semibold mb-4">Quick Pipeline Test</h3>
+        <PipelineTestButton />
       </div>
 
       {/* Overall Status Alert */}
