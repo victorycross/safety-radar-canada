@@ -3,16 +3,16 @@ import { AlertLevel } from '@/types';
 import { Province } from '@/types/dashboard';
 import { provinceNames } from '@/services/provinceMapping';
 
-// Note: This fallback data is now only used as a last resort
-// The actual province data should come from the database via syncProvinceData()
+// Clean fallback data structure - no dummy employee counts
 export const fallbackProvinces: Province[] = Object.entries(provinceNames).map(([code, name]) => ({
-  id: `fallback-${code}`, // Fallback ID pattern
+  id: `fallback-${code}`,
   name,
   code: code.toUpperCase(),
   alertLevel: AlertLevel.NORMAL,
-  employeeCount: 0
+  employeeCount: 0 // Real data comes from database
 }));
 
+// Province emojis for display purposes only
 export const provinceEmojis = {
   bc: '🏔️',
   ab: '🛢️',

@@ -7,9 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAllAlertSources } from '@/hooks/useAllAlertSources';
 import { useBCAlerts } from '@/hooks/useBCAlerts';
 import { useEverbridgeAlerts } from '@/hooks/useEverbridgeAlerts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
 
 const AlertReadyPage = () => {
-  const { alerts: allAlerts, loading: allLoading, error: allError, fetchAlerts: fetchAllAlerts, filterAlerts } = useAllAlertSources();
+  const { alerts: allAlerts, loading: allLoading, error: allError, fetchAlerts: fetchAllAlerts } = useAllAlertSources();
   const { alerts: bcAlerts, loading: bcLoading, error: bcError, fetchAlerts: fetchBCAlerts } = useBCAlerts();
   const { alerts: everbridgeAlerts, loading: everbridgeLoading, error: everbridgeError, fetchAlerts: fetchEverbridgeAlerts } = useEverbridgeAlerts();
 
@@ -47,6 +49,17 @@ const AlertReadyPage = () => {
         </TabsContent>
         
         <TabsContent value="everbridge" className="space-y-4">
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                Everbridge Integration
+              </CardTitle>
+              <CardDescription>
+                Everbridge alerts will appear here once the integration is configured with real API credentials.
+              </CardDescription>
+            </CardHeader>
+          </Card>
           <EverbridgeAlertsList 
             alerts={everbridgeAlerts}
             loading={everbridgeLoading}

@@ -61,8 +61,8 @@ export function useSupabaseData() {
   }, []);
 
   return {
-    provinces,
-    incidents,
+    provinces: provinces || [], // Ensure empty array instead of null/undefined
+    incidents: incidents || [], // Ensure empty array instead of null/undefined
     loading,
     error,
     refreshData,

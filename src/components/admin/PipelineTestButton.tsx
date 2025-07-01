@@ -59,18 +59,18 @@ const PipelineTestButton: React.FC = () => {
       // Success
       setResult({
         success: true,
-        message: 'Pipeline test successful',
+        message: 'Pipeline test successful - ready for real data processing',
         details: {
           edgeFunction: 'Responsive',
           database: 'Accessible',
-          sources: sources?.length || 0,
+          configuredSources: sources?.length || 0,
           processedSources: data?.processed_sources || 0
         }
       });
       
       toast({
         title: 'Pipeline Test Complete',
-        description: `Successfully processed ${data?.processed_sources || 0} sources`,
+        description: `Pipeline is ready to process real data from ${sources?.length || 0} configured sources`,
       });
       
     } catch (error) {

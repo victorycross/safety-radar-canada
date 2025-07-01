@@ -1,11 +1,10 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BulkEmployeeManagement from './BulkEmployeeManagement';
 import CityLocationManagement from './CityLocationManagement';
 import TravelIntegrationDashboard from './TravelIntegrationDashboard';
-import TestingSampleData from './TestingSampleData';
-import { Users, MapPin, Plane, FileSpreadsheet, TestTube } from 'lucide-react';
+import { Users, MapPin, Plane, FileSpreadsheet } from 'lucide-react';
 
 const EmployeeManagementTab = () => {
   return (
@@ -17,12 +16,8 @@ const EmployeeManagementTab = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="testing" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="testing" className="flex items-center gap-2">
-            <TestTube className="h-4 w-4" />
-            Testing
-          </TabsTrigger>
+      <Tabs defaultValue="city-management" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="city-management" className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
             City Management
@@ -36,10 +31,6 @@ const EmployeeManagementTab = () => {
             Bulk Operations
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="testing" className="space-y-4">
-          <TestingSampleData />
-        </TabsContent>
 
         <TabsContent value="city-management" className="space-y-4">
           <CityLocationManagement />

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { Card } from '../ui/card';
-import { Map } from 'lucide-react';
+import { Map, AlertTriangle } from 'lucide-react';
 import { provincePositions } from './mapConstants';
 import ProvinceOverlay from './ProvinceOverlay';
 import MapLegend from './MapLegend';
@@ -21,6 +21,9 @@ const SimpleGlobeMap = () => {
   const handleProvinceHover = (provinceId: string | null) => {
     setActiveProvinceId(provinceId);
   };
+
+  // Filter provinces with actual employee data
+  const provincesWithEmployees = provinces.filter(p => p.employeeCount > 0);
 
   return (
     <Card className="bg-white rounded-lg shadow-sm">
@@ -66,10 +69,22 @@ const SimpleGlobeMap = () => {
       </div>
       
       {/* Province cards at the bottom */}
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-        {provinces.filter(p => p.employeeCount > 0).map((province) => (
-          <ProvinceCard key={province.id} province={province} />
-        ))}
+      <div className="mt-4 p-4">
+        {provincesWithEmployees.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {provincesWithEmployees.map((province) => (
+              <ProvinceCard key={province.id} province={province} />
+            ))}
+          </div>
+        ) : (
+          <Card className="p-6 text-center">
+            <AlertTriangle className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
+            <h3 className="text-lg font-semibold mb-2">No Employee Data Available</h3>
+            <p className="text-muted-foreground">
+              Employee distribution data will appear here once it's been entered through the admin interface.
+            </p>
+          </Card>
+        )}
       </div>
     </Card>
   );
