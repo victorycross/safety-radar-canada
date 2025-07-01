@@ -177,7 +177,7 @@ const InputsManagementTab = () => {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => handleOpenCommunicationTemplateModal('create')}
+                onClick={() => setCommunicationTemplateListModalOpen(true)}
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Configure Templates
