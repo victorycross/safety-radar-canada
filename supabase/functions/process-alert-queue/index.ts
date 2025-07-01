@@ -17,7 +17,23 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Processing alert queue...');
+    console.log('🔄 Processing alert queue started...');
+
+    // First, clean up stale processing items (older than 10 minutes)
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    
+    const { error: cleanupError } = await supabaseClient
+      .from('alert_ingestion_queue')
+      .update({ 
+        processing_status: 'pending',
+        error_message: 'Reset from stale processing state'
+      })
+      .eq('processing_status', 'processing')
+      .lt('created_at', tenMinutesAgo);
+
+    if (cleanupError) {
+      console.log('⚠️ Cleanup warning:', cleanupError.message);
+    }
 
     // Get pending alerts from queue
     const { data: queueItems, error: queueError } = await supabaseClient
@@ -25,30 +41,39 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('processing_status', 'pending')
       .order('created_at', { ascending: true })
-      .limit(50); // Process in batches
+      .limit(50);
 
     if (queueError) {
       throw new Error(`Failed to fetch queue items: ${queueError.message}`);
     }
 
     if (!queueItems?.length) {
+      console.log('✅ No pending alerts to process');
       return new Response(
-        JSON.stringify({ message: 'No pending alerts to process' }),
+        JSON.stringify({ 
+          success: true,
+          message: 'No pending alerts to process',
+          processed_count: 0 
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Processing ${queueItems.length} queued alerts`);
+    console.log(`📋 Processing ${queueItems.length} queued alerts`);
 
     const results = [];
+    let processedCount = 0;
+
     for (const queueItem of queueItems) {
       try {
+        console.log(`🔄 Processing queue item ${queueItem.id}`);
+        
         // Mark as processing
         await supabaseClient
           .from('alert_ingestion_queue')
           .update({ 
             processing_status: 'processing',
-            processing_attempts: queueItem.processing_attempts + 1 
+            processing_attempts: (queueItem.processing_attempts || 0) + 1 
           })
           .eq('id', queueItem.id);
 
@@ -56,34 +81,54 @@ Deno.serve(async (req) => {
         const result = await processQueuedAlert(supabaseClient, queueItem);
         results.push(result);
 
-        // Mark as completed
-        await supabaseClient
-          .from('alert_ingestion_queue')
-          .update({ 
-            processing_status: 'completed',
-            processed_at: new Date().toISOString()
-          })
-          .eq('id', queueItem.id);
+        if (result.success) {
+          processedCount++;
+          // Mark as completed
+          await supabaseClient
+            .from('alert_ingestion_queue')
+            .update({ 
+              processing_status: 'completed',
+              processed_at: new Date().toISOString()
+            })
+            .eq('id', queueItem.id);
+          
+          console.log(`✅ Successfully processed queue item ${queueItem.id}`);
+        } else {
+          throw new Error(result.error || 'Processing failed');
+        }
 
       } catch (error) {
-        console.error(`Failed to process queue item ${queueItem.id}:`, error);
+        console.error(`❌ Failed to process queue item ${queueItem.id}:`, error);
         
         // Mark as failed if too many attempts
-        const status = queueItem.processing_attempts >= 3 ? 'failed' : 'pending';
+        const maxAttempts = 3;
+        const attempts = (queueItem.processing_attempts || 0) + 1;
+        const status = attempts >= maxAttempts ? 'failed' : 'pending';
         
         await supabaseClient
           .from('alert_ingestion_queue')
           .update({ 
             processing_status: status,
-            error_message: error.message
+            error_message: error.message,
+            processing_attempts: attempts
           })
           .eq('id', queueItem.id);
+
+        results.push({
+          success: false,
+          error: error.message,
+          queue_item_id: queueItem.id
+        });
       }
     }
 
+    console.log(`🏁 Queue processing complete. Processed: ${processedCount}/${queueItems.length}`);
+
     return new Response(
       JSON.stringify({
-        processed_count: results.length,
+        success: true,
+        processed_count: processedCount,
+        total_items: queueItems.length,
         successful: results.filter(r => r.success).length,
         failed: results.filter(r => !r.success).length,
         results: results
@@ -92,9 +137,13 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Queue processing error:', error);
+    console.error('💥 Queue processing error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
@@ -107,30 +156,48 @@ async function processQueuedAlert(supabaseClient: any, queueItem: any) {
   const alertData = queueItem.raw_payload;
   
   try {
-    // Check for duplicates
-    const isDuplicate = await checkForDuplicate(supabaseClient, alertData);
-    if (isDuplicate) {
-      console.log(`Skipping duplicate alert: ${alertData.title}`);
+    console.log(`🔍 Processing alert: ${alertData.title || 'Unknown Title'}`);
+    
+    // Check for duplicates based on title and recent timestamp
+    const { data: existingIncidents } = await supabaseClient
+      .from('incidents')
+      .select('id, title')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .ilike('title', `%${(alertData.title || '').substring(0, 30)}%`)
+      .limit(5);
+
+    if (existingIncidents && existingIncidents.length > 0) {
+      console.log(`⏭️ Skipping duplicate alert: ${alertData.title}`);
       return { success: true, action: 'skipped_duplicate' };
     }
 
-    // Get province mapping
-    const provinceId = await getProvinceId(supabaseClient, alertData);
-    
+    // Get default province (Ontario) for now
+    const { data: province } = await supabaseClient
+      .from('provinces')
+      .select('id')
+      .eq('code', 'ON')
+      .single();
+
+    const provinceId = province?.id || null;
+
+    if (!provinceId) {
+      console.log('⚠️ No province found, using null');
+    }
+
     // Create incident record
     const incident = {
-      title: alertData.title,
-      description: alertData.description,
+      title: alertData.title || 'Untitled Alert',
+      description: alertData.description || alertData.summary || 'No description available',
       province_id: provinceId,
-      timestamp: alertData.timestamp,
-      alert_level: alertData.severity,
-      source: alertData.source_name,
+      timestamp: alertData.timestamp || new Date().toISOString(),
+      alert_level: mapSeverity(alertData.severity || 'normal'),
+      source: alertData.source_name || 'Unknown Source',
       verification_status: 'unverified',
-      confidence_score: alertData.confidence_score,
-      raw_payload: alertData.raw_data,
+      confidence_score: alertData.confidence_score || 0.5,
+      raw_payload: alertData,
       data_source_id: queueItem.source_id,
       geographic_scope: alertData.geographic_data?.area || null,
-      severity_numeric: getSeverityNumeric(alertData.severity)
+      severity_numeric: getSeverityNumeric(alertData.severity || 'normal')
     };
 
     const { data: newIncident, error: incidentError } = await supabaseClient
@@ -143,24 +210,27 @@ async function processQueuedAlert(supabaseClient: any, queueItem: any) {
       throw new Error(`Failed to create incident: ${incidentError.message}`);
     }
 
+    console.log(`📝 Created incident: ${newIncident.id} - ${incident.title}`);
+
     // Add geospatial data if available
     if (alertData.geographic_data && (alertData.geographic_data.latitude || alertData.geographic_data.longitude)) {
       const geoData = {
         incident_id: newIncident.id,
         latitude: alertData.geographic_data.latitude,
         longitude: alertData.geographic_data.longitude,
-        administrative_area: alertData.geographic_data.area,
+        administrative_area: alertData.geographic_data.area || 'Unknown',
         geohash: generateGeohash(alertData.geographic_data.latitude, alertData.geographic_data.longitude),
-        affected_radius_km: estimateAffectedRadius(alertData.severity),
-        population_impact: estimatePopulationImpact(alertData.geographic_data.area)
+        affected_radius_km: estimateAffectedRadius(alertData.severity || 'normal'),
+        population_impact: estimatePopulationImpact(alertData.geographic_data.area || '')
       };
 
       await supabaseClient
         .from('geospatial_data')
         .insert(geoData);
+        
+      console.log(`📍 Added geospatial data for incident ${newIncident.id}`);
     }
 
-    console.log(`Successfully processed alert: ${alertData.title}`);
     return { 
       success: true, 
       action: 'created_incident', 
@@ -168,55 +238,21 @@ async function processQueuedAlert(supabaseClient: any, queueItem: any) {
     };
 
   } catch (error) {
-    console.error('Alert processing error:', error);
+    console.error('❌ Alert processing error:', error);
     return { success: false, error: error.message };
   }
 }
 
-async function checkForDuplicate(supabaseClient: any, alertData: any): Promise<boolean> {
-  // Check for similar incidents in the last 24 hours
-  const { data: existingIncidents } = await supabaseClient
-    .from('incidents')
-    .select('title, description')
-    .gte('timestamp', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-    .ilike('title', `%${alertData.title.substring(0, 50)}%`);
-
-  if (!existingIncidents?.length) return false;
-
-  // Simple duplicate detection based on title similarity
-  for (const existing of existingIncidents) {
-    const similarity = calculateTitleSimilarity(alertData.title, existing.title);
-    if (similarity > 0.8) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function calculateTitleSimilarity(title1: string, title2: string): number {
-  const words1 = new Set(title1.toLowerCase().split(' '));
-  const words2 = new Set(title2.toLowerCase().split(' '));
-  
-  const intersection = new Set([...words1].filter(x => words2.has(x)));
-  const union = new Set([...words1, ...words2]);
-  
-  return intersection.size / union.size;
-}
-
-async function getProvinceId(supabaseClient: any, alertData: any): Promise<string> {
-  // Default to Ontario for now - in production, implement location-based mapping
-  const { data: province } = await supabaseClient
-    .from('provinces')
-    .select('id')
-    .eq('code', 'ON')
-    .single();
-
-  return province?.id || 'default-province-id';
+function mapSeverity(severity: string): string {
+  const normalizedSeverity = severity.toLowerCase();
+  if (normalizedSeverity.includes('severe') || normalizedSeverity.includes('critical')) return 'severe';
+  if (normalizedSeverity.includes('warning') || normalizedSeverity.includes('moderate')) return 'warning';
+  return 'normal';
 }
 
 function getSeverityNumeric(severity: string): number {
-  switch (severity.toLowerCase()) {
+  const mappedSeverity = mapSeverity(severity);
+  switch (mappedSeverity) {
     case 'severe': return 3;
     case 'warning': return 2;
     case 'normal': return 1;
@@ -225,26 +261,26 @@ function getSeverityNumeric(severity: string): number {
 }
 
 function generateGeohash(lat: number, lng: number): string {
-  // Simple geohash implementation - in production use a proper library
   return `${Math.round(lat * 1000)}_${Math.round(lng * 1000)}`;
 }
 
 function estimateAffectedRadius(severity: string): number {
-  switch (severity.toLowerCase()) {
-    case 'severe': return 50; // 50km radius
-    case 'warning': return 25; // 25km radius
-    case 'normal': return 10; // 10km radius
+  const mappedSeverity = mapSeverity(severity);
+  switch (mappedSeverity) {
+    case 'severe': return 50;
+    case 'warning': return 25;
+    case 'normal': return 10;
     default: return 10;
   }
 }
 
 function estimatePopulationImpact(area: string): number {
-  // Simple population estimation - in production use actual demographic data
   if (!area) return 1000;
   
-  if (area.toLowerCase().includes('toronto')) return 100000;
-  if (area.toLowerCase().includes('ottawa')) return 50000;
-  if (area.toLowerCase().includes('city')) return 25000;
+  const areaLower = area.toLowerCase();
+  if (areaLower.includes('toronto')) return 100000;
+  if (areaLower.includes('ottawa')) return 50000;
+  if (areaLower.includes('city')) return 25000;
   
-  return 5000; // Default for smaller areas
+  return 5000;
 }

@@ -2,74 +2,56 @@
 import { AlertSource } from '../../types.ts';
 
 export function mapSecurityAlerts(processedAlerts: any[], source: AlertSource): any[] {
-  console.log(`🗺️ [Alert Mapper] Starting security alert mapping for ${source.name}`);
-  console.log(`🗺️ [Alert Mapper] Input alerts count: ${processedAlerts.length}`);
-  
-  const mappedAlerts = processedAlerts.map((alert, index) => {
-    console.log(`🗺️ [Alert Mapper] Mapping alert ${index + 1}/${processedAlerts.length}`);
-    
-    // Handle both RSS and Atom feed IDs
-    const alertId = alert.id || alert.guid || alert.link || `${source.source_type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    
-    // Clean up HTML content from Atom feeds
-    let cleanDescription = alert.description || alert.summary || '';
-    if (cleanDescription) {
-      // Remove HTML tags and decode CDATA
-      cleanDescription = cleanDescription
-        .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1') // Remove CDATA wrapper
-        .replace(/<[^>]*>/g, '') // Remove HTML tags
-        .replace(/&[a-zA-Z0-9#]+;/g, ' ') // Remove HTML entities
-        .trim();
-      
-      // Truncate if too long
-      if (cleanDescription.length > 1000) {
-        cleanDescription = cleanDescription.substring(0, 997) + '...';
-      }
-    }
-    
-    const mappedAlert = {
-      id: alertId,
-      title: alert.title || 'Untitled Alert',
-      summary: cleanDescription || 'No description available',
-      link: alert.url || alert.link,
-      pub_date: alert.published || alert.pubDate || alert.updated || new Date().toISOString(),
-      source: source.name,
-      category: alert.category || 'Security',
-      location: alert.area || 'Global',
-      raw_data: alert
-    };
-    
-    // Validate required fields
-    if (!mappedAlert.title || mappedAlert.title.trim() === '') {
-      console.warn(`🗺️ [Alert Mapper] Warning: Alert ${index + 1} has empty title, using fallback`);
-      mappedAlert.title = 'Security Alert';
-    }
-    
-    // Clean up title from CDATA
-    if (mappedAlert.title.includes('CDATA')) {
-      mappedAlert.title = mappedAlert.title.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
-    }
-    
-    if (index === 0) {
-      console.log(`🗺️ [Alert Mapper] Sample mapped security alert:`, JSON.stringify(mappedAlert, null, 2));
-    }
-    
-    return mappedAlert;
-  });
-  
-  console.log(`🗺️ [Alert Mapper] Successfully mapped ${mappedAlerts.length} security alerts`);
-  return mappedAlerts;
+  return processedAlerts.map(alert => ({
+    id: alert.id || generateAlertId(alert),
+    title: alert.title || 'Security Alert',
+    summary: alert.description || alert.summary || 'No summary available',
+    link: alert.link || source.api_endpoint,
+    pub_date: alert.timestamp || new Date().toISOString(),
+    category: alert.category || 'cybersecurity',
+    source: source.name,
+    location: alert.location || 'Global',
+    raw_data: alert.raw_data || alert,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }));
 }
 
 export function mapWeatherAlerts(processedAlerts: any[], source: AlertSource): any[] {
   return processedAlerts.map(alert => ({
-    id: alert.id || `${source.source_type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-    description: alert.description || 'No description available',
-    severity: alert.severity,
-    event_type: alert.category || 'Weather',
-    onset: alert.effective || alert.published,
-    expires: alert.expires,
-    geometry_coordinates: alert.coordinates ? JSON.stringify(alert.coordinates) : null,
-    raw_data: alert
+    id: alert.id || generateAlertId(alert),
+    description: alert.description || alert.title || 'Weather Alert',
+    severity: alert.severity || 'normal',
+    event_type: alert.event_type || 'weather',
+    onset: alert.onset || alert.timestamp || new Date().toISOString(),
+    expires: alert.expires || null,
+    geometry_coordinates: alert.geometry_coordinates || alert.coordinates || null,
+    raw_data: alert.raw_data || alert,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   }));
+}
+
+export function mapImmigrationTravelAlerts(processedAlerts: any[], source: AlertSource): any[] {
+  return processedAlerts.map(alert => ({
+    id: alert.id || generateAlertId(alert),
+    title: alert.title || 'Immigration/Travel Announcement',
+    summary: alert.summary || alert.description || 'No summary available',
+    content: alert.content || alert.description || 'No content available',
+    link: alert.link || source.api_endpoint,
+    pub_date: alert.timestamp || new Date().toISOString(),
+    category: alert.category || 'immigration',
+    announcement_type: alert.announcement_type || 'general',
+    source: source.name,
+    location: alert.location || 'Canada',
+    raw_data: alert.raw_data || alert,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }));
+}
+
+function generateAlertId(alert: any): string {
+  // Generate a consistent ID based on content
+  const content = `${alert.title || ''}-${alert.timestamp || Date.now()}`;
+  return btoa(content).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
 }

@@ -10,7 +10,9 @@ import {
   XCircle, 
   ArrowRight,
   Zap,
-  RefreshCw
+  RefreshCw,
+  Settings,
+  PlayCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +32,8 @@ const DataPipelineDiagnostics = () => {
   const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
+  const [processingQueue, setProcessingQueue] = useState(false);
+  const [settingUpCron, setSettingUpCron] = useState(false);
 
   const diagnoseDataPipeline = async () => {
     try {
@@ -65,6 +69,12 @@ const DataPipelineDiagnostics = () => {
         .select('id, created_at')
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
+      // Calculate queue status breakdown
+      const queueStatus = queue?.reduce((acc, item) => {
+        acc[item.processing_status] = (acc[item.processing_status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
       const pipelineStages: PipelineStage[] = [
         {
           name: 'Alert Sources',
@@ -82,10 +92,14 @@ const DataPipelineDiagnostics = () => {
         },
         {
           name: 'Ingestion Queue',
-          status: queueError ? 'error' : (queue?.length || 0) > 0 ? 'success' : 'warning',
+          status: queueError ? 'error' : 
+            (queueStatus.pending || 0) > 100 ? 'error' : 
+            (queueStatus.pending || 0) > 0 ? 'warning' : 'success',
           count: queue?.length || 0,
           lastActivity: queue?.length ? queue[0].created_at : null,
-          issues: queueError ? [queueError.message] : (queue?.length || 0) === 0 ? ['No items queued for processing'] : []
+          issues: queueError ? [queueError.message] : 
+            (queueStatus.pending || 0) > 100 ? [`${queueStatus.pending} items stuck in queue - needs processing`] :
+            (queueStatus.pending || 0) > 0 ? [`${queueStatus.pending} pending items`] : []
         },
         {
           name: 'Security Storage',
@@ -121,7 +135,6 @@ const DataPipelineDiagnostics = () => {
     setTesting(true);
     try {
       logger.info('Testing data pipeline...');
-      // Trigger the master ingestion orchestrator
       const { data, error } = await supabase.functions.invoke('master-ingestion-orchestrator');
       
       if (error) throw error;
@@ -131,7 +144,6 @@ const DataPipelineDiagnostics = () => {
         description: 'Monitoring data flow through the pipeline...',
       });
 
-      // Wait and then re-diagnose
       setTimeout(() => {
         diagnoseDataPipeline();
       }, 5000);
@@ -145,6 +157,61 @@ const DataPipelineDiagnostics = () => {
       });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const processAlertQueue = async () => {
+    setProcessingQueue(true);
+    try {
+      logger.info('Processing alert queue...');
+      const { data, error } = await supabase.functions.invoke('process-alert-queue');
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Queue Processing Started',
+        description: `Processing ${data?.total_items || 0} queued items...`,
+      });
+
+      setTimeout(() => {
+        diagnoseDataPipeline();
+      }, 3000);
+
+    } catch (error) {
+      logger.error('Error processing queue:', error);
+      toast({
+        title: 'Queue Processing Failed',
+        description: 'Failed to process alert queue.',
+        variant: 'destructive'
+      });
+    } finally {
+      setProcessingQueue(false);
+    }
+  };
+
+  const setupCronJobs = async () => {
+    setSettingUpCron(true);
+    try {
+      logger.info('Setting up cron jobs...');
+      const { data, error } = await supabase.functions.invoke('setup-cron-jobs');
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Cron Jobs Setup',
+        description: data?.success ? 'Cron jobs configured successfully' : 'Setup completed with warnings',
+        variant: data?.success ? 'default' : 'destructive'
+      });
+
+    } catch (error) {
+      logger.error('Error setting up cron jobs:', error);
+      toast({
+        title: 'Cron Setup Failed',
+        description: 'Failed to set up automated processing.',
+        variant: 'destructive'
+      });
+    } finally {
+      setSettingUpCron(false);
     }
   };
 
@@ -186,6 +253,8 @@ const DataPipelineDiagnostics = () => {
 
   const hasErrors = pipeline.some(stage => stage.status === 'error');
   const hasWarnings = pipeline.some(stage => stage.status === 'warning');
+  const queueStage = pipeline.find(stage => stage.name === 'Ingestion Queue');
+  const hasStuckQueue = queueStage?.issues.some(issue => issue.includes('stuck'));
 
   return (
     <div className="space-y-6">
@@ -214,13 +283,32 @@ const DataPipelineDiagnostics = () => {
         <PipelineTestButton />
       </div>
 
+      {/* Add Pipeline Management Actions */}
+      {(hasStuckQueue || hasErrors) && (
+        <div className="bg-card p-4 rounded-lg border">
+          <h3 className="text-lg font-semibold mb-4">Pipeline Management</h3>
+          <div className="space-x-2">
+            {hasStuckQueue && (
+              <Button onClick={processAlertQueue} disabled={processingQueue} variant="outline">
+                <PlayCircle className={`mr-2 h-4 w-4 ${processingQueue ? 'animate-pulse' : ''}`} />
+                Process Queue Now
+              </Button>
+            )}
+            <Button onClick={setupCronJobs} disabled={settingUpCron} variant="outline">
+              <Settings className={`mr-2 h-4 w-4 ${settingUpCron ? 'animate-pulse' : ''}`} />
+              Setup Automation
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Overall Status Alert */}
       {hasErrors && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <strong>Critical Issues Detected:</strong> The data pipeline has errors that prevent proper data flow.
-            Common issues: Missing API keys (OpenWeatherMap), incorrect API endpoints, or RSS parsing problems.
+            Common issues: Missing API keys (OpenWeatherMap), incorrect API endpoints, RSS parsing problems, or stuck queue items.
           </AlertDescription>
         </Alert>
       )}
@@ -230,7 +318,7 @@ const DataPipelineDiagnostics = () => {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <strong>Performance Issues:</strong> Some pipeline stages have warnings that may impact data processing efficiency.
-            This often indicates RSS feeds returning 0 items or API configuration issues.
+            This often indicates RSS feeds returning 0 items, API configuration issues, or pending queue items.
           </AlertDescription>
         </Alert>
       )}
@@ -346,6 +434,15 @@ const DataPipelineDiagnostics = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">Stuck Queue Items</h4>
+            <p className="text-xs text-muted-foreground">
+              • Use "Process Queue Now" button to manually clear stuck items
+              • Set up automation with "Setup Automation" to prevent future backups
+              • Check edge function logs for processing errors
+            </p>
+          </div>
+          
           <div className="space-y-2">
             <h4 className="font-medium text-sm">OpenWeatherMap API (401 Unauthorized)</h4>
             <p className="text-xs text-muted-foreground">
