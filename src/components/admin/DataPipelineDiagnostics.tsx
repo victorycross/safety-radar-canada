@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,15 +10,11 @@ import {
   CheckCircle, 
   XCircle, 
   ArrowRight,
-  Zap,
-  RefreshCw,
-  Settings,
-  PlayCircle
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
-import PipelineTestButton from './PipelineTestButton';
 
 interface PipelineStage {
   name: string;
@@ -31,9 +28,6 @@ const DataPipelineDiagnostics = () => {
   const { toast } = useToast();
   const [pipeline, setPipeline] = useState<PipelineStage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [testing, setTesting] = useState(false);
-  const [processingQueue, setProcessingQueue] = useState(false);
-  const [settingUpCron, setSettingUpCron] = useState(false);
 
   const diagnoseDataPipeline = async () => {
     try {
@@ -98,7 +92,7 @@ const DataPipelineDiagnostics = () => {
           count: queue?.length || 0,
           lastActivity: queue?.length ? queue[0].created_at : null,
           issues: queueError ? [queueError.message] : 
-            (queueStatus.pending || 0) > 100 ? [`${queueStatus.pending} items stuck in queue - needs processing`] :
+            (queueStatus.pending || 0) > 100 ? [`${queueStatus.pending} items stuck in queue - use Command Center to process`] :
             (queueStatus.pending || 0) > 0 ? [`${queueStatus.pending} pending items`] : []
         },
         {
@@ -128,90 +122,6 @@ const DataPipelineDiagnostics = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const testDataPipeline = async () => {
-    setTesting(true);
-    try {
-      logger.info('Testing data pipeline...');
-      const { data, error } = await supabase.functions.invoke('master-ingestion-orchestrator');
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Pipeline Test Started',
-        description: 'Monitoring data flow through the pipeline...',
-      });
-
-      setTimeout(() => {
-        diagnoseDataPipeline();
-      }, 5000);
-
-    } catch (error) {
-      logger.error('Error testing pipeline:', error);
-      toast({
-        title: 'Test Failed',
-        description: 'Failed to test data pipeline. Check API configurations.',
-        variant: 'destructive'
-      });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const processAlertQueue = async () => {
-    setProcessingQueue(true);
-    try {
-      logger.info('Processing alert queue...');
-      const { data, error } = await supabase.functions.invoke('process-alert-queue');
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Queue Processing Started',
-        description: `Processing ${data?.total_items || 0} queued items...`,
-      });
-
-      setTimeout(() => {
-        diagnoseDataPipeline();
-      }, 3000);
-
-    } catch (error) {
-      logger.error('Error processing queue:', error);
-      toast({
-        title: 'Queue Processing Failed',
-        description: 'Failed to process alert queue.',
-        variant: 'destructive'
-      });
-    } finally {
-      setProcessingQueue(false);
-    }
-  };
-
-  const setupCronJobs = async () => {
-    setSettingUpCron(true);
-    try {
-      logger.info('Setting up cron jobs...');
-      const { data, error } = await supabase.functions.invoke('setup-cron-jobs');
-      
-      if (error) throw error;
-      
-      toast({
-        title: 'Cron Jobs Setup',
-        description: data?.success ? 'Cron jobs configured successfully' : 'Setup completed with warnings',
-        variant: data?.success ? 'default' : 'destructive'
-      });
-
-    } catch (error) {
-      logger.error('Error setting up cron jobs:', error);
-      toast({
-        title: 'Cron Setup Failed',
-        description: 'Failed to set up automated processing.',
-        variant: 'destructive'
-      });
-    } finally {
-      setSettingUpCron(false);
     }
   };
 
@@ -253,54 +163,29 @@ const DataPipelineDiagnostics = () => {
 
   const hasErrors = pipeline.some(stage => stage.status === 'error');
   const hasWarnings = pipeline.some(stage => stage.status === 'warning');
-  const queueStage = pipeline.find(stage => stage.name === 'Ingestion Queue');
-  const hasStuckQueue = queueStage?.issues.some(issue => issue.includes('stuck'));
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Data Pipeline Diagnostics</h2>
+          <h2 className="text-2xl font-bold">Data Pipeline Status</h2>
           <p className="text-muted-foreground">
-            Analyze the flow of data from alert sources to storage
+            Monitor the flow of data from alert sources to storage
           </p>
         </div>
-        <div className="space-x-2">
-          <Button onClick={diagnoseDataPipeline} variant="outline">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Re-diagnose
-          </Button>
-          <Button onClick={testDataPipeline} disabled={testing}>
-            <Zap className={`mr-2 h-4 w-4 ${testing ? 'animate-pulse' : ''}`} />
-            Test Pipeline
-          </Button>
-        </div>
+        <Button onClick={diagnoseDataPipeline} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Refresh Status
+        </Button>
       </div>
 
-      {/* Add Pipeline Test Component */}
-      <div className="bg-card p-4 rounded-lg border">
-        <h3 className="text-lg font-semibold mb-4">Quick Pipeline Test</h3>
-        <PipelineTestButton />
-      </div>
-
-      {/* Add Pipeline Management Actions */}
-      {(hasStuckQueue || hasErrors) && (
-        <div className="bg-card p-4 rounded-lg border">
-          <h3 className="text-lg font-semibold mb-4">Pipeline Management</h3>
-          <div className="space-x-2">
-            {hasStuckQueue && (
-              <Button onClick={processAlertQueue} disabled={processingQueue} variant="outline">
-                <PlayCircle className={`mr-2 h-4 w-4 ${processingQueue ? 'animate-pulse' : ''}`} />
-                Process Queue Now
-              </Button>
-            )}
-            <Button onClick={setupCronJobs} disabled={settingUpCron} variant="outline">
-              <Settings className={`mr-2 h-4 w-4 ${settingUpCron ? 'animate-pulse' : ''}`} />
-              Setup Automation
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Management Actions Notice */}
+      <Alert>
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Need to take action?</strong> Use the <strong>Command Center</strong> tab for testing, queue processing, and automation setup.
+        </AlertDescription>
+      </Alert>
 
       {/* Overall Status Alert */}
       {hasErrors && (
@@ -437,7 +322,7 @@ const DataPipelineDiagnostics = () => {
           <div className="space-y-2">
             <h4 className="font-medium text-sm">Stuck Queue Items</h4>
             <p className="text-xs text-muted-foreground">
-              • Use "Process Queue Now" button to manually clear stuck items
+              • Use Command Center → "Process Queue Now" to manually clear stuck items
               • Set up automation with "Setup Automation" to prevent future backups
               • Check edge function logs for processing errors
             </p>

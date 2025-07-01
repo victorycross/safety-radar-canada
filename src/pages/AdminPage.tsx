@@ -4,7 +4,7 @@ import AdminTabs from '@/components/admin/AdminTabs';
 import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('command-center');
 
   return (
     <RoleProtectedRoute 
