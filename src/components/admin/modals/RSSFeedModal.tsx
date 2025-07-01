@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,12 +25,35 @@ const RSSFeedModal: React.FC<RSSFeedModalProps> = ({
 }) => {
   const { createRSSFeed, updateRSSFeed, loading } = useDataManagement();
   const [formData, setFormData] = useState({
-    name: feed?.name || '',
-    url: feed?.url || '',
-    category: feed?.category || 'general',
-    is_active: feed?.is_active ?? true,
-    polling_interval: feed?.polling_interval || 300
+    name: '',
+    url: '',
+    category: 'general',
+    is_active: true,
+    polling_interval: 300
   });
+
+  // Reset form when modal opens/closes or feed changes
+  useEffect(() => {
+    if (isOpen) {
+      if (mode === 'edit' && feed) {
+        setFormData({
+          name: feed.name,
+          url: feed.url,
+          category: feed.category,
+          is_active: feed.is_active,
+          polling_interval: feed.polling_interval
+        });
+      } else {
+        setFormData({
+          name: '',
+          url: '',
+          category: 'general',
+          is_active: true,
+          polling_interval: 300
+        });
+      }
+    }
+  }, [isOpen, mode, feed]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +84,10 @@ const RSSFeedModal: React.FC<RSSFeedModalProps> = ({
             {mode === 'create' ? 'Add RSS Feed' : 'Edit RSS Feed'}
           </DialogTitle>
           <DialogDescription>
-            Configure the RSS feed source for automatic data collection.
+            {mode === 'create' 
+              ? 'Configure a new RSS feed source for automatic data collection.'
+              : 'Update the RSS feed configuration.'
+            }
           </DialogDescription>
         </DialogHeader>
         

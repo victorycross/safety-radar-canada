@@ -15,14 +15,19 @@ import {
 } from 'lucide-react';
 import RSSFeedModal from '../modals/RSSFeedModal';
 import APISourceModal from '../modals/APISourceModal';
+import FeedListModal from '../modals/FeedListModal';
+import { RSSFeed } from '@/hooks/useDataManagement';
 
 const InputsManagementTab = () => {
   const [rssModalOpen, setRssModalOpen] = useState(false);
   const [apiModalOpen, setApiModalOpen] = useState(false);
+  const [feedListModalOpen, setFeedListModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [selectedFeed, setSelectedFeed] = useState<RSSFeed | null>(null);
 
-  const handleOpenRSSModal = (mode: 'create' | 'edit' = 'create') => {
+  const handleOpenRSSModal = (mode: 'create' | 'edit' = 'create', feed?: RSSFeed) => {
     setModalMode(mode);
+    setSelectedFeed(feed || null);
     setRssModalOpen(true);
   };
 
@@ -31,9 +36,22 @@ const InputsManagementTab = () => {
     setApiModalOpen(true);
   };
 
+  const handleOpenFeedListModal = () => {
+    setFeedListModalOpen(true);
+  };
+
+  const handleEditFeed = (feed: RSSFeed) => {
+    handleOpenRSSModal('edit', feed);
+  };
+
   const handleModalSuccess = () => {
     // Refresh data or update UI as needed
     console.log('Operation successful');
+    setSelectedFeed(null);
+  };
+
+  const handleModalClose = () => {
+    setSelectedFeed(null);
   };
 
   return (
@@ -163,7 +181,7 @@ const InputsManagementTab = () => {
                   <Plus className="h-4 w-4 mr-2" />
                   Add RSS Feed
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => handleOpenRSSModal('edit')}>
+                <Button variant="outline" className="w-full" onClick={handleOpenFeedListModal}>
                   <Settings className="h-4 w-4 mr-2" />
                   Manage Feeds
                 </Button>
@@ -264,9 +282,13 @@ const InputsManagementTab = () => {
       {/* Modals */}
       <RSSFeedModal
         isOpen={rssModalOpen}
-        onClose={() => setRssModalOpen(false)}
+        onClose={() => {
+          setRssModalOpen(false);
+          handleModalClose();
+        }}
         onSuccess={handleModalSuccess}
         mode={modalMode}
+        feed={selectedFeed}
       />
 
       <APISourceModal
@@ -274,6 +296,12 @@ const InputsManagementTab = () => {
         onClose={() => setApiModalOpen(false)}
         onSuccess={handleModalSuccess}
         mode={modalMode}
+      />
+
+      <FeedListModal
+        isOpen={feedListModalOpen}
+        onClose={() => setFeedListModalOpen(false)}
+        onEditFeed={handleEditFeed}
       />
     </div>
   );

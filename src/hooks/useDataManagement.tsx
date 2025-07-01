@@ -46,6 +46,73 @@ export const useDataManagement = () => {
   const [loading, setLoading] = useState(false);
 
   // RSS Feed Management
+  const fetchRSSFeeds = async (): Promise<RSSFeed[]> => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('alert_sources')
+        .select('*')
+        .eq('source_type', 'rss')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data.map(item => ({
+        id: item.id,
+        name: item.name,
+        url: item.api_endpoint,
+        category: item.configuration?.category || 'general',
+        is_active: item.is_active,
+        polling_interval: item.polling_interval,
+        last_updated: item.updated_at
+      }));
+    } catch (error) {
+      console.error('Error fetching RSS feeds:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch RSS feeds',
+        variant: 'destructive'
+      });
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRSSFeed = async (id: string): Promise<RSSFeed | null> => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('alert_sources')
+        .select('*')
+        .eq('id', id)
+        .eq('source_type', 'rss')
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        name: data.name,
+        url: data.api_endpoint,
+        category: data.configuration?.category || 'general',
+        is_active: data.is_active,
+        polling_interval: data.polling_interval,
+        last_updated: data.updated_at
+      };
+    } catch (error) {
+      console.error('Error fetching RSS feed:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch RSS feed',
+        variant: 'destructive'
+      });
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const createRSSFeed = async (feedData: Omit<RSSFeed, 'id' | 'last_updated'>) => {
     setLoading(true);
     try {
@@ -193,6 +260,8 @@ export const useDataManagement = () => {
 
   return {
     loading,
+    fetchRSSFeeds,
+    fetchRSSFeed,
     createRSSFeed,
     updateRSSFeed,
     deleteRSSFeed,
