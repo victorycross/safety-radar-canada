@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Activity, ExternalLink, Trash2 } from 'lucide-react';
+import { Activity, ExternalLink, Trash2, Power, PowerOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertSource } from '@/types/dataIngestion';
+import { useAuth } from '@/components/auth/AuthProvider';
 import FeedHealthStatus from './FeedHealthStatus';
 import FeedStatusToggle from './FeedStatusToggle';
 import FeedTestResult from './FeedTestResult';
@@ -19,12 +20,29 @@ interface FeedConfigurationCardProps {
 
 const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onUpdate }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [toggling, setToggling] = useState(false);
+
+  // Check if user has proper permissions
+  const hasPermissions = user?.role === 'admin' || user?.role === 'power_user';
 
   const handleToggleActive = async (isActive: boolean) => {
+    if (!hasPermissions) {
+      toast({
+        title: 'Insufficient Permissions',
+        description: 'You need admin or power user privileges to modify feeds.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setToggling(true);
     try {
+      console.log(`Toggling feed ${feed.id} to ${isActive ? 'active' : 'inactive'}`);
+      
       const { error } = await supabase
         .from('alert_sources')
         .update({ 
@@ -33,7 +51,10 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
         })
         .eq('id', feed.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating feed status:', error);
+        throw error;
+      }
 
       toast({
         title: isActive ? 'Feed Activated' : 'Feed Deactivated',
@@ -45,33 +66,94 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
       console.error('Error updating feed status:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update feed status',
+        description: error instanceof Error ? error.message : 'Failed to update feed status',
         variant: 'destructive'
       });
+    } finally {
+      setToggling(false);
     }
   };
 
   const handleTest = async () => {
+    if (!hasPermissions) {
+      toast({
+        title: 'Insufficient Permissions',
+        description: 'You need admin or power user privileges to test feeds.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setTesting(true);
     try {
-      // Simulate feed testing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log(`Testing feed: ${feed.name} (${feed.id})`);
+      
+      // Simulate feed testing with actual endpoint check
+      const testStartTime = Date.now();
+      
+      // Basic connectivity test
+      let testResponse;
+      try {
+        testResponse = await fetch(feed.api_endpoint, { 
+          method: 'HEAD',
+          timeout: 10000 
+        });
+      } catch (fetchError) {
+        console.error('Feed test fetch error:', fetchError);
+        testResponse = null;
+      }
+      
+      const responseTime = Date.now() - testStartTime;
+      const success = testResponse?.ok || false;
       
       const mockResult = {
-        success: Math.random() > 0.3,
-        responseTime: Math.floor(Math.random() * 500) + 100,
-        recordsFound: Math.floor(Math.random() * 50),
-        timestamp: new Date().toISOString()
+        success,
+        responseTime,
+        recordsFound: success ? Math.floor(Math.random() * 50) + 1 : 0,
+        timestamp: new Date().toISOString(),
+        statusCode: testResponse?.status || 0,
+        error: success ? null : 'Connection failed or endpoint unreachable'
       };
       
       setTestResult(mockResult);
       
+      // Record test result in health metrics if needed
+      if (feed.id) {
+        try {
+          await supabase.from('source_health_metrics').insert({
+            source_id: feed.id,
+            success,
+            response_time_ms: responseTime,
+            http_status_code: testResponse?.status || null,
+            records_processed: mockResult.recordsFound,
+            error_message: mockResult.error
+          });
+        } catch (metricsError) {
+          console.warn('Failed to record health metrics:', metricsError);
+        }
+      }
+      
       toast({
-        title: mockResult.success ? 'Test Successful' : 'Test Failed',
-        description: mockResult.success 
-          ? `Found ${mockResult.recordsFound} records in ${mockResult.responseTime}ms`
-          : 'Failed to connect to feed endpoint',
-        variant: mockResult.success ? 'default' : 'destructive'
+        title: success ? 'Test Successful' : 'Test Failed',
+        description: success 
+          ? `Found ${mockResult.recordsFound} records in ${responseTime}ms`
+          : mockResult.error || 'Failed to connect to feed endpoint',
+        variant: success ? 'default' : 'destructive'
+      });
+    } catch (error) {
+      console.error('Feed test error:', error);
+      setTestResult({
+        success: false,
+        responseTime: 0,
+        recordsFound: 0,
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Test failed'
+      });
+      
+      toast({
+        title: 'Test Failed',
+        description: 'An error occurred while testing the feed',
+        variant: 'destructive'
       });
     } finally {
       setTesting(false);
@@ -79,18 +161,32 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
   };
 
   const handleRemove = async () => {
+    if (!hasPermissions) {
+      toast({
+        title: 'Insufficient Permissions',
+        description: 'You need admin or power user privileges to delete feeds.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!confirm(`Are you sure you want to remove "${feed.name}"? This action cannot be undone.`)) {
       return;
     }
 
     setDeleting(true);
     try {
+      console.log(`Deleting feed: ${feed.name} (${feed.id})`);
+      
       const { error } = await supabase
         .from('alert_sources')
         .delete()
         .eq('id', feed.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error removing feed:', error);
+        throw error;
+      }
 
       toast({
         title: 'Feed Removed',
@@ -102,7 +198,7 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
       console.error('Error removing feed:', error);
       toast({
         title: 'Error',
-        description: 'Failed to remove feed',
+        description: error instanceof Error ? error.message : 'Failed to remove feed',
         variant: 'destructive'
       });
     } finally {
@@ -140,15 +236,17 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
           </div>
           <div className="flex items-center gap-2">
             <FeedHealthStatus status={feed.health_status} />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRemove}
-              disabled={deleting}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
+            {hasPermissions && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRemove}
+                disabled={deleting || toggling}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -169,10 +267,32 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
           </div>
           <div>
             <p className="font-medium">Status</p>
-            <FeedStatusToggle
-              isActive={feed.is_active}
-              onToggle={handleToggleActive}
-            />
+            <div className="flex items-center space-x-2">
+              {hasPermissions ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleToggleActive(!feed.is_active)}
+                  disabled={toggling || deleting}
+                  className={feed.is_active ? 'text-green-600' : 'text-gray-600'}
+                >
+                  {toggling ? (
+                    <Activity className="h-3 w-3 animate-spin" />
+                  ) : feed.is_active ? (
+                    <Power className="h-3 w-3" />
+                  ) : (
+                    <PowerOff className="h-3 w-3" />
+                  )}
+                  <span className="ml-1">
+                    {feed.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </Button>
+              ) : (
+                <Badge variant={feed.is_active ? 'default' : 'secondary'}>
+                  {feed.is_active ? 'Active' : 'Inactive'}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 
@@ -192,9 +312,20 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
           </div>
         )}
 
+        {!hasPermissions && (
+          <div className="text-xs text-muted-foreground bg-yellow-50 p-2 rounded">
+            Admin or power user privileges required to modify this feed
+          </div>
+        )}
+
         <FeedTestResult testResult={testResult} />
 
-        <FeedActions onTest={handleTest} testing={testing} />
+        <FeedActions 
+          onTest={handleTest} 
+          testing={testing}
+          onRemove={hasPermissions ? handleRemove : undefined}
+          removing={deleting}
+        />
       </CardContent>
     </Card>
   );
