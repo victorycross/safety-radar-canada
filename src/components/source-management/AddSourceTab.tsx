@@ -56,6 +56,17 @@ const SOURCE_TEMPLATES = [
     }
   },
   {
+    id: 'immigration-travel-atom',
+    name: 'Immigration & Travel',
+    description: 'Government announcements',
+    icon: Globe,
+    defaultConfig: {
+      source_type: 'immigration-travel-atom',
+      polling_interval: 3600,
+      configuration: { format: 'atom', parser: 'government' }
+    }
+  },
+  {
     id: 'api',
     name: 'REST API',
     description: 'Generic REST API endpoint',

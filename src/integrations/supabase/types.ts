@@ -483,6 +483,63 @@ export type Database = {
           },
         ]
       }
+      immigration_travel_announcements: {
+        Row: {
+          announcement_type: string | null
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
+          category: string | null
+          content: string | null
+          created_at: string
+          id: string
+          link: string | null
+          location: string | null
+          pub_date: string | null
+          raw_data: Json | null
+          source: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          announcement_type?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          id: string
+          link?: string | null
+          location?: string | null
+          pub_date?: string | null
+          raw_data?: Json | null
+          source?: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          announcement_type?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          location?: string | null
+          pub_date?: string | null
+          raw_data?: Json | null
+          source?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       incidents: {
         Row: {
           alert_level: string

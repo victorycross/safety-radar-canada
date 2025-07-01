@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FeedManagementTab from './FeedManagementTab';
 import FeedAuditDashboard from './FeedAuditDashboard';
 import RSSFeedAuditTab from './RSSFeedAuditTab';
+import ImmigrationTravelTab from './ImmigrationTravelTab';
 
 const DataSourcesTab = () => {
   const [activeSubTab, setActiveSubTab] = useState('management');
@@ -16,10 +17,11 @@ const DataSourcesTab = () => {
       </div>
       
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="management">Feed Management</TabsTrigger>
           <TabsTrigger value="audit">Feed Audit</TabsTrigger>
           <TabsTrigger value="rss-audit">RSS Audit</TabsTrigger>
+          <TabsTrigger value="immigration-travel">Immigration & Travel</TabsTrigger>
         </TabsList>
         
         <TabsContent value="management" className="space-y-4">
@@ -32,6 +34,10 @@ const DataSourcesTab = () => {
         
         <TabsContent value="rss-audit" className="space-y-4">
           <RSSFeedAuditTab />
+        </TabsContent>
+        
+        <TabsContent value="immigration-travel" className="space-y-4">
+          <ImmigrationTravelTab />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Cloud, Shield, Rss, Globe, MapPin } from 'lucide-react';
+import { AlertTriangle, Cloud, Shield, Rss, Globe, MapPin, Building2, Zap } from 'lucide-react';
 
 interface FeedTemplate {
   id: string;
@@ -150,6 +149,93 @@ const feedTemplates: FeedTemplate[] = [
       categoryField: 'properties.category',
       publishedField: 'properties.timestamp',
       areaField: 'properties.area'
+    }
+  }
+];
+
+const SOURCE_TEMPLATES = [
+  {
+    id: 'rss',
+    name: 'RSS Feed',
+    description: 'Standard RSS feed source',
+    icon: Rss,
+    category: 'general',
+    defaultConfig: {
+      source_type: 'rss',
+      polling_interval: 1800,
+      configuration: { format: 'rss', parser: 'xml' }
+    }
+  },
+  {
+    id: 'security-rss',
+    name: 'Security RSS Feed',
+    description: 'Security alerts via RSS',
+    icon: Shield,
+    category: 'security',
+    defaultConfig: {
+      source_type: 'security-rss',
+      polling_interval: 300,
+      configuration: { format: 'rss', parser: 'xml', category: 'security' }
+    }
+  },
+  {
+    id: 'weather',
+    name: 'Weather API',
+    description: 'Weather alerts and data',
+    icon: Cloud,
+    category: 'weather',
+    defaultConfig: {
+      source_type: 'weather',
+      polling_interval: 600,
+      configuration: { format: 'json', parser: 'weather' }
+    }
+  },
+  {
+    id: 'immigration-travel-atom',
+    name: 'Immigration & Travel Atom',
+    description: 'Government immigration and travel announcements',
+    icon: Globe,
+    category: 'government',
+    defaultConfig: {
+      source_type: 'immigration-travel-atom',
+      polling_interval: 3600,
+      configuration: { format: 'atom', parser: 'government', category: 'immigration' }
+    }
+  },
+  {
+    id: 'government-announcements',
+    name: 'Government Announcements',
+    description: 'General government announcements and news',
+    icon: Building2,
+    category: 'government',
+    defaultConfig: {
+      source_type: 'government-announcements',
+      polling_interval: 3600,
+      configuration: { format: 'atom', parser: 'government', category: 'general' }
+    }
+  },
+  {
+    id: 'api',
+    name: 'REST API',
+    description: 'Generic REST API endpoint',
+    icon: Globe,
+    category: 'general',
+    defaultConfig: {
+      source_type: 'api',
+      polling_interval: 300,
+      configuration: { format: 'json', method: 'GET' }
+    }
+  },
+  {
+    id: 'webhook',
+    name: 'Webhook',
+    description: 'Incoming webhook receiver',
+    icon: Zap,
+    category: 'general',
+    defaultConfig: {
+      source_type: 'webhook',
+      polling_interval: 0,
+      configuration: { format: 'json', method: 'POST' }
     }
   }
 ];
