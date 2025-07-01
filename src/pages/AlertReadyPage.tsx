@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import AlertsList from '@/components/alert-ready/AlertsList';
 import BCAlertslist from '@/components/alert-ready/BCAlertslist';
 import EverbridgeAlertsList from '@/components/alert-ready/EverbridgeAlertsList';
+import CriticalAlertsSummary from '@/components/alert-ready/CriticalAlertsSummary';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,15 @@ const AlertReadyPage = () => {
     filters[key as keyof typeof filters] !== undefined && filters[key as keyof typeof filters] !== ''
   );
 
+  // Get current loading state based on active tab
+  const getCurrentLoading = () => {
+    switch (activeTab) {
+      case 'bc-alerts': return bcLoading;
+      case 'everbridge': return everbridgeLoading;
+      default: return allLoading;
+    }
+  };
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-6">
@@ -133,11 +143,17 @@ const AlertReadyPage = () => {
         </div>
       </div>
 
+      {/* Critical Alerts Summary - Always shows all alerts for overview */}
+      <CriticalAlertsSummary 
+        alerts={allAlerts} 
+        loading={allLoading} 
+      />
+
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="all-alerts">
             All Alerts
-            {filteredAlerts.length > 0 && (
+            {activeTab === 'all-alerts' && filteredAlerts.length > 0 && (
               <Badge variant="secondary" className="ml-2">{filteredAlerts.length}</Badge>
             )}
           </TabsTrigger>
