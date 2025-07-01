@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import SimpleLocationFilter from '@/components/map/SimpleLocationFilter';
 import { useSimpleLocationFilter } from '@/hooks/useSimpleLocationFilter';
+import DataStatusIndicator from '@/components/dashboard/DataStatusIndicator';
 import { Link } from 'react-router-dom';
 
 interface DashboardHeaderProps {
@@ -27,6 +28,10 @@ interface DashboardHeaderProps {
   loading: boolean;
   provinces: any[];
   internationalHubs: any[];
+  // New processing status props
+  lastDataUpdate?: Date;
+  isProcessing?: boolean;
+  hasDataErrors?: boolean;
 }
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -36,7 +41,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onRefresh,
   loading,
   provinces,
-  internationalHubs
+  internationalHubs,
+  lastDataUpdate,
+  isProcessing = false,
+  hasDataErrors = false
 }) => {
   const provinceIds = provinces.map(p => p.id);
   const hubIds = internationalHubs.map(h => h.id);
@@ -83,6 +91,13 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <Badge variant="outline" className="text-xs">
               {visibleProvinceCount + visibleHubCount}/{totalProvinces + internationalHubs.length} Locations
             </Badge>
+
+            {/* Data Status Indicator */}
+            <DataStatusIndicator
+              lastUpdated={lastDataUpdate}
+              isProcessing={isProcessing || loading}
+              hasErrors={hasDataErrors}
+            />
           </div>
         </div>
 
@@ -127,12 +142,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 <Link to="/alert-ready" className="flex items-center w-full">
                   <Bell className="h-4 w-4 mr-2" />
                   Alert Ready Feed
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/widgets" className="flex items-center w-full">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Employee Check-In
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
