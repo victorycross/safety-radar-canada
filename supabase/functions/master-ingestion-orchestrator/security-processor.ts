@@ -3,13 +3,13 @@ export async function processSecurityRSSSource(source: any, supabaseClient: any)
   const startTime = Date.now();
   
   try {
-    console.log(`🔐 [Security Processor] Processing security RSS source: ${source.name}`);
+    console.log(`🔐 [Security Processor] Processing security RSS/Atom source: ${source.name}`);
     console.log(`🔐 [Security Processor] API endpoint: ${source.api_endpoint}`);
     
     const response = await fetch(source.api_endpoint, {
       headers: {
         'User-Agent': 'Security-Intelligence-Platform/1.0',
-        'Accept': 'application/rss+xml, application/xml, text/xml'
+        'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml'
       }
     });
 
@@ -19,38 +19,80 @@ export async function processSecurityRSSSource(source: any, supabaseClient: any)
 
     const xmlText = await response.text();
     console.log(`🔐 [Security Processor] Fetched ${xmlText.length} characters from ${source.name}`);
-    console.log(`🔐 [Security Processor] RSS content sample (first 500 chars):`, xmlText.substring(0, 500));
+    console.log(`🔐 [Security Processor] Feed content sample (first 500 chars):`, xmlText.substring(0, 500));
     
-    // Enhanced RSS parsing with detailed logging
+    // Enhanced parsing to handle both RSS and Atom feeds
     const items: any[] = [];
-    const itemMatches = xmlText.match(/<item[^>]*>[\s\S]*?<\/item>/gi) || [];
     
-    console.log(`🔐 [Security Processor] Found ${itemMatches.length} RSS items in XML`);
+    // Check if it's an Atom feed
+    const isAtomFeed = xmlText.includes('<feed') && xmlText.includes('xmlns="http://www.w3.org/2005/Atom"');
+    console.log(`🔐 [Security Processor] Feed type detected: ${isAtomFeed ? 'Atom' : 'RSS'}`);
+    
+    // Parse based on feed type
+    let itemMatches: RegExpMatchArray | null = null;
+    
+    if (isAtomFeed) {
+      // Atom feeds use <entry> tags
+      itemMatches = xmlText.match(/<entry[^>]*>[\s\S]*?<\/entry>/gi) || [];
+      console.log(`🔐 [Security Processor] Found ${itemMatches.length} Atom entries`);
+    } else {
+      // RSS feeds use <item> tags
+      itemMatches = xmlText.match(/<item[^>]*>[\s\S]*?<\/item>/gi) || [];
+      console.log(`🔐 [Security Processor] Found ${itemMatches.length} RSS items`);
+    }
 
     for (let i = 0; i < itemMatches.length; i++) {
       const itemMatch = itemMatches[i];
       const item: any = { raw_xml: itemMatch };
       
-      console.log(`🔐 [Security Processor] Processing item ${i + 1}/${itemMatches.length}`);
+      console.log(`🔐 [Security Processor] Processing ${isAtomFeed ? 'entry' : 'item'} ${i + 1}/${itemMatches.length}`);
       
-      // Extract common RSS fields with enhanced logging
-      const titleMatch = itemMatch.match(/<title[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title[^>]*>([\s\S]*?)<\/title>/i);
-      const descMatch = itemMatch.match(/<description[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description[^>]*>([\s\S]*?)<\/description>/i);
-      const linkMatch = itemMatch.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
-      const pubDateMatch = itemMatch.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i);
-      const guidMatch = itemMatch.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
-      
-      if (titleMatch) {
-        item.title = (titleMatch[1] || titleMatch[2] || '').trim();
-        console.log(`🔐 [Security Processor] Item ${i + 1} title: ${item.title}`);
+      if (isAtomFeed) {
+        // Parse Atom entry fields
+        const idMatch = itemMatch.match(/<id[^>]*>([\s\S]*?)<\/id>/i);
+        const titleMatch = itemMatch.match(/<title[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title[^>]*>([\s\S]*?)<\/title>/i);
+        const contentMatch = itemMatch.match(/<content[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/content>|<content[^>]*>([\s\S]*?)<\/content>/i);
+        const summaryMatch = itemMatch.match(/<summary[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/summary>|<summary[^>]*>([\s\S]*?)<\/summary>/i);
+        const linkMatch = itemMatch.match(/<link[^>]*href=["']([\s\S]*?)["'][^>]*>/i);
+        const updatedMatch = itemMatch.match(/<updated[^>]*>([\s\S]*?)<\/updated>/i);
+        const authorMatch = itemMatch.match(/<author[^>]*>[\s\S]*?<name[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/name>|<author[^>]*>[\s\S]*?<name[^>]*>([\s\S]*?)<\/name>/i);
+        
+        if (idMatch) item.guid = idMatch[1].trim();
+        if (titleMatch) {
+          item.title = (titleMatch[1] || titleMatch[2] || '').trim();
+          console.log(`🔐 [Security Processor] Entry ${i + 1} title: ${item.title}`);
+        }
+        if (contentMatch) {
+          item.description = (contentMatch[1] || contentMatch[2] || '').trim();
+          console.log(`🔐 [Security Processor] Entry ${i + 1} content length: ${item.description?.length || 0}`);
+        } else if (summaryMatch) {
+          item.description = (summaryMatch[1] || summaryMatch[2] || '').trim();
+          console.log(`🔐 [Security Processor] Entry ${i + 1} summary length: ${item.description?.length || 0}`);
+        }
+        if (linkMatch) item.link = linkMatch[1].trim();
+        if (updatedMatch) item.pubDate = updatedMatch[1].trim();
+        if (authorMatch) item.author = (authorMatch[1] || authorMatch[2] || '').trim();
+        
+      } else {
+        // Parse RSS item fields (existing logic)
+        const titleMatch = itemMatch.match(/<title[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title[^>]*>([\s\S]*?)<\/title>/i);
+        const descMatch = itemMatch.match(/<description[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description[^>]*>([\s\S]*?)<\/description>/i);
+        const linkMatch = itemMatch.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
+        const pubDateMatch = itemMatch.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i);
+        const guidMatch = itemMatch.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
+        
+        if (titleMatch) {
+          item.title = (titleMatch[1] || titleMatch[2] || '').trim();
+          console.log(`🔐 [Security Processor] Item ${i + 1} title: ${item.title}`);
+        }
+        if (descMatch) {
+          item.description = (descMatch[1] || descMatch[2] || '').trim();
+          console.log(`🔐 [Security Processor] Item ${i + 1} description length: ${item.description?.length || 0}`);
+        }
+        if (linkMatch) item.link = linkMatch[1].trim();
+        if (pubDateMatch) item.pubDate = pubDateMatch[1].trim();
+        if (guidMatch) item.guid = guidMatch[1].trim();
       }
-      if (descMatch) {
-        item.description = (descMatch[1] || descMatch[2] || '').trim();
-        console.log(`🔐 [Security Processor] Item ${i + 1} description length: ${item.description?.length || 0}`);
-      }
-      if (linkMatch) item.link = linkMatch[1].trim();
-      if (pubDateMatch) item.pubDate = pubDateMatch[1].trim();
-      if (guidMatch) item.guid = guidMatch[1].trim();
       
       items.push(item);
     }
@@ -62,7 +104,7 @@ export async function processSecurityRSSSource(source: any, supabaseClient: any)
       console.log(`🔐 [Security Processor] Mapping ${items.length} items to security alerts format`);
       
       const securityAlerts = items.map((item, index) => {
-        const alertId = item.guid || `${source.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${index}`;
+        const alertId = item.guid || item.id || `${source.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${index}`;
         const alert = {
           id: alertId,
           title: item.title || 'Untitled Alert',
@@ -71,7 +113,7 @@ export async function processSecurityRSSSource(source: any, supabaseClient: any)
           pub_date: item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString(),
           source: source.name,
           category: 'cybersecurity',
-          location: 'Global',
+          location: 'Canada', // CCCS is Canadian
           raw_data: item
         };
         
@@ -120,7 +162,7 @@ export async function processSecurityRSSSource(source: any, supabaseClient: any)
     };
 
   } catch (error) {
-    console.error(`🔐 [Security Processor] Error processing security RSS source ${source.name}:`, error);
+    console.error(`🔐 [Security Processor] Error processing security RSS/Atom source ${source.name}:`, error);
     console.error(`🔐 [Security Processor] Error stack:`, error.stack);
     throw error;
   }

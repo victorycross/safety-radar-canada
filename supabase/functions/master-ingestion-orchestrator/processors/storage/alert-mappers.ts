@@ -1,3 +1,4 @@
+
 import { AlertSource } from '../../types.ts';
 
 export function mapSecurityAlerts(processedAlerts: any[], source: AlertSource): any[] {
@@ -7,14 +8,31 @@ export function mapSecurityAlerts(processedAlerts: any[], source: AlertSource): 
   const mappedAlerts = processedAlerts.map((alert, index) => {
     console.log(`🗺️ [Alert Mapper] Mapping alert ${index + 1}/${processedAlerts.length}`);
     
-    const alertId = alert.id || alert.guid || `${source.source_type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    // Handle both RSS and Atom feed IDs
+    const alertId = alert.id || alert.guid || alert.link || `${source.source_type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Clean up HTML content from Atom feeds
+    let cleanDescription = alert.description || alert.summary || '';
+    if (cleanDescription) {
+      // Remove HTML tags and decode CDATA
+      cleanDescription = cleanDescription
+        .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1') // Remove CDATA wrapper
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&[a-zA-Z0-9#]+;/g, ' ') // Remove HTML entities
+        .trim();
+      
+      // Truncate if too long
+      if (cleanDescription.length > 1000) {
+        cleanDescription = cleanDescription.substring(0, 997) + '...';
+      }
+    }
     
     const mappedAlert = {
       id: alertId,
       title: alert.title || 'Untitled Alert',
-      summary: alert.description || alert.summary,
-      link: alert.url || alert.link || alert.link,
-      pub_date: alert.published || alert.pubDate || new Date().toISOString(),
+      summary: cleanDescription || 'No description available',
+      link: alert.url || alert.link,
+      pub_date: alert.published || alert.pubDate || alert.updated || new Date().toISOString(),
       source: source.name,
       category: alert.category || 'Security',
       location: alert.area || 'Global',
@@ -25,6 +43,11 @@ export function mapSecurityAlerts(processedAlerts: any[], source: AlertSource): 
     if (!mappedAlert.title || mappedAlert.title.trim() === '') {
       console.warn(`🗺️ [Alert Mapper] Warning: Alert ${index + 1} has empty title, using fallback`);
       mappedAlert.title = 'Security Alert';
+    }
+    
+    // Clean up title from CDATA
+    if (mappedAlert.title.includes('CDATA')) {
+      mappedAlert.title = mappedAlert.title.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
     }
     
     if (index === 0) {
