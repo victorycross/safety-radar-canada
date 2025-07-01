@@ -27,6 +27,7 @@ import { logSecurityEvent, SecurityEvents } from '@/utils/securityAudit';
 import { logger } from '@/utils/logger';
 import { getBrowserInfo, detectChromeIssues } from '@/utils/browserUtils';
 import { SessionSecurityManager } from '@/components/security/SessionSecurityManager';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Move QueryClient outside component to prevent recreation
 const queryClient = new QueryClient({
@@ -146,16 +147,38 @@ const AppContent = () => {
         <MainLayout>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/admin" element={<AdminPage />} />
+            
+            {/* Admin-only routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/analytics" element={
+              <ProtectedRoute requiredRole="admin">
+                <AnalyticsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/incidents" element={
+              <ProtectedRoute requiredRole="admin">
+                <IncidentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/report" element={
+              <ProtectedRoute requiredRole="admin">
+                <ReportPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Routes available to all authenticated users */}
             <Route path="/alert-ready" element={<AlertReadyPage />} />
             <Route path="/location-status" element={<LocationStatusPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/incidents" element={<IncidentsPage />} />
-            <Route path="/report" element={<ReportPage />} />
             <Route path="/report-incident" element={<ReportIncidentPage />} />
-            <Route path="/employees" element={<Navigate to="/location-status" replace />} />
             <Route path="/hubs" element={<HubsPage />} />
             <Route path="/hub/:hubId" element={<HubDetailPage />} />
+            
+            {/* Redirects */}
+            <Route path="/employees" element={<Navigate to="/location-status" replace />} />
             <Route path="/auth" element={<Navigate to="/" replace />} />
             
             {/* Updated redirects for new simplified admin structure */}
