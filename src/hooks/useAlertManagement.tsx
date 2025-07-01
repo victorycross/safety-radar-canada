@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { UniversalAlert } from '@/types/alerts';
 import { useToast } from '@/hooks/use-toast';
@@ -43,12 +44,16 @@ export const useAlertManagement = (alerts: UniversalAlert[]) => {
     setFilters({});
   };
 
-  const archiveAlert = async (alert: UniversalAlert, reason: string) => {
+  const archiveAlert = async (alertId: string, reason: string) => {
     try {
+      // Find the alert by ID for display purposes
+      const alert = alerts.find(a => a.id === alertId);
+      const alertTitle = alert?.title || 'Alert';
+      
       // Implementation would depend on the alert source and archiving mechanism
       toast({
         title: 'Alert Archived',
-        description: `Alert "${alert.title}" has been archived.`,
+        description: `Alert "${alertTitle}" has been archived.`,
       });
       closeAlertDetail();
     } catch (error) {
