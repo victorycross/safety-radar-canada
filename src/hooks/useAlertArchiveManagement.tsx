@@ -16,6 +16,12 @@ export interface Alert {
   table_name: string;
 }
 
+interface BulkOperationResponse {
+  success: boolean;
+  updated_count: number;
+  error?: string;
+}
+
 export const useAlertArchiveManagement = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [archivedAlerts, setArchivedAlerts] = useState<Alert[]>([]);
@@ -214,10 +220,13 @@ export const useAlertArchiveManagement = () => {
         }
 
         console.log(`Archive result for ${tableName}:`, data);
-        results.push(data);
+        
+        // Type assertion for the response data
+        const response = data as BulkOperationResponse;
+        results.push(response);
 
-        if (!data.success) {
-          throw new Error(data.error || `Failed to archive alerts in ${tableName}`);
+        if (!response.success) {
+          throw new Error(response.error || `Failed to archive alerts in ${tableName}`);
         }
       } catch (error) {
         console.error(`Failed to archive alerts in ${tableName}:`, error);
@@ -277,10 +286,13 @@ export const useAlertArchiveManagement = () => {
         }
 
         console.log(`Unarchive result for ${tableName}:`, data);
-        results.push(data);
+        
+        // Type assertion for the response data
+        const response = data as BulkOperationResponse;
+        results.push(response);
 
-        if (!data.success) {
-          throw new Error(data.error || `Failed to unarchive alerts in ${tableName}`);
+        if (!response.success) {
+          throw new Error(response.error || `Failed to unarchive alerts in ${tableName}`);
         }
       } catch (error) {
         console.error(`Failed to unarchive alerts in ${tableName}:`, error);
