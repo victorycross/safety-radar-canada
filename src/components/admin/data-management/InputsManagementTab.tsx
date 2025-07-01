@@ -17,16 +17,26 @@ import RSSFeedModal from '../modals/RSSFeedModal';
 import APISourceModal from '../modals/APISourceModal';
 import FeedListModal from '../modals/FeedListModal';
 import APISourceListModal from '../modals/APISourceListModal';
-import { RSSFeed, APISource } from '@/hooks/useDataManagement';
+import SystemIntegrationModal from '../modals/SystemIntegrationModal';
+import SystemIntegrationListModal from '../modals/SystemIntegrationListModal';
+import CommunicationTemplateModal from '../modals/CommunicationTemplateModal';
+import CommunicationTemplateListModal from '../modals/CommunicationTemplateListModal';
+import { RSSFeed, APISource, SystemIntegration, CommunicationTemplate } from '@/hooks/useDataManagement';
 
 const InputsManagementTab = () => {
   const [rssModalOpen, setRssModalOpen] = useState(false);
   const [apiModalOpen, setApiModalOpen] = useState(false);
   const [feedListModalOpen, setFeedListModalOpen] = useState(false);
   const [apiSourceListModalOpen, setApiSourceListModalOpen] = useState(false);
+  const [systemIntegrationModalOpen, setSystemIntegrationModalOpen] = useState(false);
+  const [systemIntegrationListModalOpen, setSystemIntegrationListModalOpen] = useState(false);
+  const [communicationTemplateModalOpen, setCommunicationTemplateModalOpen] = useState(false);
+  const [communicationTemplateListModalOpen, setCommunicationTemplateListModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedFeed, setSelectedFeed] = useState<RSSFeed | null>(null);
   const [selectedAPISource, setSelectedAPISource] = useState<APISource | null>(null);
+  const [selectedSystemIntegration, setSelectedSystemIntegration] = useState<SystemIntegration | null>(null);
+  const [selectedCommunicationTemplate, setSelectedCommunicationTemplate] = useState<CommunicationTemplate | null>(null);
 
   const handleOpenRSSModal = (mode: 'create' | 'edit' = 'create', feed?: RSSFeed) => {
     setModalMode(mode);
@@ -40,12 +50,16 @@ const InputsManagementTab = () => {
     setApiModalOpen(true);
   };
 
-  const handleOpenFeedListModal = () => {
-    setFeedListModalOpen(true);
+  const handleOpenSystemIntegrationModal = (mode: 'create' | 'edit' = 'create', integration?: SystemIntegration) => {
+    setModalMode(mode);
+    setSelectedSystemIntegration(integration || null);
+    setSystemIntegrationModalOpen(true);
   };
 
-  const handleOpenAPIListModal = () => {
-    setApiSourceListModalOpen(true);
+  const handleOpenCommunicationTemplateModal = (mode: 'create' | 'edit' = 'create', template?: CommunicationTemplate) => {
+    setModalMode(mode);
+    setSelectedCommunicationTemplate(template || null);
+    setCommunicationTemplateModalOpen(true);
   };
 
   const handleEditFeed = (feed: RSSFeed) => {
@@ -56,16 +70,27 @@ const InputsManagementTab = () => {
     handleOpenAPIModal('edit', source);
   };
 
+  const handleEditSystemIntegration = (integration: SystemIntegration) => {
+    handleOpenSystemIntegrationModal('edit', integration);
+  };
+
+  const handleEditCommunicationTemplate = (template: CommunicationTemplate) => {
+    handleOpenCommunicationTemplateModal('edit', template);
+  };
+
   const handleModalSuccess = () => {
-    // Refresh data or update UI as needed
     console.log('Operation successful');
     setSelectedFeed(null);
     setSelectedAPISource(null);
+    setSelectedSystemIntegration(null);
+    setSelectedCommunicationTemplate(null);
   };
 
   const handleModalClose = () => {
     setSelectedFeed(null);
     setSelectedAPISource(null);
+    setSelectedSystemIntegration(null);
+    setSelectedCommunicationTemplate(null);
   };
 
   return (
@@ -149,7 +174,11 @@ const InputsManagementTab = () => {
                 <Upload className="h-4 w-4 mr-2" />
                 Upload New File
               </Button>
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => handleOpenCommunicationTemplateModal('create')}
+              >
                 <Settings className="h-4 w-4 mr-2" />
                 Configure Templates
               </Button>
@@ -195,7 +224,7 @@ const InputsManagementTab = () => {
                   <Plus className="h-4 w-4 mr-2" />
                   Add RSS Feed
                 </Button>
-                <Button variant="outline" className="w-full" onClick={handleOpenFeedListModal}>
+                <Button variant="outline" className="w-full" onClick={() => setFeedListModalOpen(true)}>
                   <Settings className="h-4 w-4 mr-2" />
                   Manage Feeds
                 </Button>
@@ -242,7 +271,7 @@ const InputsManagementTab = () => {
                   <Plus className="h-4 w-4 mr-2" />
                   Add API Source
                 </Button>
-                <Button variant="outline" className="w-full" onClick={handleOpenAPIListModal}>
+                <Button variant="outline" className="w-full" onClick={() => setApiSourceListModalOpen(true)}>
                   <Settings className="h-4 w-4 mr-2" />
                   Configure APIs
                 </Button>
@@ -280,11 +309,11 @@ const InputsManagementTab = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Button className="w-full">
+              <Button className="w-full" onClick={() => handleOpenSystemIntegrationModal('create')}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Integration
               </Button>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => setSystemIntegrationListModalOpen(true)}>
                 <Settings className="h-4 w-4 mr-2" />
                 Manage Connections
               </Button>
@@ -326,6 +355,40 @@ const InputsManagementTab = () => {
         isOpen={apiSourceListModalOpen}
         onClose={() => setApiSourceListModalOpen(false)}
         onEditSource={handleEditAPISource}
+      />
+
+      <SystemIntegrationModal
+        isOpen={systemIntegrationModalOpen}
+        onClose={() => {
+          setSystemIntegrationModalOpen(false);
+          handleModalClose();
+        }}
+        onSuccess={handleModalSuccess}
+        mode={modalMode}
+        integration={selectedSystemIntegration}
+      />
+
+      <SystemIntegrationListModal
+        isOpen={systemIntegrationListModalOpen}
+        onClose={() => setSystemIntegrationListModalOpen(false)}
+        onEditIntegration={handleEditSystemIntegration}
+      />
+
+      <CommunicationTemplateModal
+        isOpen={communicationTemplateModalOpen}
+        onClose={() => {
+          setCommunicationTemplateModalOpen(false);
+          handleModalClose();
+        }}
+        onSuccess={handleModalSuccess}
+        mode={modalMode}
+        template={selectedCommunicationTemplate}
+      />
+
+      <CommunicationTemplateListModal
+        isOpen={communicationTemplateListModalOpen}
+        onClose={() => setCommunicationTemplateListModalOpen(false)}
+        onEditTemplate={handleEditCommunicationTemplate}
       />
     </div>
   );
