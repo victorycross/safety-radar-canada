@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 import { useChromeCompatibleAuth } from '@/hooks/useChromeCompatibleAuth';
 import { getBrowserInfo, detectChromeIssues } from '@/utils/browserUtils';
 import { SecurityService } from '@/services/securityService';
+import { PasswordService } from '@/services/passwordService';
 
 export type AppRole = 'admin' | 'power_user' | 'regular_user';
 
@@ -27,6 +28,11 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Track failed login attempts
+const failedAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const LOCKOUT_THRESHOLD = 5;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -73,6 +79,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     return Math.min(score, 100);
+  };
+
+  const isAccountLocked = (email: string): boolean => {
+    const attempts = failedAttempts.get(email);
+    if (!attempts) return false;
+    
+    const now = Date.now();
+    if (now - attempts.lastAttempt > LOCKOUT_DURATION) {
+      failedAttempts.delete(email);
+      return false;
+    }
+    
+    return attempts.count >= LOCKOUT_THRESHOLD;
+  };
+
+  const recordFailedAttempt = (email: string) => {
+    const now = Date.now();
+    const attempts = failedAttempts.get(email) || { count: 0, lastAttempt: 0 };
+    
+    // Reset count if last attempt was more than lockout duration ago
+    if (now - attempts.lastAttempt > LOCKOUT_DURATION) {
+      attempts.count = 0;
+    }
+    
+    attempts.count++;
+    attempts.lastAttempt = now;
+    failedAttempts.set(email, attempts);
+  };
+
+  const clearFailedAttempts = (email: string) => {
+    failedAttempts.delete(email);
   };
 
   const fetchUserRoles = async (userId: string) => {
@@ -130,6 +167,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const signIn = async (email: string, password: string) => {
+    // Check if account is locked
+    if (isAccountLocked(email)) {
+      const error = new Error('Account temporarily locked due to multiple failed attempts. Please try again later.');
+      await logSecurityEvent({
+        action: SecurityEvents.LOGIN_FAILURE,
+        new_values: { 
+          email,
+          reason: 'account_locked',
+          attempts: failedAttempts.get(email)?.count || 0
+        }
+      });
+      return { error };
+    }
+
     // Rate limiting check
     const rateLimitKey = `login_${email}`;
     if (!SecurityService.checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000)) {
@@ -176,12 +227,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         logger.warn('AuthProvider: Sign in failed:', error.message);
+        recordFailedAttempt(email);
         await logSecurityEvent({
           action: SecurityEvents.LOGIN_FAILURE,
-          new_values: { email, error: error.message }
+          new_values: { 
+            email, 
+            error: error.message,
+            failedAttempts: failedAttempts.get(email)?.count || 0
+          }
         });
       } else {
         logger.chrome('Chrome sign in successful');
+        clearFailedAttempts(email);
         await logSecurityEvent({
           action: SecurityEvents.LOGIN_SUCCESS,
           new_values: { email }
@@ -191,6 +248,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error };
     } catch (error: any) {
       logger.error('AuthProvider: Sign in error:', error);
+      recordFailedAttempt(email);
       await logSecurityEvent({
         action: SecurityEvents.LOGIN_FAILURE,
         new_values: { email, error: error.message }
@@ -215,9 +273,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error: new Error('Invalid email format') };
       }
 
-      // Password strength validation
-      if (password.length < 8) {
-        return { error: new Error('Password must be at least 8 characters long') };
+      // Enhanced password validation
+      const passwordStrength = PasswordService.validatePassword(password);
+      if (!passwordStrength.isValid) {
+        return { 
+          error: new Error(`Password requirements not met: ${passwordStrength.feedback.join(', ')}`) 
+        };
       }
       
       const redirectUrl = `${window.location.origin}/`;
@@ -237,7 +298,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logger.chrome('Chrome sign up successful');
         await logSecurityEvent({
           action: SecurityEvents.LOGIN_SUCCESS,
-          new_values: { email, type: 'signup' }
+          new_values: { 
+            email, 
+            type: 'signup',
+            passwordStrength: passwordStrength.score
+          }
         });
       }
       

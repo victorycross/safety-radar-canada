@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
@@ -74,28 +75,37 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
-  })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
-    />
-  )
+  // Use CSS custom properties instead of dangerouslySetInnerHTML for security
+  React.useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.setAttribute('data-chart-style', id);
+    
+    const cssRules = Object.entries(THEMES)
+      .map(([theme, prefix]) => {
+        const colorVars = colorConfig
+          .map(([key, itemConfig]) => {
+            const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+            return color ? `  --color-${key}: ${color};` : null;
+          })
+          .filter(Boolean)
+          .join('\n');
+        
+        return `${prefix} [data-chart=${id}] {\n${colorVars}\n}`;
+      })
+      .join('\n');
+    
+    styleElement.textContent = cssRules;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      const existingStyle = document.querySelector(`[data-chart-style="${id}"]`);
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, [id, colorConfig]);
+
+  return null;
 }
 
 const ChartTooltip = RechartsPrimitive.Tooltip
@@ -359,5 +369,4 @@ export {
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-  ChartStyle,
 }
