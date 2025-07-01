@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -20,6 +19,16 @@ export const recalculateProvincesTotals = async (): Promise<void> => {
   
   if (error) {
     console.error('Error recalculating province totals:', error);
+    throw error;
+  }
+};
+
+// Recalculate all hub totals from hub employee location data
+export const recalculateHubTotals = async (): Promise<void> => {
+  const { error } = await supabase.rpc('recalculate_all_hub_totals');
+  
+  if (error) {
+    console.error('Error recalculating hub totals:', error);
     throw error;
   }
 };
