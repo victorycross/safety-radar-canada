@@ -180,12 +180,17 @@ export const useAlertArchiveManagement = () => {
       }
     });
 
-    // Update each table
+    // Update each table explicitly
     for (const [tableName, ids] of alertsByTable) {
-      await supabase
-        .from(tableName)
-        .update(archiveData)
-        .in('id', ids);
+      if (tableName === 'security_alerts_ingest') {
+        await supabase.from('security_alerts_ingest').update(archiveData).in('id', ids);
+      } else if (tableName === 'weather_alerts_ingest') {
+        await supabase.from('weather_alerts_ingest').update(archiveData).in('id', ids);
+      } else if (tableName === 'incidents') {
+        await supabase.from('incidents').update(archiveData).in('id', ids);
+      } else if (tableName === 'hub_incidents') {
+        await supabase.from('hub_incidents').update(archiveData).in('id', ids);
+      }
     }
 
     await logArchiveAction(alertIds, 'archive', reason);
@@ -210,12 +215,17 @@ export const useAlertArchiveManagement = () => {
       }
     });
 
-    // Update each table
+    // Update each table explicitly
     for (const [tableName, ids] of alertsByTable) {
-      await supabase
-        .from(tableName)
-        .update(unarchiveData)
-        .in('id', ids);
+      if (tableName === 'security_alerts_ingest') {
+        await supabase.from('security_alerts_ingest').update(unarchiveData).in('id', ids);
+      } else if (tableName === 'weather_alerts_ingest') {
+        await supabase.from('weather_alerts_ingest').update(unarchiveData).in('id', ids);
+      } else if (tableName === 'incidents') {
+        await supabase.from('incidents').update(unarchiveData).in('id', ids);
+      } else if (tableName === 'hub_incidents') {
+        await supabase.from('hub_incidents').update(unarchiveData).in('id', ids);
+      }
     }
 
     await logArchiveAction(alertIds, 'unarchive', reason);
@@ -236,12 +246,17 @@ export const useAlertArchiveManagement = () => {
 
     await logArchiveAction(alertIds, 'delete', reason);
 
-    // Delete from each table
+    // Delete from each table explicitly
     for (const [tableName, ids] of alertsByTable) {
-      await supabase
-        .from(tableName)
-        .delete()
-        .in('id', ids);
+      if (tableName === 'security_alerts_ingest') {
+        await supabase.from('security_alerts_ingest').delete().in('id', ids);
+      } else if (tableName === 'weather_alerts_ingest') {
+        await supabase.from('weather_alerts_ingest').delete().in('id', ids);
+      } else if (tableName === 'incidents') {
+        await supabase.from('incidents').delete().in('id', ids);
+      } else if (tableName === 'hub_incidents') {
+        await supabase.from('hub_incidents').delete().in('id', ids);
+      }
     }
   };
 

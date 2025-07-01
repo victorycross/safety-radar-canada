@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Archive, Unarchive, Trash2, Search, Filter } from 'lucide-react';
+import { Archive, ArchiveRestore, Trash2, Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -186,7 +186,7 @@ const AlertManagementTab = () => {
                 variant="outline"
                 size="sm"
               >
-                <Unarchive className="mr-2 h-4 w-4" />
+                <ArchiveRestore className="mr-2 h-4 w-4" />
                 Restore Selected
               </Button>
               <Button

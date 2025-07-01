@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Archive, Unarchive, Calendar, User } from 'lucide-react';
+import { Archive, ArchiveRestore, Calendar, User } from 'lucide-react';
 import { Alert } from '@/hooks/useAlertArchiveManagement';
 
 interface AlertListProps {
@@ -143,7 +143,7 @@ const AlertList: React.FC<AlertListProps> = ({
                         variant="outline"
                         onClick={() => onUnarchive([alert.id])}
                       >
-                        <Unarchive className="h-3 w-3" />
+                        <ArchiveRestore className="h-3 w-3" />
                       </Button>
                     )}
                   </div>

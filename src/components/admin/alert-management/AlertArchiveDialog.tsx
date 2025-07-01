@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Archive, Unarchive } from 'lucide-react';
+import { Archive, ArchiveRestore } from 'lucide-react';
 
 interface AlertArchiveDialogProps {
   open: boolean;
@@ -57,7 +57,7 @@ const AlertArchiveDialog: React.FC<AlertArchiveDialogProps> = ({
             {action === 'archive' ? (
               <Archive className="h-5 w-5" />
             ) : (
-              <Unarchive className="h-5 w-5" />
+              <ArchiveRestore className="h-5 w-5" />
             )}
             <span>
               {action === 'archive' ? 'Archive' : 'Restore'} Alerts
@@ -106,7 +106,7 @@ const AlertArchiveDialog: React.FC<AlertArchiveDialogProps> = ({
                 {action === 'archive' ? (
                   <Archive className="h-4 w-4 mr-2" />
                 ) : (
-                  <Unarchive className="h-4 w-4 mr-2" />
+                  <ArchiveRestore className="h-4 w-4 mr-2" />
                 )}
                 {action === 'archive' ? 'Archive' : 'Restore'} {selectedCount} Alert{selectedCount > 1 ? 's' : ''}
               </>
