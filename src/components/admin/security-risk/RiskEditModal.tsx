@@ -24,11 +24,7 @@ interface SecurityRisk {
   current_alerts: string;
   notes: string;
   playbook: string;
-  live_feeds: Array<{
-    name: string;
-    url: string;
-    description: string;
-  }>;
+  live_feeds: any; // Using any to handle Json type from Supabase
 }
 
 interface RiskEditModalProps {

@@ -21,11 +21,7 @@ interface SecurityRisk {
   current_alerts: string;
   notes: string;
   playbook: string;
-  live_feeds: Array<{
-    name: string;
-    url: string;
-    description: string;
-  }>;
+  live_feeds: any; // Using any to handle Json type from Supabase
 }
 
 interface RiskDetailModalProps {
@@ -43,6 +39,9 @@ const RiskDetailModal = ({ risk, open, onOpenChange }: RiskDetailModalProps) => 
     };
     return colors[priority as keyof typeof colors] || colors.medium;
   };
+
+  // Handle live_feeds as an array, with fallback for empty or invalid data
+  const liveFeeds = Array.isArray(risk.live_feeds) ? risk.live_feeds : [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,23 +178,25 @@ const RiskDetailModal = ({ risk, open, onOpenChange }: RiskDetailModalProps) => 
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {risk.live_feeds?.map((feed, index) => (
+                    {liveFeeds.map((feed: any, index: number) => (
                       <div key={index} className="flex items-start justify-between p-3 border rounded-lg">
                         <div className="flex-1">
-                          <h4 className="font-medium">{feed.name}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">{feed.description}</p>
+                          <h4 className="font-medium">{feed?.name || 'Unknown Feed'}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">{feed?.description || 'No description available'}</p>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(feed.url, '_blank')}
-                          className="ml-4"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                        {feed?.url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(feed.url, '_blank')}
+                            className="ml-4"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     ))}
-                    {(!risk.live_feeds || risk.live_feeds.length === 0) && (
+                    {liveFeeds.length === 0 && (
                       <p className="text-muted-foreground">No live feeds configured</p>
                     )}
                   </div>

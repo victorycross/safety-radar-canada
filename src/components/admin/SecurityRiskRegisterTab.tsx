@@ -28,11 +28,7 @@ interface SecurityRisk {
   current_alerts: string;
   notes: string;
   playbook: string;
-  live_feeds: Array<{
-    name: string;
-    url: string;
-    description: string;
-  }>;
+  live_feeds: any; // Using any to handle Json type from Supabase
 }
 
 const SecurityRiskRegisterTab = () => {
@@ -54,7 +50,12 @@ const SecurityRiskRegisterTab = () => {
         .order('rpn', { ascending: false });
       
       if (error) throw error;
-      return data as SecurityRisk[];
+      
+      // Transform the data to handle the live_feeds properly
+      return data.map(risk => ({
+        ...risk,
+        live_feeds: risk.live_feeds || []
+      })) as SecurityRisk[];
     }
   });
 
