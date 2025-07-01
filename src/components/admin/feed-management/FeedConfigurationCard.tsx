@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -91,13 +90,18 @@ const FeedConfigurationCard: React.FC<FeedConfigurationCardProps> = ({ feed, onU
       // Simulate feed testing with actual endpoint check
       const testStartTime = Date.now();
       
-      // Basic connectivity test
+      // Basic connectivity test with timeout using AbortController
       let testResponse;
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
         testResponse = await fetch(feed.api_endpoint, { 
           method: 'HEAD',
-          timeout: 10000 
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
       } catch (fetchError) {
         console.error('Feed test fetch error:', fetchError);
         testResponse = null;
