@@ -97,10 +97,10 @@ const DailyOperationsHub = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button 
               onClick={testDataPipeline}
-              disabled={operations.testPipeline.loading}
+              disabled={operations.testingPipeline}
               className="h-20 flex-col gap-2"
             >
-              {operations.testPipeline.loading ? (
+              {operations.testingPipeline ? (
                 <RefreshCw className="h-6 w-6 animate-spin" />
               ) : (
                 <Play className="h-6 w-6" />
@@ -113,11 +113,11 @@ const DailyOperationsHub = () => {
 
             <Button 
               onClick={processQueueNow}
-              disabled={operations.processQueue.loading}
+              disabled={operations.processingQueue}
               variant="outline"
               className="h-20 flex-col gap-2"
             >
-              {operations.processQueue.loading ? (
+              {operations.processingQueue ? (
                 <RefreshCw className="h-6 w-6 animate-spin" />
               ) : (
                 <Database className="h-6 w-6" />
@@ -130,11 +130,11 @@ const DailyOperationsHub = () => {
 
             <Button 
               onClick={reDiagnoseSystem}
-              disabled={operations.reDiagnose.loading}
+              disabled={operations.diagnosing}
               variant="outline"
               className="h-20 flex-col gap-2"
             >
-              {operations.reDiagnose.loading ? (
+              {operations.diagnosing ? (
                 <RefreshCw className="h-6 w-6 animate-spin" />
               ) : (
                 <Activity className="h-6 w-6" />
@@ -167,7 +167,7 @@ const DailyOperationsHub = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button 
                   onClick={setupAutomation}
-                  disabled={operations.setupAutomation.loading}
+                  disabled={operations.settingUpCron}
                   variant="outline"
                 >
                   <Settings className="h-4 w-4 mr-2" />
@@ -176,7 +176,7 @@ const DailyOperationsHub = () => {
 
                 <Button 
                   onClick={testAPIConnectivity}
-                  disabled={operations.testAPI.loading}
+                  disabled={operations.testingAPI}
                   variant="outline"
                 >
                   <Activity className="h-4 w-4 mr-2" />
