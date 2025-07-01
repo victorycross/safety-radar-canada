@@ -10,9 +10,13 @@ import {
   Bell,
   Database,
   Key,
-  FileText
+  FileText,
+  Activity,
+  GitBranch
 } from 'lucide-react';
 import DocumentationTab from './DocumentationTab';
+import SchemaHealthMonitor from './SchemaHealthMonitor';
+import SecurityDashboard from '../security/SecurityDashboard';
 
 const SettingsDocumentationTab = () => {
   const [activeSubTab, setActiveSubTab] = useState('system');
@@ -22,14 +26,16 @@ const SettingsDocumentationTab = () => {
       <div>
         <h2 className="text-2xl font-bold">Settings & Documentation</h2>
         <p className="text-muted-foreground">
-          System configuration, user management, and comprehensive documentation resources
+          System configuration, user management, security monitoring, and comprehensive documentation resources
         </p>
       </div>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="system">System Settings</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="security">Security Monitor</TabsTrigger>
+          <TabsTrigger value="schema">Schema Health</TabsTrigger>
           <TabsTrigger value="docs">Documentation</TabsTrigger>
         </TabsList>
         
@@ -56,30 +62,40 @@ const SettingsDocumentationTab = () => {
                   <Key className="h-4 w-4 mr-2" />
                   API Configuration
                 </Button>
+                <Button variant="outline" className="w-full justify-start">
+                  <Activity className="h-4 w-4 mr-2" />
+                  System Monitoring
+                </Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Security Settings
+                  <GitBranch className="h-5 w-5" />
+                  Version Information
                 </CardTitle>
-                <CardDescription>Security policies and access controls</CardDescription>
+                <CardDescription>Current system version and schema information</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full justify-start">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Security Policies
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Key className="h-4 w-4 mr-2" />
-                  Access Controls
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Audit Logs
-                </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="font-semibold">Application Version</div>
+                    <div className="text-sm text-muted-foreground">v1.0.0</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Database Schema</div>
+                    <div className="text-sm text-muted-foreground">v2.0.0</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Total Tables</div>
+                    <div className="text-sm text-muted-foreground">25 tables</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold">Last Updated</div>
+                    <div className="text-sm text-muted-foreground">January 2025</div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -122,6 +138,14 @@ const SettingsDocumentationTab = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="security" className="space-y-4">
+          <SecurityDashboard />
+        </TabsContent>
+
+        <TabsContent value="schema" className="space-y-4">
+          <SchemaHealthMonitor />
         </TabsContent>
         
         <TabsContent value="docs" className="space-y-4">
