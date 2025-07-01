@@ -4,6 +4,7 @@ import AlertsList from '@/components/alert-ready/AlertsList';
 import BCAlertslist from '@/components/alert-ready/BCAlertslist';
 import EverbridgeAlertsList from '@/components/alert-ready/EverbridgeAlertsList';
 import CriticalAlertsSummary from '@/components/alert-ready/CriticalAlertsSummary';
+import UnifiedAlertControls from '@/components/alert-ready/UnifiedAlertControls';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { useAllAlertSources } from '@/hooks/useAllAlertSources';
 import { useBCAlerts } from '@/hooks/useBCAlerts';
 import { useEverbridgeAlerts } from '@/hooks/useEverbridgeAlerts';
 import { useAlertManagement } from '@/hooks/useAlertManagement';
+import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import AlertDetailModal from '@/components/alerts/AlertDetailModal';
 import { Badge } from '@/components/ui/badge';
 import { useSearchParams } from 'react-router-dom';
@@ -24,6 +26,7 @@ const AlertReadyPage = () => {
   const { alerts: allAlerts, loading: allLoading, error: allError, fetchAlerts: fetchAllAlerts } = useAllAlertSources();
   const { alerts: bcAlerts, loading: bcLoading, error: bcError, fetchAlerts: fetchBCAlerts } = useBCAlerts();
   const { alerts: everbridgeAlerts, loading: everbridgeLoading, error: everbridgeError, fetchAlerts: fetchEverbridgeAlerts } = useEverbridgeAlerts();
+  const { refreshData } = useSupabaseDataContext();
 
   // Use alert management hook for the current tab's alerts
   const getCurrentAlerts = () => {
@@ -81,6 +84,10 @@ const AlertReadyPage = () => {
       case 'everbridge': return everbridgeLoading;
       default: return allLoading;
     }
+  };
+
+  const handleRefreshIncidents = () => {
+    refreshData();
   };
 
   return (
@@ -147,6 +154,12 @@ const AlertReadyPage = () => {
       <CriticalAlertsSummary 
         alerts={allAlerts} 
         loading={allLoading} 
+      />
+
+      {/* Unified Alert Integration Controls */}
+      <UnifiedAlertControls
+        alerts={allAlerts}
+        onRefreshIncidents={handleRefreshIncidents}
       />
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
