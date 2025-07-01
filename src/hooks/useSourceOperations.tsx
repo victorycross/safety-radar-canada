@@ -2,6 +2,7 @@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UnifiedSource } from './useSourceState';
+import { logger } from '@/utils/logger';
 
 interface UseSourceOperationsProps {
   setSources: (sources: UnifiedSource[]) => void;
@@ -18,7 +19,7 @@ export const useSourceOperations = ({
 
   const fetchSources = async () => {
     try {
-      console.log('Fetching all sources...');
+      logger.info('Fetching all sources...');
       const { data, error } = await supabase
         .from('alert_sources')
         .select('*')
@@ -26,7 +27,7 @@ export const useSourceOperations = ({
 
       if (error) throw error;
 
-      console.log('Fetched sources:', data);
+      logger.info('Fetched sources:', data);
       const typedSources = (data || []).map(source => ({
         ...source,
         health_status: (['healthy', 'degraded', 'error', 'unknown'].includes(source.health_status) 
@@ -35,7 +36,7 @@ export const useSourceOperations = ({
       }));
       setSources(typedSources);
     } catch (err) {
-      console.error('Error fetching sources:', err);
+      logger.error('Error fetching sources:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch sources';
       setError(errorMessage);
       toast({
@@ -72,7 +73,7 @@ export const useSourceOperations = ({
       await fetchSources();
       return data;
     } catch (err) {
-      console.error('Error adding source:', err);
+      logger.error('Error adding source:', err);
       toast({
         title: 'Error',
         description: 'Failed to add source',
@@ -101,7 +102,7 @@ export const useSourceOperations = ({
 
       await fetchSources();
     } catch (err) {
-      console.error('Error updating source:', err);
+      logger.error('Error updating source:', err);
       toast({
         title: 'Error',
         description: 'Failed to update source',
@@ -127,7 +128,7 @@ export const useSourceOperations = ({
 
       await fetchSources();
     } catch (err) {
-      console.error('Error deleting source:', err);
+      logger.error('Error deleting source:', err);
       toast({
         title: 'Error',
         description: 'Failed to delete source',

@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { UniversalAlert } from '@/types/alerts';
 import { useAlertSourcesFetch } from './useAlertSourcesFetch';
 import { useAlertFiltering } from './useAlertFiltering';
+import { logger } from '@/utils/logger';
 
 interface AlertSource {
   id: string;
@@ -27,32 +28,32 @@ export const useAllAlertSources = () => {
     setError(null);
     
     try {
-      console.log('Starting to fetch all alerts...');
+      logger.info('Starting to fetch all alerts...');
       const activeSources = await fetchSources();
       const allAlerts: UniversalAlert[] = [];
       
       // Fetch alerts from each active source
       for (const source of activeSources) {
-        console.log(`Processing source: ${source.name}`);
+        logger.info(`Processing source: ${source.name}`);
         const sourceAlerts = await fetchAlertsFromSource(source);
-        console.log(`Got ${sourceAlerts.length} alerts from ${source.name}`);
+        logger.info(`Got ${sourceAlerts.length} alerts from ${source.name}`);
         allAlerts.push(...sourceAlerts);
       }
       
-      console.log(`Total alerts fetched: ${allAlerts.length}`);
+      logger.info(`Total alerts fetched: ${allAlerts.length}`);
       
       const validAlerts = validateAndSortAlerts(allAlerts);
       
-      console.log(`Filtered to ${validAlerts.length} valid alerts from ${allAlerts.length} total`);
+      logger.info(`Filtered to ${validAlerts.length} valid alerts from ${allAlerts.length} total`);
       
       setAlerts(validAlerts);
       
       if (validAlerts.length === 0) {
-        console.warn('No valid alerts found. This might indicate a data ingestion issue.');
+        logger.warn('No valid alerts found. This might indicate a data ingestion issue.');
       }
       
     } catch (err) {
-      console.error('Error fetching all alerts:', err);
+      logger.error('Error fetching all alerts:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch alerts');
       toast({
         title: 'Error',
@@ -65,7 +66,7 @@ export const useAllAlertSources = () => {
   };
 
   useEffect(() => {
-    console.log('useAllAlertSources hook initialized');
+    logger.info('useAllAlertSources hook initialized');
     fetchAllAlerts();
   }, []);
   

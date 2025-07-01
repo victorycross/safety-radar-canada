@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UniversalAlert } from '@/types/alerts';
 import { normalizeAlert } from '@/utils/sourceNormalizers';
+import { logger } from '@/utils/logger';
 
 interface AlertSource {
   id: string;
@@ -17,25 +18,25 @@ export const useAlertSourcesFetch = () => {
 
   const fetchSources = async () => {
     try {
-      console.log('Fetching alert sources...');
+      logger.info('Fetching alert sources...');
       const { data, error } = await supabase
         .from('alert_sources')
         .select('*')
         .eq('is_active', true);
       
       if (error) throw error;
-      console.log('Fetched sources:', data);
+      logger.info('Fetched sources:', data);
       setSources(data || []);
       return data || [];
     } catch (err) {
-      console.error('Error fetching alert sources:', err);
+      logger.error('Error fetching alert sources:', err);
       throw err;
     }
   };
 
   const fetchAlertsFromSource = async (source: AlertSource): Promise<UniversalAlert[]> => {
     try {
-      console.log(`Fetching alerts from source: ${source.name} (${source.source_type})`);
+      logger.info(`Fetching alerts from source: ${source.name} (${source.source_type})`);
       
       switch (source.source_type) {
         case 'rss':
@@ -47,11 +48,11 @@ export const useAlertSourcesFetch = () => {
           return await fetchWeatherAlerts(source);
 
         default:
-          console.log(`No specific handler for source type: ${source.source_type}`);
+          logger.info(`No specific handler for source type: ${source.source_type}`);
           return [];
       }
     } catch (err) {
-      console.error(`Error fetching alerts from ${source.name}:`, err);
+      logger.error(`Error fetching alerts from ${source.name}:`, err);
       return [];
     }
   };
@@ -64,11 +65,11 @@ export const useAlertSourcesFetch = () => {
       .limit(50);
     
     if (rssError) {
-      console.error('RSS data fetch error:', rssError);
+      logger.error('RSS data fetch error:', rssError);
       throw rssError;
     }
     
-    console.log(`Fetched ${rssData?.length || 0} RSS alerts`);
+    logger.info(`Fetched ${rssData?.length || 0} RSS alerts`);
     
     return (rssData || []).map(alert => {
       const normalized = normalizeAlert({
@@ -84,7 +85,7 @@ export const useAlertSourcesFetch = () => {
         raw_data: alert.raw_data
       }, source.source_type);
       
-      console.log('Normalized RSS alert:', {
+      logger.debug('Normalized RSS alert:', {
         id: normalized.id,
         title: normalized.title,
         source: normalized.source
@@ -102,11 +103,11 @@ export const useAlertSourcesFetch = () => {
       .limit(50);
     
     if (weatherError) {
-      console.error('Weather data fetch error:', weatherError);
+      logger.error('Weather data fetch error:', weatherError);
       throw weatherError;
     }
     
-    console.log(`Fetched ${weatherData?.length || 0} weather alerts`);
+    logger.info(`Fetched ${weatherData?.length || 0} weather alerts`);
     
     return (weatherData || []).map(alert => {
       const normalized = normalizeAlert({
@@ -121,7 +122,7 @@ export const useAlertSourcesFetch = () => {
         raw_data: alert.raw_data
       }, source.source_type);
       
-      console.log('Normalized weather alert:', {
+      logger.debug('Normalized weather alert:', {
         id: normalized.id,
         title: normalized.title,
         source: normalized.source

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 interface PipelineStage {
   name: string;
@@ -33,6 +34,7 @@ const DataPipelineDiagnostics = () => {
   const diagnoseDataPipeline = async () => {
     try {
       setLoading(true);
+      logger.info('Starting data pipeline diagnosis...');
       
       // Stage 1: Alert Sources Configuration
       const { data: sources, error: sourcesError } = await supabase
@@ -102,8 +104,9 @@ const DataPipelineDiagnostics = () => {
       ];
 
       setPipeline(pipelineStages);
+      logger.info('Pipeline diagnosis completed successfully');
     } catch (error) {
-      console.error('Error diagnosing pipeline:', error);
+      logger.error('Error diagnosing pipeline:', error);
       toast({
         title: 'Error',
         description: 'Failed to diagnose data pipeline',
@@ -117,6 +120,7 @@ const DataPipelineDiagnostics = () => {
   const testDataPipeline = async () => {
     setTesting(true);
     try {
+      logger.info('Testing data pipeline...');
       // Trigger the master ingestion orchestrator
       const { data, error } = await supabase.functions.invoke('master-ingestion-orchestrator');
       
@@ -133,7 +137,7 @@ const DataPipelineDiagnostics = () => {
       }, 5000);
 
     } catch (error) {
-      console.error('Error testing pipeline:', error);
+      logger.error('Error testing pipeline:', error);
       toast({
         title: 'Test Failed',
         description: 'Failed to test data pipeline. Check API configurations.',
