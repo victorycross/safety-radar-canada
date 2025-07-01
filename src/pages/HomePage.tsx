@@ -39,7 +39,7 @@ const HomePage = () => {
   const dataSourcesCount = sources?.length || 0;
   const healthySources = sources?.filter(s => s.health_status === 'healthy') || [];
   const healthySourcesCount = healthySources.length;
-  const processingQueueCount = queueStatus?.pending_count || 0;
+  const processingQueueCount = queueStatus?.pending || 0;
   const systemErrors = sources?.filter(s => s.health_status === 'error').length || 0;
   
   // Get last data update time from health metrics
