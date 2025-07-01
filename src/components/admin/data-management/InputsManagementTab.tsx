@@ -13,8 +13,29 @@ import {
   Plus,
   Settings
 } from 'lucide-react';
+import RSSFeedModal from '../modals/RSSFeedModal';
+import APISourceModal from '../modals/APISourceModal';
 
 const InputsManagementTab = () => {
+  const [rssModalOpen, setRssModalOpen] = useState(false);
+  const [apiModalOpen, setApiModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+
+  const handleOpenRSSModal = (mode: 'create' | 'edit' = 'create') => {
+    setModalMode(mode);
+    setRssModalOpen(true);
+  };
+
+  const handleOpenAPIModal = (mode: 'create' | 'edit' = 'create') => {
+    setModalMode(mode);
+    setApiModalOpen(true);
+  };
+
+  const handleModalSuccess = () => {
+    // Refresh data or update UI as needed
+    console.log('Operation successful');
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -138,11 +159,11 @@ const InputsManagementTab = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Button className="w-full">
+                <Button className="w-full" onClick={() => handleOpenRSSModal('create')}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add RSS Feed
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={() => handleOpenRSSModal('edit')}>
                   <Settings className="h-4 w-4 mr-2" />
                   Manage Feeds
                 </Button>
@@ -185,11 +206,11 @@ const InputsManagementTab = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Button className="w-full">
+                <Button className="w-full" onClick={() => handleOpenAPIModal('create')}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add API Source
                 </Button>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={() => handleOpenAPIModal('edit')}>
                   <Settings className="h-4 w-4 mr-2" />
                   Configure APIs
                 </Button>
@@ -239,6 +260,21 @@ const InputsManagementTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      <RSSFeedModal
+        isOpen={rssModalOpen}
+        onClose={() => setRssModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        mode={modalMode}
+      />
+
+      <APISourceModal
+        isOpen={apiModalOpen}
+        onClose={() => setApiModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        mode={modalMode}
+      />
     </div>
   );
 };

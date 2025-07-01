@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +15,22 @@ import {
   Calendar,
   Users
 } from 'lucide-react';
+import TemplateModal from '../modals/TemplateModal';
 
 const OutputsManagementTab = () => {
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+
+  const handleOpenTemplateModal = (mode: 'create' | 'edit' = 'create') => {
+    setModalMode(mode);
+    setTemplateModalOpen(true);
+  };
+
+  const handleModalSuccess = () => {
+    // Refresh data or update UI as needed
+    console.log('Template operation successful');
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -147,8 +161,12 @@ const OutputsManagementTab = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Button className="w-full">
+              <Button className="w-full" onClick={() => handleOpenTemplateModal('create')}>
                 <Mail className="h-4 w-4 mr-2" />
+                Create Template
+              </Button>
+              <Button variant="outline" className="w-full" onClick={() => handleOpenTemplateModal('edit')}>
+                <Settings className="h-4 w-4 mr-2" />
                 Manage Templates
               </Button>
               <Button variant="outline" className="w-full">
@@ -240,6 +258,14 @@ const OutputsManagementTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Template Modal */}
+      <TemplateModal
+        isOpen={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        mode={modalMode}
+      />
     </div>
   );
 };
