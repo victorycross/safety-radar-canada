@@ -130,7 +130,7 @@ const SystemHealthTab = () => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="font-medium">Avg Response Time:</span>
-                    <span className="text-green-600">< 200ms</span>
+                    <span className="text-green-600">&lt; 200ms</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Database Queries:</span>
@@ -142,7 +142,7 @@ const SystemHealthTab = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Error Rate:</span>
-                    <span className="text-green-600">< 0.1%</span>
+                    <span className="text-green-600">&lt; 0.1%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Uptime:</span>
