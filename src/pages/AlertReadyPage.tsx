@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import AlertsList from '@/components/alert-ready/AlertsList';
-import BCAlertslist from '@/components/alert-ready/BCAlertslist';
-import EverbridgeAlertsList from '@/components/alert-ready/EverbridgeAlertsList';
 import CriticalAlertsSummary from '@/components/alert-ready/CriticalAlertsSummary';
 import UnifiedAlertControls from '@/components/alert-ready/UnifiedAlertControls';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle, Filter, X } from 'lucide-react';
 import { useAllAlertSources } from '@/hooks/useAllAlertSources';
-import { useBCAlerts } from '@/hooks/useBCAlerts';
-import { useEverbridgeAlerts } from '@/hooks/useEverbridgeAlerts';
 import { useAlertManagement } from '@/hooks/useAlertManagement';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import AlertDetailModal from '@/components/alerts/AlertDetailModal';
@@ -22,22 +17,10 @@ import AlertLocationMap from '@/components/alert-ready/AlertLocationMap';
 
 const AlertReadyPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all-alerts');
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   
   const { alerts: allAlerts, loading: allLoading, error: allError, fetchAlerts: fetchAllAlerts } = useAllAlertSources();
-  const { alerts: bcAlerts, loading: bcLoading, error: bcError, fetchAlerts: fetchBCAlerts } = useBCAlerts();
-  const { alerts: everbridgeAlerts, loading: everbridgeLoading, error: everbridgeError, fetchAlerts: fetchEverbridgeAlerts } = useEverbridgeAlerts();
   const { refreshData } = useSupabaseDataContext();
-
-  // Use alert management hook for the current tab's alerts
-  const getCurrentAlerts = () => {
-    switch (activeTab) {
-      case 'bc-alerts': return bcAlerts;
-      case 'everbridge': return everbridgeAlerts;
-      default: return allAlerts;
-    }
-  };
 
   const {
     filteredAlerts,
@@ -49,7 +32,7 @@ const AlertReadyPage = () => {
     updateFilters,
     clearFilters,
     archiveAlert
-  } = useAlertManagement(getCurrentAlerts());
+  } = useAlertManagement(allAlerts);
 
   // Handle location filtering
   const handleLocationFilter = (location: string | null) => {
@@ -78,29 +61,9 @@ const AlertReadyPage = () => {
     }
   }, [searchParams, updateFilters]);
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    // Clear location-specific filters when switching tabs
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.delete('location');
-    newSearchParams.delete('type');
-    setSearchParams(newSearchParams);
-    setSelectedLocation(null);
-    clearFilters();
-  };
-
   const hasActiveFilters = Object.keys(filters).some(key => 
     filters[key as keyof typeof filters] !== undefined && filters[key as keyof typeof filters] !== ''
   );
-
-  // Get current loading state based on active tab
-  const getCurrentLoading = () => {
-    switch (activeTab) {
-      case 'bc-alerts': return bcLoading;
-      case 'everbridge': return everbridgeLoading;
-      default: return allLoading;
-    }
-  };
 
   const handleRefreshIncidents = () => {
     refreshData();
@@ -166,7 +129,7 @@ const AlertReadyPage = () => {
         </div>
       </div>
 
-      {/* Critical Alerts Summary - Always shows all alerts for overview */}
+      {/* Critical Alerts Summary */}
       <CriticalAlertsSummary 
         alerts={allAlerts} 
         loading={allLoading} 
@@ -174,13 +137,13 @@ const AlertReadyPage = () => {
 
       {/* Location Context and Mapping */}
       <LocationContext
-        alerts={getCurrentAlerts()}
+        alerts={allAlerts}
         onLocationFilter={handleLocationFilter}
         selectedLocation={selectedLocation}
       />
 
       <AlertLocationMap
-        alerts={getCurrentAlerts()}
+        alerts={allAlerts}
         onLocationClick={handleLocationFilter}
         selectedLocation={selectedLocation}
       />
@@ -191,70 +154,24 @@ const AlertReadyPage = () => {
         onRefreshIncidents={handleRefreshIncidents}
       />
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all-alerts">
-            All Alerts
-            {activeTab === 'all-alerts' && filteredAlerts.length > 0 && (
-              <Badge variant="secondary" className="ml-2">{filteredAlerts.length}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="bc-alerts">
-            BC Alerts
-            {activeTab === 'bc-alerts' && filteredAlerts.length > 0 && (
-              <Badge variant="secondary" className="ml-2">{filteredAlerts.length}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="everbridge">
-            Everbridge
-            {activeTab === 'everbridge' && filteredAlerts.length > 0 && (
-              <Badge variant="secondary" className="ml-2">{filteredAlerts.length}</Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
+      {/* Unified Alerts List */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold">All Alerts</h2>
+          {filteredAlerts.length > 0 && (
+            <Badge variant="secondary">{filteredAlerts.length} alerts</Badge>
+          )}
+        </div>
         
-        <TabsContent value="all-alerts" className="space-y-4">
-          <AlertsList 
-            alerts={filteredAlerts}
-            loading={allLoading}
-            error={allError}
-            fetchAlerts={fetchAllAlerts}
-            activeView="all"
-            onAlertClick={openAlertDetail}
-          />
-        </TabsContent>
-        
-        <TabsContent value="bc-alerts" className="space-y-4">
-          <BCAlertslist 
-            alerts={filteredAlerts}
-            loading={bcLoading}
-            error={bcError}
-            fetchAlerts={fetchBCAlerts}
-            onAlertClick={openAlertDetail}
-          />
-        </TabsContent>
-        
-        <TabsContent value="everbridge" className="space-y-4">
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                Everbridge Integration
-              </CardTitle>
-              <CardDescription>
-                Everbridge alerts will appear here once the integration is configured with real API credentials.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          <EverbridgeAlertsList 
-            alerts={filteredAlerts}
-            loading={everbridgeLoading}
-            error={everbridgeError}
-            fetchAlerts={fetchEverbridgeAlerts}
-            onAlertClick={openAlertDetail}
-          />
-        </TabsContent>
-      </Tabs>
+        <AlertsList 
+          alerts={filteredAlerts}
+          loading={allLoading}
+          error={allError}
+          fetchAlerts={fetchAllAlerts}
+          activeView="all"
+          onAlertClick={openAlertDetail}
+        />
+      </div>
 
       <AlertDetailModal
         alert={selectedAlert}
