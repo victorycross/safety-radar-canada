@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,15 +56,18 @@ export const useDataManagement = () => {
 
       if (error) throw error;
 
-      return data.map(item => ({
-        id: item.id,
-        name: item.name,
-        url: item.api_endpoint,
-        category: item.configuration?.category || 'general',
-        is_active: item.is_active,
-        polling_interval: item.polling_interval,
-        last_updated: item.updated_at
-      }));
+      return data.map(item => {
+        const config = item.configuration as any;
+        return {
+          id: item.id,
+          name: item.name,
+          url: item.api_endpoint,
+          category: config?.category || 'general',
+          is_active: item.is_active,
+          polling_interval: item.polling_interval,
+          last_updated: item.updated_at
+        };
+      });
     } catch (error) {
       console.error('Error fetching RSS feeds:', error);
       toast({
@@ -91,11 +93,12 @@ export const useDataManagement = () => {
 
       if (error) throw error;
 
+      const config = data.configuration as any;
       return {
         id: data.id,
         name: data.name,
         url: data.api_endpoint,
-        category: data.configuration?.category || 'general',
+        category: config?.category || 'general',
         is_active: data.is_active,
         polling_interval: data.polling_interval,
         last_updated: data.updated_at
