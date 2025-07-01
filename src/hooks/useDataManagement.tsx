@@ -293,6 +293,46 @@ export const useDataManagement = () => {
     }
   };
 
+  const createAPISource = async (sourceData: Omit<APISource, 'id'>) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('alert_sources')
+        .insert([{
+          name: sourceData.name,
+          source_type: sourceData.type,
+          api_endpoint: sourceData.endpoint,
+          is_active: sourceData.is_active,
+          configuration: {
+            ...sourceData.configuration,
+            authentication: sourceData.authentication,
+            source_category: 'api'
+          }
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: 'API Source Created',
+        description: `${sourceData.name} has been added successfully`,
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error creating API source:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create API source',
+        variant: 'destructive'
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updateAPISource = async (id: string, updates: Partial<APISource>) => {
     setLoading(true);
     try {
