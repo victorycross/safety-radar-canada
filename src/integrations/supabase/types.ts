@@ -170,6 +170,39 @@ export type Database = {
         }
         Relationships: []
       }
+      analysis_rules: {
+        Row: {
+          analysis_type: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          rule_config: Json
+          threshold_values: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          analysis_type: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          rule_config: Json
+          threshold_values?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          rule_config?: Json
+          threshold_values?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       cities: {
         Row: {
           code: string
@@ -214,6 +247,48 @@ export type Database = {
           },
         ]
       }
+      classification_rules: {
+        Row: {
+          classification_value: string
+          condition_pattern: string
+          confidence_score: number | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          rule_type: string
+          source_types: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          classification_value: string
+          condition_pattern: string
+          confidence_score?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          rule_type: string
+          source_types?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          classification_value?: string
+          condition_pattern?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          rule_type?: string
+          source_types?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       communication_templates: {
         Row: {
           content: string
@@ -247,6 +322,48 @@ export type Database = {
           subject?: string | null
           type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      data_processing_config: {
+        Row: {
+          category: string
+          config_data: Json
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          priority: number | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          category: string
+          config_data: Json
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          config_data?: Json
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority?: number | null
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -818,6 +935,48 @@ export type Database = {
         }
         Relationships: []
       }
+      normalization_rules: {
+        Row: {
+          category_mapping: Json | null
+          created_at: string | null
+          created_by: string | null
+          field_mappings: Json
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          severity_mapping: Json | null
+          source_type: string
+          transformation_rules: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_mapping?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          field_mappings: Json
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          severity_mapping?: Json | null
+          source_type: string
+          transformation_rules?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_mapping?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          field_mappings?: Json
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          severity_mapping?: Json | null
+          source_type?: string
+          transformation_rules?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -869,6 +1028,42 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      quality_control_rules: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          error_handling: Json | null
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          updated_at: string | null
+          validation_config: Json
+          validation_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          error_handling?: Json | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          updated_at?: string | null
+          validation_config: Json
+          validation_type: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          error_handling?: Json | null
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          updated_at?: string | null
+          validation_config?: Json
+          validation_type?: string
         }
         Relationships: []
       }
@@ -1235,6 +1430,15 @@ export type Database = {
           user_id?: string
         }
         Returns: Json
+      }
+      get_active_processing_rules: {
+        Args: { rule_category: string }
+        Returns: {
+          id: string
+          name: string
+          config_data: Json
+          priority: number
+        }[]
       }
       has_role: {
         Args: {
