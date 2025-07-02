@@ -7,37 +7,47 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Bell, ExternalLink, Loader2, AlertTriangle, MapPin } from 'lucide-react';
 import { UniversalAlert } from '@/types/alerts';
-import { fetchAlertReadyData } from '@/utils/alertReadyUtils';
+import { unifiedDataProvider } from '@/services/unifiedDataProvider';
+import { alertClassificationService, ClassifiedAlert } from '@/services/alertClassificationService';
 import { useToast } from '@/hooks/use-toast';
 import AlertDetailModal from '@/components/alerts/AlertDetailModal';
+import DataFreshnessIndicator from '@/components/ui/DataFreshnessIndicator';
 
 interface RecentAlertsProps {
   onAlertClick?: (alert: UniversalAlert) => void;
 }
 
 const RecentAlerts: React.FC<RecentAlertsProps> = ({ onAlertClick }) => {
-  const [alerts, setAlerts] = useState<UniversalAlert[]>([]);
+  const [alerts, setAlerts] = useState<ClassifiedAlert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAlert, setSelectedAlert] = useState<UniversalAlert | null>(null);
+  const [selectedAlert, setSelectedAlert] = useState<ClassifiedAlert | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [bannerTitle, setBannerTitle] = useState('Recent Alerts');
+  const [freshness, setFreshness] = useState<any>(null);
   const { toast } = useToast();
   
   useEffect(() => {
     const getAlerts = async () => {
       setLoading(true);
       try {
-        const alertData = await fetchAlertReadyData();
-        // Get only severe or extreme alerts
-        const criticalAlerts = alertData.filter(
-          alert => alert.severity === 'Extreme' || alert.severity === 'Severe' || alert.urgency === 'Immediate'
+        const unifiedData = await unifiedDataProvider.getUnifiedAlerts();
+        
+        // Filter for critical/relevant alerts for dashboard display
+        const relevantAlerts = unifiedData.alerts.filter(alert => 
+          alert.classification.urgencyScore > 0.3 || // High urgency
+          !alert.classification.isRoutine || // Non-routine
+          alert.severity === 'Extreme' || alert.severity === 'Severe'
         ).slice(0, 3); // Limit to 3 alerts
         
-        setAlerts(criticalAlerts);
+        setAlerts(relevantAlerts);
+        setFreshness(unifiedData.freshness);
+        setBannerTitle(alertClassificationService.getContextualBannerTitle(relevantAlerts));
+        
       } catch (err) {
         console.error('Error fetching alerts for homepage:', err);
         toast({
           title: 'Error',
-          description: 'Failed to load emergency alerts',
+          description: 'Failed to load alerts',
           variant: 'destructive'
         });
       } finally {
@@ -78,7 +88,7 @@ const RecentAlerts: React.FC<RecentAlertsProps> = ({ onAlertClick }) => {
     }
   };
 
-  const handleAlertClick = (alert: UniversalAlert) => {
+  const handleAlertClick = (alert: ClassifiedAlert) => {
     if (onAlertClick) {
       onAlertClick(alert);
     } else {
@@ -98,7 +108,7 @@ const RecentAlerts: React.FC<RecentAlertsProps> = ({ onAlertClick }) => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Bell className="mr-2 h-5 w-5 text-warning" />
-            Emergency Alerts
+            Loading Alerts
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -116,11 +126,11 @@ const RecentAlerts: React.FC<RecentAlertsProps> = ({ onAlertClick }) => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Bell className="mr-2 h-5 w-5 text-warning" />
-            Emergency Alerts
+            {bannerTitle}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center py-4 text-muted-foreground">No critical alerts at this time</p>
+          <p className="text-center py-4 text-muted-foreground">No relevant alerts at this time</p>
           <Link to="/alert-ready">
             <Button variant="outline" size="sm" className="w-full">View All Alerts</Button>
           </Link>
@@ -133,21 +143,36 @@ const RecentAlerts: React.FC<RecentAlertsProps> = ({ onAlertClick }) => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
+          <CardTitle className="flex items-center gap-2">
             <Bell className="mr-2 h-5 w-5 text-warning" />
-            Critical Emergency Alerts
+            {bannerTitle}
+            {freshness && (
+              <DataFreshnessIndicator 
+                lastUpdated={freshness.lastUpdated}
+                isProcessing={loading}
+                hasErrors={freshness.isStale}
+              />
+            )}
           </CardTitle>
-          <CardDescription>Recent critical alerts - click to view details</CardDescription>
+          <CardDescription>Recent alerts - click to view details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {alerts.map((alert) => (
             <div 
               key={alert.id} 
-              className="border-l-4 border-red-500 pl-3 py-2 space-y-2 cursor-pointer hover:bg-gray-50 transition-colors rounded-r-md"
+              className={`border-l-4 pl-3 py-2 space-y-2 cursor-pointer hover:bg-gray-50 transition-colors rounded-r-md ${
+                alert.classification.isRoutine ? 'border-blue-400' : 'border-red-500'
+              }`}
               onClick={() => handleAlertClick(alert)}
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm">{alert.classification.icon}</span>
+                    <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-700">
+                      {alert.classification.subtype}
+                    </span>
+                  </div>
                   <h4 className="font-medium leading-tight hover:underline">{alert.title}</h4>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                     <span>{formatAlertDate(alert.published)}</span>

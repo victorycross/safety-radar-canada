@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, Filter, X, Settings, RefreshCw, Database, Archive, Shield } from 'lucide-react';
 import { useAllAlertSources } from '@/hooks/useAllAlertSources';
 import { useEnhancedAlertManagement } from '@/hooks/useEnhancedAlertManagement';
+import { unifiedDataProvider } from '@/services/unifiedDataProvider';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import AlertDetailModal from '@/components/alerts/AlertDetailModal';
 import { Badge } from '@/components/ui/badge';
@@ -97,9 +98,10 @@ const AlertReadyPage = () => {
     return value !== undefined && value !== '' && value !== false;
   });
 
-  // Updated refresh handler to properly sync the main data source
+  // Updated refresh handler to use unified data provider
   const handleRefreshIncidents = async () => {
-    console.log('Refreshing main alert data source...');
+    console.log('Refreshing unified alert data source...');
+    await unifiedDataProvider.forceRefresh();
     await fetchAllAlerts();
     refreshData(); // Keep this for any other data dependencies
   };
