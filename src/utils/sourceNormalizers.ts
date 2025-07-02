@@ -123,6 +123,7 @@ export const normalizeAlert = (alert: any, sourceType: string): UniversalAlert =
       alert.level
     ];
     
+    // Try explicit severity fields first
     for (const field of severityFields) {
       if (field && typeof field === 'string') {
         const severity = field.toLowerCase().trim();
@@ -135,18 +136,51 @@ export const normalizeAlert = (alert: any, sourceType: string): UniversalAlert =
       }
     }
     
-    // Determine severity from source type and content
+    // Enhanced content-based severity detection for Canadian feeds
+    const title = (alert.title || '').toLowerCase();
+    const description = (alert.description || '').toLowerCase();
+    const combinedText = `${title} ${description}`;
+    
+    // Extreme severity indicators
+    if (combinedText.match(/\b(extreme|critical|emergency|catastrophic|tornado|hurricane|tsunami|terrorist|evacuation)\b/)) {
+      return 'Extreme';
+    }
+    
+    // Severe severity indicators
+    if (combinedText.match(/\b(severe|major|high|warning|alert|lockdown|shelter|dangerous)\b/)) {
+      return 'Severe';
+    }
+    
+    // Moderate severity indicators
+    if (combinedText.match(/\b(moderate|medium|watch|advisory|caution|prepare|monitor)\b/)) {
+      return 'Moderate';
+    }
+    
+    // Minor severity indicators
+    if (combinedText.match(/\b(minor|low|notice|update|information|routine)\b/)) {
+      return 'Minor';
+    }
+    
+    // Info severity indicators
+    if (combinedText.match(/\b(info|information|informational|announcement|bulletin|statement)\b/)) {
+      return 'Info';
+    }
+    
+    // Default based on source type with Canadian government context
     if (sourceType.includes('security') || sourceType.includes('cyber')) {
       return 'Moderate'; // Security alerts are generally important
     }
     
     if (sourceType.includes('weather')) {
-      // Check description for weather severity indicators
-      const desc = (alert.description || '').toLowerCase();
-      if (desc.includes('tornado') || desc.includes('hurricane') || desc.includes('severe thunderstorm')) {
+      // Weather-specific severity detection
+      if (combinedText.includes('tornado') || combinedText.includes('hurricane') || combinedText.includes('severe thunderstorm')) {
         return 'Severe';
       }
       return 'Minor';
+    }
+    
+    if (sourceType.includes('emergency') || sourceType.includes('government')) {
+      return 'Moderate'; // Err on side of caution for government sources
     }
     
     return 'Unknown';

@@ -1,27 +1,50 @@
 
 import { UniversalAlert } from '../alert-types.ts';
 
-// Normalize severity with mapping support
-export const normalizeSeverity = (value: string, severityMapping?: Record<string, string>): UniversalAlert['severity'] => {
-  if (!value) return 'Unknown';
+// Normalize severity with enhanced Canadian government feed support
+export const normalizeSeverity = (value: string, severityMapping?: Record<string, string>, content?: string): UniversalAlert['severity'] => {
+  if (!value && !content) return 'Unknown';
   
-  const normalizedValue = value.toString().toLowerCase();
+  const normalizedValue = value?.toString().toLowerCase() || '';
+  const contentText = content?.toLowerCase() || '';
   
   // Use custom mapping if provided
-  if (severityMapping) {
+  if (severityMapping && value) {
     const mapped = severityMapping[normalizedValue] || 
                   severityMapping[value];
     if (mapped) return mapped as UniversalAlert['severity'];
   }
   
-  // Default severity normalization
-  if (normalizedValue.includes('extreme') || normalizedValue.includes('critical')) return 'Extreme';
-  if (normalizedValue.includes('severe') || normalizedValue.includes('high')) return 'Severe';
-  if (normalizedValue.includes('moderate') || normalizedValue.includes('medium')) return 'Moderate';
-  if (normalizedValue.includes('minor') || normalizedValue.includes('low')) return 'Minor';
-  if (normalizedValue.includes('info') || normalizedValue.includes('information')) return 'Info';
+  // Enhanced severity detection with content analysis
+  const combinedText = `${normalizedValue} ${contentText}`;
   
-  return 'Unknown';
+  // Extreme severity indicators
+  if (combinedText.match(/\b(extreme|critical|emergency|catastrophic|tornado|hurricane|tsunami|terrorist)\b/)) {
+    return 'Extreme';
+  }
+  
+  // Severe severity indicators
+  if (combinedText.match(/\b(severe|major|high|warning|alert|evacuation|shelter|lockdown)\b/)) {
+    return 'Severe';
+  }
+  
+  // Moderate severity indicators
+  if (combinedText.match(/\b(moderate|medium|watch|advisory|caution|prepare)\b/)) {
+    return 'Moderate';
+  }
+  
+  // Minor severity indicators
+  if (combinedText.match(/\b(minor|low|advisory|notice|update|information)\b/)) {
+    return 'Minor';
+  }
+  
+  // Info severity indicators
+  if (combinedText.match(/\b(info|information|informational|announcement|bulletin)\b/)) {
+    return 'Info';
+  }
+  
+  // Default to Moderate for Canadian government sources to err on side of caution
+  return 'Moderate';
 };
 
 // Normalize urgency
