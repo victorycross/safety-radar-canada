@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
   const location = useLocation();
-  const { user, isAdmin, isPowerUserOrAdmin } = useAuth();
+  const { user, isAdmin, isPowerUserOrAdmin, hasRole } = useAuth();
 
   // Dashboard & Monitoring section - for all authenticated users
   const dashboardSection = [
@@ -27,9 +27,9 @@ const Sidebar = () => {
     { name: 'Location Status', href: '/location-status', icon: MapPin },
   ];
 
-  // Analytics & Reporting section - for admins only
-  const analyticsSection = isAdmin() ? [
-    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  // Analytics & Reporting section - for admins, power users, and auditors
+  const analyticsSection = (isAdmin() || isPowerUserOrAdmin() || hasRole('auditor')) ? [
+    { name: 'Analytics & Reporting', href: '/analytics', icon: BarChart3 },
     { name: 'Incident Reports', href: '/incidents', icon: Activity },
     { name: 'Executive Reports', href: '/report', icon: TrendingUp },
   ] : [];

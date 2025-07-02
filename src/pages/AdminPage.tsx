@@ -19,13 +19,14 @@ const AdminPage = () => {
       'monitoring': 'system-health',
       'settings': 'documentation',
       'overview': 'operations',
-      'users': 'user-management'
+      'users': 'user-management',
+      'security-risks': 'operations' // Redirect old security-risks tab to operations
     };
     
     if (tabParam) {
       const mappedTab = tabMapping[tabParam] || tabParam;
-      // Validate the tab exists
-      const validTabs = ['operations', 'data-management', 'system-health', 'security-risks', 'archive-management', 'user-management', 'documentation'];
+      // Validate the tab exists (removed security-risks from valid tabs)
+      const validTabs = ['operations', 'data-management', 'system-health', 'archive-management', 'user-management', 'documentation'];
       if (validTabs.includes(mappedTab)) {
         setActiveTab(mappedTab);
       }

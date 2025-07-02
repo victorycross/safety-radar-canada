@@ -5,6 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AnalyticsFilters from '@/components/analytics/AnalyticsFilters';
 import EnhancedCharts from '@/components/analytics/EnhancedCharts';
 import ExecutiveSummary from '@/components/analytics/ExecutiveSummary';
+import SecurityRiskRegisterTab from '@/components/admin/SecurityRiskRegisterTab';
+import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
 import { useAnalyticsState } from '@/hooks/useAnalyticsState';
 import { AnalyticsChartData } from '@/types/analytics';
 
@@ -37,76 +39,76 @@ const AnalyticsPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Security Analytics</h1>
-        <p className="text-muted-foreground">
-          Analyze security incidents and trends across your organization
-        </p>
+    <RoleProtectedRoute 
+      allowedRoles={['admin', 'power_user', 'auditor']}
+      fallbackMessage="Access to Analytics & Reporting requires Administrator, Power User, or Auditor privileges."
+    >
+      <div className="container mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">Analytics & Reporting</h1>
+          <p className="text-muted-foreground">
+            Comprehensive analytics, risk assessment, and reporting tools for security operations
+          </p>
+        </div>
+
+        <Tabs defaultValue="analytics" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="analytics">Security Analytics</TabsTrigger>
+            <TabsTrigger value="risk-register">Risk Register</TabsTrigger>
+            <TabsTrigger value="executive">Executive Summary</TabsTrigger>
+            <TabsTrigger value="reporting">Reporting Tools</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="analytics" className="space-y-6">
+            <AnalyticsFilters
+              filters={state.filters}
+              onFiltersChange={updateFilters}
+              onReset={resetFilters}
+              onExport={exportData}
+              autoRefresh={state.autoRefresh}
+              onAutoRefreshToggle={() => updateFilters({ refreshInterval: state.filters.refreshInterval })}
+            />
+            
+            <EnhancedCharts 
+              incidentsByAlertLevel={mockChartData.incidentsByAlertLevel}
+              incidentsBySource={mockChartData.incidentsBySource}
+              provincesByAlertLevel={mockChartData.provincesByAlertLevel}
+            />
+          </TabsContent>
+
+          <TabsContent value="risk-register" className="space-y-6">
+            <SecurityRiskRegisterTab />
+          </TabsContent>
+
+          <TabsContent value="executive" className="space-y-6">
+            <ExecutiveSummary 
+              totalIncidents={60}
+              affectedProvinces={13}
+              latestIncident="Security alert in Ontario"
+              incidentsByAlertLevel={mockChartData.incidentsByAlertLevel}
+              provinces={[]}
+            />
+          </TabsContent>
+
+          <TabsContent value="reporting" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Reporting Tools</CardTitle>
+                <CardDescription>
+                  Advanced reporting and export capabilities for comprehensive analysis
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Advanced reporting tools will be available in a future update.</p>
+                  <p className="text-sm mt-2">Features in development: Custom reports, automated scheduling, and advanced export options.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="detailed">Detailed Analysis</TabsTrigger>
-          <TabsTrigger value="executive">Executive Summary</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <AnalyticsFilters
-            filters={state.filters}
-            onFiltersChange={updateFilters}
-            onReset={resetFilters}
-            onExport={exportData}
-            autoRefresh={state.autoRefresh}
-            onAutoRefreshToggle={() => updateFilters({ refreshInterval: state.filters.refreshInterval })}
-          />
-          
-          <EnhancedCharts 
-            incidentsByAlertLevel={mockChartData.incidentsByAlertLevel}
-            incidentsBySource={mockChartData.incidentsBySource}
-            provincesByAlertLevel={mockChartData.provincesByAlertLevel}
-          />
-        </TabsContent>
-
-        <TabsContent value="detailed" className="space-y-6">
-          <AnalyticsFilters
-            filters={state.filters}
-            onFiltersChange={updateFilters}
-            onReset={resetFilters}
-            onExport={exportData}
-            autoRefresh={state.autoRefresh}
-            onAutoRefreshToggle={() => updateFilters({ refreshInterval: state.filters.refreshInterval })}
-          />
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Detailed Analytics</CardTitle>
-              <CardDescription>
-                Comprehensive breakdown of security metrics and trends
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EnhancedCharts 
-                incidentsByAlertLevel={mockChartData.incidentsByAlertLevel}
-                incidentsBySource={mockChartData.incidentsBySource}
-                provincesByAlertLevel={mockChartData.provincesByAlertLevel}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="executive" className="space-y-6">
-          <ExecutiveSummary 
-            totalIncidents={60}
-            affectedProvinces={13}
-            latestIncident="Security alert in Ontario"
-            incidentsByAlertLevel={mockChartData.incidentsByAlertLevel}
-            provinces={[]}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
+    </RoleProtectedRoute>
   );
 };
 
