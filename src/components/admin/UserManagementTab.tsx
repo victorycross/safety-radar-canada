@@ -16,14 +16,15 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { format } from 'date-fns';
 
-type AppRole = 'admin' | 'power_user' | 'regular_user' | 'auditor';
+// Update to match the actual database schema
+type DatabaseRole = 'admin' | 'power_user' | 'regular_user';
 
 interface User {
   id: string;
   email: string;
   full_name?: string;
   created_at: string;
-  roles: AppRole[];
+  roles: DatabaseRole[];
   last_sign_in_at?: string;
 }
 
@@ -43,7 +44,7 @@ const UserManagementTab = () => {
   const [auditLogs, setAuditLogs] = useState<UserAudit[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRole, setSelectedRole] = useState<AppRole | 'all'>('all');
+  const [selectedRole, setSelectedRole] = useState<DatabaseRole | 'all'>('all');
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
 
@@ -52,21 +53,19 @@ const UserManagementTab = () => {
     email: '',
     full_name: '',
     password: '',
-    role: 'regular_user' as AppRole
+    role: 'regular_user' as DatabaseRole
   });
 
   const roleLabels = {
     admin: 'Administrator',
     power_user: 'Power User',
-    regular_user: 'Regular User',
-    auditor: 'Auditor'
+    regular_user: 'Regular User'
   };
 
   const roleColors = {
     admin: 'destructive',
     power_user: 'default',
-    regular_user: 'secondary',
-    auditor: 'outline'
+    regular_user: 'secondary'
   } as const;
 
   useEffect(() => {
@@ -289,7 +288,7 @@ const UserManagementTab = () => {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: AppRole) => {
+  const handleRoleChange = async (userId: string, newRole: DatabaseRole) => {
     setLoading(true);
     try {
       const user = users.find(u => u.id === userId);
@@ -348,12 +347,12 @@ const UserManagementTab = () => {
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === 'all' || user.roles.includes(selectedRole as AppRole);
+    const matchesRole = selectedRole === 'all' || user.roles.includes(selectedRole as DatabaseRole);
     return matchesSearch && matchesRole;
   });
 
   const handleRoleFilterChange = (value: string) => {
-    setSelectedRole(value as AppRole | 'all');
+    setSelectedRole(value as DatabaseRole | 'all');
   };
 
   if (!isAdmin()) {
@@ -469,7 +468,7 @@ const UserManagementTab = () => {
                           <Label htmlFor="role">Initial Role</Label>
                           <Select 
                             value={newUser.role} 
-                            onValueChange={(value: AppRole) => setNewUser(prev => ({ ...prev, role: value }))}
+                            onValueChange={(value: DatabaseRole) => setNewUser(prev => ({ ...prev, role: value }))}
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -477,7 +476,6 @@ const UserManagementTab = () => {
                             <SelectContent>
                               <SelectItem value="regular_user">Regular User</SelectItem>
                               <SelectItem value="power_user">Power User</SelectItem>
-                              <SelectItem value="auditor">Auditor</SelectItem>
                               <SelectItem value="admin">Administrator</SelectItem>
                             </SelectContent>
                           </Select>
@@ -513,7 +511,6 @@ const UserManagementTab = () => {
                     <SelectItem value="all">All Roles</SelectItem>
                     <SelectItem value="admin">Administrator</SelectItem>
                     <SelectItem value="power_user">Power User</SelectItem>
-                    <SelectItem value="auditor">Auditor</SelectItem>
                     <SelectItem value="regular_user">Regular User</SelectItem>
                   </SelectContent>
                 </Select>
@@ -559,7 +556,7 @@ const UserManagementTab = () => {
                       <TableCell>
                         <Select
                           value={user.roles[0] || ''}
-                          onValueChange={(value: AppRole) => handleRoleChange(user.id, value)}
+                          onValueChange={(value: DatabaseRole) => handleRoleChange(user.id, value)}
                         >
                           <SelectTrigger className="w-32">
                             <SelectValue placeholder="Assign role" />
@@ -567,7 +564,6 @@ const UserManagementTab = () => {
                           <SelectContent>
                             <SelectItem value="regular_user">Regular User</SelectItem>
                             <SelectItem value="power_user">Power User</SelectItem>
-                            <SelectItem value="auditor">Auditor</SelectItem>
                             <SelectItem value="admin">Administrator</SelectItem>
                           </SelectContent>
                         </Select>
