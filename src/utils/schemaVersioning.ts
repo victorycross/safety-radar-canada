@@ -1,4 +1,3 @@
-
 export interface SchemaVersion {
   version: string;
   releaseDate: string;
@@ -16,6 +15,62 @@ export interface SchemaChange {
 }
 
 export const SCHEMA_VERSIONS: SchemaVersion[] = [
+  {
+    version: '3.0.0',
+    releaseDate: '2025-01-02',
+    description: 'AI Integration and Multi-Tenant Architecture Implementation',
+    breakingChanges: false,
+    changes: [
+      {
+        type: 'table_added',
+        table: 'organizations',
+        description: 'Multi-tenant organization management with subscription tiers',
+        impact: 'high'
+      },
+      {
+        type: 'table_added',
+        table: 'ai_configurations',
+        description: 'AI provider configurations with encrypted API keys and feature flags',
+        impact: 'high'
+      },
+      {
+        type: 'column_added',
+        table: 'user_roles',
+        column: 'organization_id',
+        description: 'Organization-level user role isolation',
+        impact: 'medium'
+      },
+      {
+        type: 'column_added',
+        table: 'profiles',
+        column: 'organization_id',
+        description: 'Link user profiles to organizations',
+        impact: 'medium'
+      },
+      {
+        type: 'function_added',
+        description: 'get_organization_ai_config() for secure AI configuration retrieval',
+        impact: 'medium'
+      },
+      {
+        type: 'function_added',
+        description: 'update_ai_usage_stats() for AI cost and usage tracking',
+        impact: 'medium'
+      },
+      {
+        type: 'rls_policy_added',
+        table: 'organizations',
+        description: 'Multi-tenant RLS policies for organization data isolation',
+        impact: 'high'
+      },
+      {
+        type: 'rls_policy_added',
+        table: 'ai_configurations',
+        description: 'Organization-specific AI configuration access controls',
+        impact: 'high'
+      }
+    ]
+  },
   {
     version: '2.0.0',
     releaseDate: '2025-01-01',
@@ -233,7 +288,7 @@ export class SchemaVersionManager {
       return acc;
     }, {} as Record<string, SchemaChange[]>);
 
-    let changelog = `# Schema Changes\n\n`;
+    let changelog = `# Schema Changes${fromVersion ? ` (from ${fromVersion})` : ''}\n\n`;
     
     Object.entries(changesByType).forEach(([type, typeChanges]) => {
       const readableType = type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -241,12 +296,44 @@ export class SchemaVersionManager {
       
       typeChanges.forEach(change => {
         const tableInfo = change.table ? ` (${change.table})` : '';
-        changelog += `- ${change.description}${tableInfo} [${change.impact.toUpperCase()}]\n`;
+        const columnInfo = change.column ? `.${change.column}` : '';
+        changelog += `- ${change.description}${tableInfo}${columnInfo} [${change.impact.toUpperCase()}]\n`;
       });
       
       changelog += '\n';
     });
 
+    // Add AI-specific migration notes for version 3.0.0
+    if (!fromVersion || fromVersion < '3.0.0') {
+      changelog += `## AI Integration Migration Notes\n\n`;
+      changelog += `- All existing users will be assigned to a "Default Organization"\n`;
+      changelog += `- AI features are disabled by default and require configuration\n`;
+      changelog += `- API keys must be configured per organization for AI functionality\n`;
+      changelog += `- Cost limits are set to conservative defaults ($100 daily, $1000 monthly)\n\n`;
+    }
+
     return changelog;
+  }
+
+  // New method to get AI-specific schema information
+  static getAISchemaInfo(): {
+    tables: string[];
+    functions: string[];
+    totalChanges: number;
+    latestVersion: string;
+  } {
+    const aiTables = ['organizations', 'ai_configurations'];
+    const aiFunctions = ['get_organization_ai_config', 'update_ai_usage_stats'];
+    const aiChanges = SCHEMA_VERSIONS[0].changes.filter(c => 
+      c.description.toLowerCase().includes('ai') || 
+      c.description.toLowerCase().includes('organization')
+    );
+
+    return {
+      tables: aiTables,
+      functions: aiFunctions,
+      totalChanges: aiChanges.length,
+      latestVersion: SCHEMA_VERSIONS[0].version
+    };
   }
 }
