@@ -9,7 +9,9 @@ import {
   getHubById, 
   getIncidentsByHub,
   addHubIncident,
-  updateHubAlertLevel
+  updateHubAlertLevel,
+  syncHubIncidentCounts,
+  validateHubDataConsistency
 } from '@/services/hubService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,10 +37,28 @@ export const useHubData = () => {
     try {
       logger.debug('useHubData: Refreshing hub data');
       
+      // First sync the hub incident counts to ensure consistency
+      await syncHubIncidentCounts();
+      
       const [hubsData, incidentsData] = await Promise.all([
         fetchInternationalHubs(),
         fetchHubIncidents()
       ]);
+
+      // Validate data consistency and log any issues
+      const validation = await validateHubDataConsistency();
+      if (!validation.isConsistent) {
+        logger.warn('Hub data consistency issues detected', {
+          discrepancies: validation.discrepancies
+        });
+        
+        // Show a toast for admins about data inconsistencies
+        toast({
+          title: 'Data Sync Notice',
+          description: `${validation.discrepancies.length} hub(s) have inconsistent incident counts. Data has been synchronized.`,
+          variant: 'default'
+        });
+      }
 
       setState({
         hubs: hubsData,
@@ -49,7 +69,8 @@ export const useHubData = () => {
 
       logger.info('useHubData: Data refreshed successfully', {
         hubsCount: hubsData.length,
-        incidentsCount: incidentsData.length
+        incidentsCount: incidentsData.length,
+        consistencyCheck: validation.isConsistent
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load hub data';
@@ -110,17 +131,25 @@ export const useHubData = () => {
     }
   };
 
-  // Get hubs with alerts
-  const alertHubs = state.hubs.filter(hub => 
-    hub.alertLevel === AlertLevel.SEVERE || hub.alertLevel === AlertLevel.WARNING
-  );
+  // Get hubs with alerts (based on actual incident counts, not stale database field)
+  const alertHubs = state.hubs.filter(hub => {
+    const hubIncidents = getIncidentsByHub(state.incidents, hub.id);
+    const hasActiveIncidents = hubIncidents.some(incident => 
+      incident.alertLevel === AlertLevel.SEVERE || incident.alertLevel === AlertLevel.WARNING
+    );
+    return hasActiveIncidents || hub.alertLevel === AlertLevel.SEVERE || hub.alertLevel === AlertLevel.WARNING;
+  });
 
-  // Aggregate metrics
+  // Aggregate metrics with real-time calculations
   const metrics = {
     totalHubs: state.hubs.length,
     alertHubsCount: alertHubs.length,
     hubEmployeesCount: state.hubs.reduce((sum, hub) => sum + hub.employeeCount, 0),
-    totalIncidents: state.incidents.length
+    totalIncidents: state.incidents.length,
+    activeIncidentsByHub: state.hubs.reduce((acc, hub) => {
+      acc[hub.id] = getIncidentsByHub(state.incidents, hub.id).length;
+      return acc;
+    }, {} as Record<string, number>)
   };
 
   return {
@@ -134,6 +163,9 @@ export const useHubData = () => {
     getHub,
     getHubIncidents,
     addIncident,
-    updateAlertLevel
+    updateAlertLevel,
+    // Expose validation for admin interfaces
+    validateDataConsistency: validateHubDataConsistency,
+    syncIncidentCounts: syncHubIncidentCounts
   };
 };

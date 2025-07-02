@@ -81,10 +81,16 @@ const UnifiedBulkArchive: React.FC<UnifiedBulkArchiveProps> = ({ onRefresh }) =>
       console.log('Refreshing local bulk interface...');
       await refreshAlerts();
       
-      // Add a small delay to ensure database changes are committed
-      setTimeout(() => {
+      // Add a small delay to ensure database changes are committed and hub data is synchronized
+      setTimeout(async () => {
         console.log('Triggering main dashboard refresh...');
         onRefresh();
+        
+        // Additional delay for hub incident synchronization
+        setTimeout(() => {
+          console.log('Final refresh to ensure hub synchronization...');
+          onRefresh();
+        }, 1000);
       }, 500);
       
     } catch (error) {
@@ -136,10 +142,16 @@ const UnifiedBulkArchive: React.FC<UnifiedBulkArchiveProps> = ({ onRefresh }) =>
       console.log('Refreshing local bulk interface...');
       await refreshAlerts();
       
-      // Add a small delay to ensure database changes are committed
-      setTimeout(() => {
+      // Add a small delay to ensure database changes are committed and hub data is synchronized
+      setTimeout(async () => {
         console.log('Triggering main dashboard refresh...');
         onRefresh();
+        
+        // Additional delay for hub incident synchronization
+        setTimeout(() => {
+          console.log('Final refresh to ensure hub synchronization...');
+          onRefresh();
+        }, 1000);
       }, 500);
       
     } catch (error) {

@@ -57,11 +57,12 @@ export const fetchInternationalHubs = async (): Promise<InternationalHub[]> => {
 
 export const fetchHubIncidents = async (): Promise<HubIncident[]> => {
   try {
-    logger.debug('Fetching hub incidents from database');
+    logger.debug('Fetching hub incidents from database (active only)');
     
     const { data, error } = await supabase
       .from('hub_incidents')
       .select('*')
+      .is('archived_at', null) // Only fetch non-archived incidents
       .order('timestamp', { ascending: false });
 
     if (error) {
@@ -91,7 +92,10 @@ export const fetchHubIncidents = async (): Promise<HubIncident[]> => {
       updated_at: incident.updated_at
     }));
 
-    logger.info('Hub incidents fetched successfully', { count: incidents.length });
+    logger.info('Hub incidents fetched successfully (active only)', { 
+      count: incidents.length,
+      incidents: incidents.map(i => ({ id: i.id, hubId: i.hubId, title: i.title }))
+    });
     return incidents;
   } catch (error) {
     logger.error('Error in fetchHubIncidents:', error);
@@ -177,6 +181,88 @@ export const updateHubAlertLevel = async (hubId: string, alertLevel: AlertLevel)
     logger.info('Hub alert level updated successfully:', { hubId, alertLevel });
   } catch (error) {
     logger.error('Error in updateHubAlertLevel:', error);
+    throw error;
+  }
+};
+
+// New function to sync hub incident counts and validate data consistency
+export const syncHubIncidentCounts = async (): Promise<void> => {
+  try {
+    logger.debug('Synchronizing all hub incident counts');
+    
+    const { error } = await supabase.rpc('sync_all_hub_incident_counts');
+    
+    if (error) {
+      logger.error('Error synchronizing hub incident counts:', error);
+      throw error;
+    }
+    
+    logger.info('Hub incident counts synchronized successfully');
+  } catch (error) {
+    logger.error('Error in syncHubIncidentCounts:', error);
+    throw error;
+  }
+};
+
+// Validate data consistency between hub records and incident counts
+export const validateHubDataConsistency = async (): Promise<{
+  isConsistent: boolean;
+  discrepancies: Array<{
+    hubId: string;
+    hubName: string;
+    hubCount: number;
+    actualCount: number;
+    difference: number;
+  }>;
+}> => {
+  try {
+    logger.debug('Validating hub data consistency');
+    
+    // Get hub data
+    const hubs = await fetchInternationalHubs();
+    const incidents = await fetchHubIncidents();
+    
+    // Calculate actual incident counts per hub
+    const actualCounts = incidents.reduce((acc, incident) => {
+      acc[incident.hubId] = (acc[incident.hubId] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const discrepancies = [];
+    let isConsistent = true;
+    
+    for (const hub of hubs) {
+      const actualCount = actualCounts[hub.id] || 0;
+      const difference = Math.abs(hub.localIncidents - actualCount);
+      
+      if (difference > 0) {
+        isConsistent = false;
+        discrepancies.push({
+          hubId: hub.id,
+          hubName: hub.name,
+          hubCount: hub.localIncidents,
+          actualCount,
+          difference
+        });
+        
+        logger.warn('Hub data inconsistency detected', {
+          hubId: hub.id,
+          hubName: hub.name,
+          recordedCount: hub.localIncidents,
+          actualCount,
+          difference
+        });
+      }
+    }
+    
+    logger.info('Hub data consistency validation completed', {
+      isConsistent,
+      discrepanciesFound: discrepancies.length
+    });
+    
+    return { isConsistent, discrepancies };
+  } catch (error) {
+    logger.error('Error validating hub data consistency:', error);
     throw error;
   }
 };

@@ -1230,6 +1230,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      sync_all_hub_incident_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       validate_hub_data_consistency: {
         Args: Record<PropertyKey, never>
         Returns: {
