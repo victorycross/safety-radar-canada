@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, UserPlus, Shield, Eye, AlertTriangle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
+import { Users, UserPlus, Shield, Eye, AlertTriangle, CheckCircle, Clock, RefreshCw, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -26,6 +25,8 @@ interface User {
   created_at: string;
   roles: DatabaseRole[];
   last_sign_in_at?: string;
+  has_profile: boolean;
+  profile_missing?: boolean;
 }
 
 interface UserAudit {
@@ -38,15 +39,24 @@ interface UserAudit {
   created_at: string;
 }
 
+interface DataIssue {
+  type: 'missing_profile' | 'missing_role';
+  user_id: string;
+  user_email: string;
+  description: string;
+}
+
 const UserManagementTab = () => {
   const { isAdmin } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [auditLogs, setAuditLogs] = useState<UserAudit[]>([]);
+  const [dataIssues, setDataIssues] = useState<DataIssue[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<DatabaseRole | 'all'>('all');
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
+  const [showDataRepair, setShowDataRepair] = useState(false);
 
   // Create User Form State
   const [newUser, setNewUser] = useState({
@@ -96,43 +106,191 @@ const UserManagementTab = () => {
     }
   };
 
-  const verifyUserCreation = async (userId: string, email: string): Promise<boolean> => {
+  const repairMissingProfiles = async () => {
+    setLoading(true);
     try {
-      // Check if profile was created
-      const { data: profile, error: profileError } = await supabase
+      console.log('Starting data repair for missing profiles...');
+      
+      // Get all auth users
+      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      if (authError) throw authError;
+
+      // Get existing profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+        .select('id');
+      if (profilesError) throw profilesError;
 
-      if (profileError || !profile) {
-        console.error('Profile not found for user:', userId, profileError);
-        return false;
+      const existingProfileIds = new Set(profiles?.map(p => p.id) || []);
+      const missingProfiles = authUsers?.filter(user => !existingProfileIds.has(user.id)) || [];
+
+      console.log(`Found ${missingProfiles.length} users without profiles`);
+
+      // Create missing profiles
+      if (missingProfiles.length > 0) {
+        const profileInserts = missingProfiles.map(user => ({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.email
+        }));
+
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert(profileInserts);
+
+        if (insertError) {
+          console.error('Error creating profiles:', insertError);
+          throw insertError;
+        }
+
+        // Assign default roles to users without roles
+        const { data: existingRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('user_id');
+        if (rolesError) throw rolesError;
+
+        const existingRoleUserIds = new Set(existingRoles?.map(r => r.user_id) || []);
+        const usersWithoutRoles = missingProfiles.filter(user => !existingRoleUserIds.has(user.id));
+
+        if (usersWithoutRoles.length > 0) {
+          const roleInserts = usersWithoutRoles.map(user => ({
+            user_id: user.id,
+            role: 'regular_user' as DatabaseRole
+          }));
+
+          const { error: roleInsertError } = await supabase
+            .from('user_roles')
+            .insert(roleInserts);
+
+          if (roleInsertError) {
+            console.error('Error creating roles:', roleInsertError);
+            throw roleInsertError;
+          }
+        }
+
+        toast({
+          title: 'Data Repair Complete',
+          description: `Fixed ${missingProfiles.length} missing profiles and assigned default roles`
+        });
+
+        // Log the repair action
+        await logAuditAction(
+          'data_repair_profiles',
+          undefined,
+          undefined,
+          null,
+          { repaired_count: missingProfiles.length, repaired_users: missingProfiles.map(u => u.email) }
+        );
+      } else {
+        toast({
+          title: 'No Issues Found',
+          description: 'All users have proper profiles and roles'
+        });
       }
 
-      // Check if role was assigned
-      const { data: userRole, error: roleError } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (roleError || !userRole) {
-        console.error('Role not found for user:', userId, roleError);
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error verifying user creation:', error);
-      return false;
+      // Reload data
+      await Promise.all([loadUsers(), loadAuditLogs()]);
+    } catch (error: any) {
+      console.error('Error during data repair:', error);
+      toast({
+        title: 'Data Repair Failed',
+        description: error.message || 'Failed to repair missing profiles',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadUsers = async () => {
     setLoading(true);
+    const issues: DataIssue[] = [];
+    
     try {
-      // Get all profiles with their roles
+      console.log('Loading users with comprehensive approach...');
+      
+      // Get all auth users first
+      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        // Fallback to profiles-only approach
+        return loadUsersFromProfiles();
+      }
+
+      console.log(`Found ${authUsers?.length || 0} auth users`);
+
+      // Get all profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+      if (profilesError) throw profilesError;
+
+      // Get all user roles
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+      if (rolesError) throw rolesError;
+
+      // Create a comprehensive user list
+      const usersWithRoles = (authUsers || []).map(authUser => {
+        const profile = profiles?.find(p => p.id === authUser.id);
+        const roles = userRoles?.filter((ur: any) => ur.user_id === authUser.id).map((ur: any) => ur.role) || [];
+        
+        // Track data issues
+        if (!profile) {
+          issues.push({
+            type: 'missing_profile',
+            user_id: authUser.id,
+            user_email: authUser.email || 'Unknown',
+            description: 'User exists in auth but missing profile record'
+          });
+        }
+        
+        if (roles.length === 0) {
+          issues.push({
+            type: 'missing_role',
+            user_id: authUser.id,
+            user_email: authUser.email || 'Unknown',
+            description: 'User has no assigned roles'
+          });
+        }
+
+        return {
+          id: authUser.id,
+          email: authUser.email || '',
+          full_name: profile?.full_name || authUser.user_metadata?.full_name,
+          created_at: authUser.created_at,
+          roles: roles as DatabaseRole[],
+          has_profile: !!profile,
+          profile_missing: !profile,
+          last_sign_in_at: authUser.last_sign_in_at
+        };
+      });
+
+      setUsers(usersWithRoles);
+      setDataIssues(issues);
+      
+      console.log(`Loaded ${usersWithRoles.length} users with ${issues.length} data issues`);
+      
+      if (issues.length > 0) {
+        console.warn('Data issues found:', issues);
+        setShowDataRepair(true);
+      }
+
+    } catch (error) {
+      console.error('Error loading users:', error);
+      // Fallback to the old method
+      await loadUsersFromProfiles();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadUsersFromProfiles = async () => {
+    try {
+      console.log('Falling back to profiles-only loading...');
+      
+      // Get all profiles with their roles (fallback method)
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
@@ -153,20 +311,19 @@ const UserManagementTab = () => {
         full_name: profile.full_name,
         created_at: profile.created_at,
         roles: userRoles?.filter((ur: any) => ur.user_id === profile.id).map((ur: any) => ur.role) || [],
-        last_sign_in_at: undefined // Would need to get from auth.users if accessible
+        has_profile: true,
+        last_sign_in_at: undefined
       })) || [];
 
       setUsers(usersWithRoles);
-      console.log('Loaded users:', usersWithRoles.length);
+      console.log('Loaded users from profiles:', usersWithRoles.length);
     } catch (error) {
-      console.error('Error loading users:', error);
+      console.error('Error in fallback loading:', error);
       toast({
         title: 'Error',
         description: 'Failed to load users',
         variant: 'destructive'
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -223,12 +380,8 @@ const UserManagementTab = () => {
         // Wait for trigger to complete profile and role creation
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Verify user creation was successful
-        const isVerified = await verifyUserCreation(authData.user.id, newUser.email);
-        
-        if (!isVerified) {
-          console.warn('User creation verification failed, but continuing...');
-        }
+        // Verify and repair if needed
+        await repairUserData(authData.user.id, newUser.email);
 
         // If the desired role is different from the default 'regular_user', update it
         if (newUser.role !== 'regular_user') {
@@ -285,6 +438,57 @@ const UserManagementTab = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const repairUserData = async (userId: string, email: string) => {
+    try {
+      // Check if profile exists
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError && profileError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        console.log('Creating missing profile for user:', userId);
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: email,
+            full_name: newUser.full_name || email
+          });
+
+        if (insertError) {
+          console.error('Failed to create profile:', insertError);
+        }
+      }
+
+      // Check if role exists
+      const { data: userRole, error: roleError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (roleError && roleError.code === 'PGRST116') {
+        // Role doesn't exist, create it
+        console.log('Creating missing role for user:', userId);
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role: 'regular_user'
+          });
+
+        if (insertError) {
+          console.error('Failed to create role:', insertError);
+        }
+      }
+    } catch (error) {
+      console.error('Error repairing user data:', error);
     }
   };
 
@@ -394,6 +598,27 @@ const UserManagementTab = () => {
         </CardHeader>
       </Card>
 
+      {/* Data Issues Alert */}
+      {showDataRepair && dataIssues.length > 0 && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              Found {dataIssues.length} data integrity issues. Some users may be missing profiles or roles.
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={repairMissingProfiles}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Repair Data
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="users">User Management</TabsTrigger>
@@ -408,6 +633,11 @@ const UserManagementTab = () => {
                   <CardTitle className="text-lg">Users & Roles</CardTitle>
                   <CardDescription>
                     Manage user accounts and role assignments ({users.length} users loaded)
+                    {dataIssues.length > 0 && (
+                      <span className="text-destructive font-medium">
+                        {' '}• {dataIssues.length} issues detected
+                      </span>
+                    )}
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
@@ -522,6 +752,7 @@ const UserManagementTab = () => {
                     <TableHead>User</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -551,6 +782,21 @@ const UserManagementTab = () => {
                       <TableCell>
                         <div className="text-sm">
                           {format(new Date(user.created_at), 'MMM d, yyyy')}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {user.has_profile ? (
+                            <Badge variant="outline" className="text-green-600">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Complete
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Issues
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
