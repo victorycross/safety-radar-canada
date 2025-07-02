@@ -66,6 +66,7 @@ const UnifiedBulkArchive: React.FC<UnifiedBulkArchiveProps> = ({ onRefresh }) =>
 
     setArchiving(true);
     try {
+      console.log('Starting bulk archive operation...');
       await archiveAlerts(selectedIds, archiveReason.trim());
       
       toast({
@@ -75,8 +76,17 @@ const UnifiedBulkArchive: React.FC<UnifiedBulkArchiveProps> = ({ onRefresh }) =>
       
       setSelectedIds([]);
       setArchiveReason('');
+      
+      // Refresh both local data and trigger parent refresh
+      console.log('Refreshing local bulk interface...');
       await refreshAlerts();
-      onRefresh();
+      
+      // Add a small delay to ensure database changes are committed
+      setTimeout(() => {
+        console.log('Triggering main dashboard refresh...');
+        onRefresh();
+      }, 500);
+      
     } catch (error) {
       console.error('Error archiving alerts:', error);
       toast({
@@ -110,6 +120,7 @@ const UnifiedBulkArchive: React.FC<UnifiedBulkArchiveProps> = ({ onRefresh }) =>
 
     setArchiving(true);
     try {
+      console.log('Starting clear all operation...');
       const allActiveIds = alerts.map(a => a.id);
       await archiveAlerts(allActiveIds, archiveReason.trim());
       
@@ -120,8 +131,17 @@ const UnifiedBulkArchive: React.FC<UnifiedBulkArchiveProps> = ({ onRefresh }) =>
       
       setSelectedIds([]);
       setArchiveReason('');
+      
+      // Refresh both local data and trigger parent refresh
+      console.log('Refreshing local bulk interface...');
       await refreshAlerts();
-      onRefresh();
+      
+      // Add a small delay to ensure database changes are committed
+      setTimeout(() => {
+        console.log('Triggering main dashboard refresh...');
+        onRefresh();
+      }, 500);
+      
     } catch (error) {
       console.error('Error clearing all alerts:', error);
       toast({

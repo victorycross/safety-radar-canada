@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AlertsList from '@/components/alert-ready/AlertsList';
 import CriticalAlertsSummary from '@/components/alert-ready/CriticalAlertsSummary';
@@ -69,8 +70,11 @@ const AlertReadyPage = () => {
     filters[key as keyof typeof filters] !== undefined && filters[key as keyof typeof filters] !== ''
   );
 
-  const handleRefreshIncidents = () => {
-    refreshData();
+  // Updated refresh handler to properly sync the main data source
+  const handleRefreshIncidents = async () => {
+    console.log('Refreshing main alert data source...');
+    await fetchAllAlerts();
+    refreshData(); // Keep this for any other data dependencies
   };
 
   return (
