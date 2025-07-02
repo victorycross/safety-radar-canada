@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { UniversalAlert } from '@/types/alerts';
 import { normalizeAlert } from './sourceNormalizers';

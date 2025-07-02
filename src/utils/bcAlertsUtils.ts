@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { UniversalAlert } from '@/types/alerts';
 import { normalizeAlert } from './sourceNormalizers';
@@ -35,7 +34,6 @@ export const fetchBCAlertsData = async (): Promise<UniversalAlert[]> => {
   }
 };
 
-// Utility functions for backward compatibility with BCAlertsCard
 export const getSeverityClass = (severity: string) => {
   switch (severity?.toLowerCase()) {
     case 'extreme':

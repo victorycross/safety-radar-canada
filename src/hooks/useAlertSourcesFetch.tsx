@@ -61,6 +61,7 @@ export const useAlertSourcesFetch = () => {
     const { data: rssData, error: rssError } = await supabase
       .from('security_alerts_ingest')
       .select('*')
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
       .limit(50);
     
@@ -69,7 +70,7 @@ export const useAlertSourcesFetch = () => {
       throw rssError;
     }
     
-    logger.info(`Fetched ${rssData?.length || 0} RSS alerts`);
+    logger.info(`Fetched ${rssData?.length || 0} non-archived RSS alerts`);
     
     return (rssData || []).map(alert => {
       const normalized = normalizeAlert({
@@ -99,6 +100,7 @@ export const useAlertSourcesFetch = () => {
     const { data: weatherData, error: weatherError } = await supabase
       .from('weather_alerts_ingest')
       .select('*')
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
       .limit(50);
     
@@ -107,7 +109,7 @@ export const useAlertSourcesFetch = () => {
       throw weatherError;
     }
     
-    logger.info(`Fetched ${weatherData?.length || 0} weather alerts`);
+    logger.info(`Fetched ${weatherData?.length || 0} non-archived weather alerts`);
     
     return (weatherData || []).map(alert => {
       const normalized = normalizeAlert({
