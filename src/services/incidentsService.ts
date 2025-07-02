@@ -1,8 +1,10 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Incident, AlertLevel, IncidentSource, VerificationStatus } from '@/types';
 
 export const fetchIncidents = async (): Promise<Incident[]> => {
   // Fetch incidents with enhanced data including correlations and geospatial info
+  // Only fetch non-archived incidents by default
   const { data, error } = await supabase
     .from('incidents')
     .select(`
@@ -14,6 +16,7 @@ export const fetchIncidents = async (): Promise<Incident[]> => {
         confidence_score
       )
     `)
+    .is('archived_at', null) // Only fetch non-archived incidents
     .order('timestamp', { ascending: false });
   
   if (error) throw error;

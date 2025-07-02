@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { Archive, CheckSquare, Trash2, Filter } from 'lucide-react';
 import { useAlertArchiveManagement } from '@/hooks/useAlertArchiveManagement';
+import { syncProvinceAlertLevels } from '@/services/provincesService';
 
 interface UnifiedBulkArchiveProps {
   onRefresh: () => void;
@@ -81,14 +82,21 @@ const UnifiedBulkArchive: React.FC<UnifiedBulkArchiveProps> = ({ onRefresh }) =>
       console.log('Refreshing local bulk interface...');
       await refreshAlerts();
       
-      // Add a small delay to ensure database changes are committed and hub data is synchronized
+      // Add delay to ensure database changes are committed
       setTimeout(async () => {
+        console.log('Synchronizing province alert levels...');
+        try {
+          await syncProvinceAlertLevels();
+        } catch (error) {
+          console.error('Error synchronizing province alert levels:', error);
+        }
+        
         console.log('Triggering main dashboard refresh...');
         onRefresh();
         
-        // Additional delay for hub incident synchronization
+        // Additional delay for final synchronization
         setTimeout(() => {
-          console.log('Final refresh to ensure hub synchronization...');
+          console.log('Final refresh to ensure full synchronization...');
           onRefresh();
         }, 1000);
       }, 500);
@@ -142,14 +150,21 @@ const UnifiedBulkArchive: React.FC<UnifiedBulkArchiveProps> = ({ onRefresh }) =>
       console.log('Refreshing local bulk interface...');
       await refreshAlerts();
       
-      // Add a small delay to ensure database changes are committed and hub data is synchronized
+      // Add delay to ensure database changes are committed
       setTimeout(async () => {
+        console.log('Synchronizing province alert levels...');
+        try {
+          await syncProvinceAlertLevels();
+        } catch (error) {
+          console.error('Error synchronizing province alert levels:', error);
+        }
+        
         console.log('Triggering main dashboard refresh...');
         onRefresh();
         
-        // Additional delay for hub incident synchronization
+        // Additional delay for final synchronization
         setTimeout(() => {
-          console.log('Final refresh to ensure hub synchronization...');
+          console.log('Final refresh to ensure full synchronization...');
           onRefresh();
         }, 1000);
       }, 500);

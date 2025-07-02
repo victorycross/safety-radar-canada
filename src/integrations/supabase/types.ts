@@ -1234,6 +1234,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      sync_all_province_alert_levels: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       validate_hub_data_consistency: {
         Args: Record<PropertyKey, never>
         Returns: {

@@ -1,7 +1,7 @@
 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchProvinces, updateProvinceAlertLevel } from '@/services/provincesService';
+import { fetchProvinces, updateProvinceAlertLevel, syncProvinceAlertLevels } from '@/services/provincesService';
 import { fetchIncidents, addIncident, reportIncident } from '@/services/incidentsService';
 import { Province, Incident, AlertLevel } from '@/types';
 
@@ -57,7 +57,11 @@ export const useSupabaseActions = ({
     setError(null);
     
     try {
+      // First sync province alert levels to ensure consistency
+      await syncProvinceAlertLevels();
       await Promise.all([loadProvinces(), loadIncidents()]);
+    } catch (err) {
+      console.error('Error during data refresh:', err);
     } finally {
       setLoading(false);
     }
@@ -161,6 +165,8 @@ export const useSupabaseActions = ({
     handleAddIncident,
     handleReportIncident,
     handleUpdateProvinceAlertLevel,
-    handleTriggerDataIngestion
+    handleTriggerDataIngestion,
+    // Expose synchronization for admin interfaces
+    syncProvinceAlertLevels
   };
 };
