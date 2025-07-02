@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Users, Plane, Home, AlertTriangle, CheckCircle } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { MapPin, Users, Plane, Home, AlertTriangle, CheckCircle, History, Clock } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { 
   fetchCities, 
@@ -16,6 +17,9 @@ import {
   type City,
   type EmployeeLocation 
 } from '@/services/cityService';
+import LocationHistoryViewer from './LocationHistoryViewer';
+import EmployeeCountValidator from './EmployeeCountValidator';
+import { format } from 'date-fns';
 
 interface CityLocationManagementProps {
   onDataUpdated?: () => void;
@@ -31,6 +35,17 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
   const [currentLocationCount, setCurrentLocationCount] = useState<number>(0);
   const [travelAwayCount, setTravelAwayCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  
+  // New state for enhanced features
+  const [showHistoryViewer, setShowHistoryViewer] = useState(false);
+  const [selectedCityForHistory, setSelectedCityForHistory] = useState<{ id: string; name: string } | null>(null);
+  const [showValidator, setShowValidator] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState<{
+    cityId: string;
+    homeBase: number;
+    current: number;
+    travelAway: number;
+  } | null>(null);
 
   useEffect(() => {
     loadData();
@@ -73,7 +88,24 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
     }
   }, [existingLocation]);
 
-  const handleUpdateLocation = async () => {
+  const checkForLargeChanges = (newHomeBase: number, newCurrent: number, newTravelAway: number) => {
+    if (!existingLocation) return false;
+    
+    const currentTotal = existingLocation.homeBaseCount + existingLocation.currentLocationCount + existingLocation.travelAwayCount;
+    const newTotal = newHomeBase + newCurrent + newTravelAway;
+    
+    if (currentTotal === 0) return false;
+    
+    const totalChange = Math.abs(newTotal - currentTotal);
+    const percentageChange = (totalChange / currentTotal) * 100;
+    
+    const homeBaseChange = Math.abs(newHomeBase - existingLocation.homeBaseCount);
+    const homeBasePercentage = existingLocation.homeBaseCount > 0 ? (homeBaseChange / existingLocation.homeBaseCount) * 100 : 0;
+    
+    return percentageChange > 25 || (homeBasePercentage > 25 && newHomeBase < existingLocation.homeBaseCount);
+  };
+
+  const handleUpdateLocation = async (reason?: string) => {
     if (!selectedCity) {
       toast({
         title: 'Validation Error',
@@ -83,13 +115,31 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
       return;
     }
 
+    // Check for large changes
+    if (checkForLargeChanges(homeBaseCount, currentLocationCount, travelAwayCount)) {
+      setPendingUpdate({
+        cityId: selectedCity,
+        homeBase: homeBaseCount,
+        current: currentLocationCount,
+        travelAway: travelAwayCount
+      });
+      setShowValidator(true);
+      return;
+    }
+
+    await performUpdate(selectedCity, homeBaseCount, currentLocationCount, travelAwayCount, reason);
+  };
+
+  const performUpdate = async (cityId: string, homeBase: number, current: number, travelAway: number, reason?: string) => {
     setLoading(true);
     try {
+      const updateReason = reason ? `Manual update: ${reason}` : 'Manual update via admin interface';
+      
       await updateEmployeeLocation(
-        selectedCity,
-        homeBaseCount,
-        currentLocationCount,
-        travelAwayCount,
+        cityId,
+        homeBase,
+        current,
+        travelAway,
         'admin'
       );
 
@@ -99,14 +149,12 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
       });
 
       await loadData();
-      await refreshData(); // Refresh province totals
+      await refreshData();
       
-      // Notify parent component
       if (onDataUpdated) {
         onDataUpdated();
       }
       
-      // Dispatch custom event for dashboard refresh
       window.dispatchEvent(new CustomEvent('employeeDataUpdated'));
     } catch (error) {
       console.error('Error updating location:', error);
@@ -118,6 +166,36 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleValidatorConfirm = async (reason?: string) => {
+    if (pendingUpdate) {
+      await performUpdate(pendingUpdate.cityId, pendingUpdate.homeBase, pendingUpdate.current, pendingUpdate.travelAway, reason);
+      setPendingUpdate(null);
+    }
+    setShowValidator(false);
+  };
+
+  const handleValidatorCancel = () => {
+    setPendingUpdate(null);
+    setShowValidator(false);
+  };
+
+  const handleViewHistory = (cityId: string, cityName: string) => {
+    setSelectedCityForHistory({ id: cityId, name: cityName });
+    setShowHistoryViewer(true);
+  };
+
+  const handleHistoryRevert = (homeBase: number, current: number, travelAway: number) => {
+    setHomeBaseCount(homeBase);
+    setCurrentLocationCount(current);
+    setTravelAwayCount(travelAway);
+    loadData();
+    refreshData();
+    if (onDataUpdated) {
+      onDataUpdated();
+    }
+    window.dispatchEvent(new CustomEvent('employeeDataUpdated'));
   };
 
   const getTotalEmployees = (location: EmployeeLocation) => {
@@ -138,6 +216,7 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
           <div className="space-y-2 text-sm">
             <p><strong>Authoritative Source:</strong> All province totals are calculated from this city-level data</p>
             <p><strong>Real-time Sync:</strong> Province dashboard updates automatically when you make changes here</p>
+            <p><strong>Change Tracking:</strong> All modifications are logged with timestamps and user information</p>
           </div>
         </CardContent>
       </Card>
@@ -149,7 +228,7 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
             City-Level Employee Management
           </CardTitle>
           <CardDescription>
-            Manage employee distribution at the city level with travel status tracking
+            Manage employee distribution at the city level with travel status tracking and change validation
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -199,8 +278,27 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
                   <Badge variant="outline">
                     Pop: {selectedCityData.population?.toLocaleString() || 'N/A'}
                   </Badge>
+                  {existingLocation && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewHistory(selectedCity, selectedCityData.name)}
+                      className="flex items-center gap-1"
+                    >
+                      <History className="h-3 w-3" />
+                      History
+                    </Button>
+                  )}
                 </div>
               </div>
+              
+              {existingLocation && (
+                <div className="mb-3 text-xs text-muted-foreground flex items-center gap-2">
+                  <Clock className="h-3 w-3" />
+                  Last updated: {format(new Date(existingLocation.lastUpdatedAt), 'PPpp')}
+                  {existingLocation.updatedBy && ` by ${existingLocation.updatedBy}`}
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div className="space-y-2">
@@ -265,10 +363,16 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
                 <div className="text-xs text-blue-600 mt-1">
                   Note: Home Base count contributes to province totals on the dashboard
                 </div>
+                {existingLocation && checkForLargeChanges(homeBaseCount, currentLocationCount, travelAwayCount) && (
+                  <div className="text-xs text-yellow-600 mt-1 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Large change detected - confirmation will be required
+                  </div>
+                )}
               </div>
 
               <Button 
-                onClick={handleUpdateLocation} 
+                onClick={() => handleUpdateLocation()} 
                 disabled={loading}
                 className="w-full mt-4"
               >
@@ -283,7 +387,7 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
         <CardHeader>
           <CardTitle>Current City Distributions</CardTitle>
           <CardDescription>
-            Overview of employee distributions across all cities
+            Overview of employee distributions across all cities with change tracking
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -302,6 +406,10 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
                       <div className="text-sm text-muted-foreground">
                         {location.city?.code} • {provinces.find(p => p.id === location.provinceId)?.name}
                       </div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                        <Clock className="h-3 w-3" />
+                        {format(new Date(location.lastUpdatedAt), 'MMM d, yyyy HH:mm')}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -313,9 +421,20 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
                         {location.homeBaseCount}H • {location.currentLocationCount}C • {location.travelAwayCount}A
                       </div>
                     </div>
-                    <Badge variant={getTotalEmployees(location) > 0 ? 'default' : 'secondary'}>
-                      {getTotalEmployees(location) > 0 ? 'Active' : 'Empty'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={getTotalEmployees(location) > 0 ? 'default' : 'secondary'}>
+                        {getTotalEmployees(location) > 0 ? 'Active' : 'Empty'}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewHistory(location.cityId, location.city?.name || 'Unknown')}
+                        className="flex items-center gap-1"
+                      >
+                        <History className="h-3 w-3" />
+                        History
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -323,6 +442,38 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
           </div>
         </CardContent>
       </Card>
+
+      {/* Location History Viewer */}
+      <LocationHistoryViewer
+        cityId={selectedCityForHistory?.id || null}
+        cityName={selectedCityForHistory?.name || ''}
+        isOpen={showHistoryViewer}
+        onClose={() => {
+          setShowHistoryViewer(false);
+          setSelectedCityForHistory(null);
+        }}
+        onRevert={handleHistoryRevert}
+      />
+
+      {/* Employee Count Validator */}
+      {showValidator && pendingUpdate && selectedCityData && existingLocation && (
+        <EmployeeCountValidator
+          cityName={selectedCityData.name}
+          currentCounts={{
+            homeBase: existingLocation.homeBaseCount,
+            current: existingLocation.currentLocationCount,
+            travelAway: existingLocation.travelAwayCount
+          }}
+          newCounts={{
+            homeBase: pendingUpdate.homeBase,
+            current: pendingUpdate.current,
+            travelAway: pendingUpdate.travelAway
+          }}
+          onConfirm={handleValidatorConfirm}
+          onCancel={handleValidatorCancel}
+          isOpen={showValidator}
+        />
+      )}
     </div>
   );
 };
