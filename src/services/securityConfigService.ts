@@ -10,6 +10,11 @@ export interface SecurityConfig {
   blockedCountries: string[];
   requireMFA: boolean;
   passwordMinLength: number;
+  // Enhanced session management
+  sessionHeartbeatInterval: number; // minutes
+  sessionOrphanTimeout: number; // minutes
+  sessionCleanupFrequency: number; // minutes
+  maxSessionAge: number; // minutes
 }
 
 export class SecurityConfigService {
@@ -21,7 +26,12 @@ export class SecurityConfigService {
     enableGeoBlocking: false,
     blockedCountries: [],
     requireMFA: false,
-    passwordMinLength: 12
+    passwordMinLength: 12,
+    // Enhanced session management defaults
+    sessionHeartbeatInterval: 5, // 5 minutes
+    sessionOrphanTimeout: 10, // 10 minutes
+    sessionCleanupFrequency: 2, // 2 minutes
+    maxSessionAge: 30 // 30 minutes
   };
 
   static async getConfig(): Promise<SecurityConfig> {
