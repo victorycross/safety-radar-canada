@@ -36,6 +36,9 @@ const ProvinceOverlay = ({
     return null;
   }
   
+  // Filter out any archived incidents (extra safety check)
+  const activeIncidents = incidents.filter(incident => !incident.archived_at);
+  
   // Get alert level color for the overlay
   const getAlertLevelColor = (alertLevel: AlertLevel) => {
     switch (alertLevel) {
@@ -84,8 +87,8 @@ const ProvinceOverlay = ({
             {province.code}
           </span>
           
-          {/* Incident count badge */}
-          {incidents.length > 0 && (
+          {/* Incident count badge - only show if there are active incidents */}
+          {activeIncidents.length > 0 && (
             <div 
               className="absolute bg-white rounded-full border-2 border-slate-700 flex items-center justify-center w-5 h-5"
               style={{
@@ -95,7 +98,7 @@ const ProvinceOverlay = ({
               }}
             >
               <span className="text-xs font-bold">
-                {incidents.length}
+                {activeIncidents.length}
               </span>
             </div>
           )}
@@ -107,7 +110,7 @@ const ProvinceOverlay = ({
           {getAlertLevelBadge(province.alertLevel)}
         </div>
         <p className="text-sm mb-2">
-          {incidents.length} incidents reported
+          {activeIncidents.length} active incident{activeIncidents.length !== 1 ? 's' : ''} reported
         </p>
         <Link to={`/province/${province.id}`}>
           <Button variant="outline" size="sm" className="w-full">

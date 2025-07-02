@@ -12,9 +12,12 @@ const SimpleGlobeMap = () => {
   const { provinces, incidents } = useSupabaseDataContext();
   const [activeProvinceId, setActiveProvinceId] = useState<string | null>(null);
 
-  // Get all incidents for a specific province
+  // Get all ACTIVE (non-archived) incidents for a specific province
   const getIncidentsForProvince = (provinceId: string) => {
-    return incidents.filter(incident => incident.provinceId === provinceId);
+    return incidents.filter(incident => 
+      incident.provinceId === provinceId && 
+      !incident.archived_at // Only include non-archived incidents
+    );
   };
 
   // Show province information on hover
@@ -60,12 +63,15 @@ const SimpleGlobeMap = () => {
                 return null;
               }
               
+              // Get only active incidents for this province
+              const activeIncidents = getIncidentsForProvince(province.id);
+              
               return (
                 <ProvinceOverlay
                   key={province.id}
                   province={province}
                   position={position}
-                  incidents={getIncidentsForProvince(province.id)}
+                  incidents={activeIncidents}
                   activeProvinceId={activeProvinceId}
                   onHover={handleProvinceHover}
                 />
