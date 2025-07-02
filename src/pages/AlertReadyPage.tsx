@@ -48,7 +48,11 @@ const AlertReadyPage = () => {
     getAlertDisplayConfig
   } = useEnhancedAlertManagement({
     alerts: allAlerts,
-    enableAutomatedArchiving: isAdmin()
+    enableAutomatedArchiving: isAdmin(),
+    confidenceConfig: {
+      minDisplayThreshold: 0.4, // Show more alerts to regular users
+      autoHideBelow: 0.2 // Only hide very low quality data
+    }
   });
 
   const [selectedAlert, setSelectedAlert] = useState(null);

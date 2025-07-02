@@ -64,7 +64,7 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-green-900">All Systems Normal</h2>
-              <p className="text-sm text-green-700">No active security alerts across all provinces and international hubs</p>
+              <p className="text-sm text-green-700">No active alerts across all provinces and international hubs</p>
             </div>
           </div>
           <Badge variant="outline" className="text-green-700 border-green-300">
@@ -85,7 +85,7 @@ const CriticalAlertsHero: React.FC<CriticalAlertsHeroProps> = ({
               <AlertTriangle className="h-5 w-5 text-red-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-red-900">Active Security Alerts</h2>
+              <h2 className="text-lg font-semibold text-red-900">Weather & Public Safety Alerts</h2>
               <div className="text-sm text-red-700 space-y-1">
                 <div className="flex items-center space-x-4">
                   {alertProvinces.length > 0 && (
