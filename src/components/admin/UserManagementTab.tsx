@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, UserPlus, Shield, Eye, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Users, UserPlus, Shield, Eye, AlertTriangle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -29,7 +29,7 @@ interface User {
 
 interface UserAudit {
   id: string;
-  action: string;
+  action_type: string;
   target_user_email: string;
   performed_by: string;
   old_values?: any;
@@ -76,6 +76,60 @@ const UserManagementTab = () => {
     }
   }, []);
 
+  const logAuditAction = async (actionType: string, targetUserId?: string, targetUserEmail?: string, oldValues?: any, newValues?: any) => {
+    try {
+      const { error } = await supabase
+        .from('user_management_audit')
+        .insert({
+          action_type: actionType,
+          target_user_id: targetUserId,
+          target_user_email: targetUserEmail,
+          performed_by: (await supabase.auth.getUser()).data.user?.id,
+          old_values: oldValues || null,
+          new_values: newValues || null
+        });
+
+      if (error) {
+        console.error('Failed to log audit action:', error);
+      }
+    } catch (error) {
+      console.error('Error logging audit action:', error);
+    }
+  };
+
+  const verifyUserCreation = async (userId: string, email: string): Promise<boolean> => {
+    try {
+      // Check if profile was created
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileError || !profile) {
+        console.error('Profile not found for user:', userId, profileError);
+        return false;
+      }
+
+      // Check if role was assigned
+      const { data: userRole, error: roleError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (roleError || !userRole) {
+        console.error('Role not found for user:', userId, roleError);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error verifying user creation:', error);
+      return false;
+    }
+  };
+
   const loadUsers = async () => {
     setLoading(true);
     try {
@@ -86,8 +140,8 @@ const UserManagementTab = () => {
 
       if (profilesError) throw profilesError;
 
-      // Get all user roles - cast to any to work around type issues
-      const { data: userRoles, error: rolesError } = await (supabase as any)
+      // Get all user roles
+      const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
@@ -104,6 +158,7 @@ const UserManagementTab = () => {
       })) || [];
 
       setUsers(usersWithRoles);
+      console.log('Loaded users:', usersWithRoles.length);
     } catch (error) {
       console.error('Error loading users:', error);
       toast({
@@ -118,8 +173,7 @@ const UserManagementTab = () => {
 
   const loadAuditLogs = async () => {
     try {
-      // Use raw query to access the new table
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('user_management_audit')
         .select('*')
         .order('created_at', { ascending: false })
@@ -128,6 +182,7 @@ const UserManagementTab = () => {
       if (error) throw error;
 
       setAuditLogs(data || []);
+      console.log('Loaded audit logs:', data?.length || 0);
     } catch (error) {
       console.error('Error loading audit logs:', error);
     }
@@ -145,6 +200,8 @@ const UserManagementTab = () => {
 
     setLoading(true);
     try {
+      console.log('Creating user:', newUser.email);
+      
       // Create user via Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newUser.email,
@@ -156,15 +213,29 @@ const UserManagementTab = () => {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw authError;
+      }
 
       if (authData.user) {
-        // Wait a moment for the trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('User created in auth:', authData.user.id);
+        
+        // Wait for trigger to complete profile and role creation
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Verify user creation was successful
+        const isVerified = await verifyUserCreation(authData.user.id, newUser.email);
+        
+        if (!isVerified) {
+          console.warn('User creation verification failed, but continuing...');
+        }
 
         // If the desired role is different from the default 'regular_user', update it
         if (newUser.role !== 'regular_user') {
-          const { error: roleUpdateError } = await (supabase as any)
+          console.log('Updating role to:', newUser.role);
+          
+          const { error: roleUpdateError } = await supabase
             .from('user_roles')
             .update({ role: newUser.role })
             .eq('user_id', authData.user.id)
@@ -177,8 +248,23 @@ const UserManagementTab = () => {
               description: `User created successfully but role update failed. You can manually update the role later.`,
               variant: 'destructive'
             });
+          } else {
+            console.log('Role updated successfully');
           }
         }
+
+        // Log the audit action
+        await logAuditAction(
+          'user_created',
+          authData.user.id,
+          newUser.email,
+          null,
+          { 
+            role: newUser.role, 
+            full_name: newUser.full_name,
+            email: newUser.email
+          }
+        );
 
         toast({
           title: 'User Created',
@@ -187,8 +273,9 @@ const UserManagementTab = () => {
 
         setNewUser({ email: '', full_name: '', password: '', role: 'regular_user' });
         setShowCreateUser(false);
-        loadUsers();
-        loadAuditLogs();
+        
+        // Reload data
+        await Promise.all([loadUsers(), loadAuditLogs()]);
       }
     } catch (error: any) {
       console.error('Error creating user:', error);
@@ -208,9 +295,11 @@ const UserManagementTab = () => {
       const user = users.find(u => u.id === userId);
       const oldRole = user?.roles[0]; // Assuming single role for now
 
-      // Update role - cast to any to work around type issues
+      console.log('Changing role for user:', userId, 'from', oldRole, 'to', newRole);
+
+      // Update role
       if (oldRole) {
-        const { error: updateError } = await (supabase as any)
+        const { error: updateError } = await supabase
           .from('user_roles')
           .update({ role: newRole })
           .eq('user_id', userId)
@@ -218,7 +307,7 @@ const UserManagementTab = () => {
 
         if (updateError) throw updateError;
       } else {
-        const { error: insertError } = await (supabase as any)
+        const { error: insertError } = await supabase
           .from('user_roles')
           .insert({
             user_id: userId,
@@ -228,13 +317,22 @@ const UserManagementTab = () => {
         if (insertError) throw insertError;
       }
 
+      // Log the audit action
+      await logAuditAction(
+        'role_changed',
+        userId,
+        user?.email,
+        { role: oldRole },
+        { role: newRole }
+      );
+
       toast({
         title: 'Role Updated',
         description: `User role updated to ${roleLabels[newRole]}`
       });
 
-      loadUsers();
-      loadAuditLogs();
+      // Reload data
+      await Promise.all([loadUsers(), loadAuditLogs()]);
     } catch (error: any) {
       console.error('Error updating role:', error);
       toast({
@@ -310,81 +408,92 @@ const UserManagementTab = () => {
                 <div className="space-y-1">
                   <CardTitle className="text-lg">Users & Roles</CardTitle>
                   <CardDescription>
-                    Manage user accounts and role assignments
+                    Manage user accounts and role assignments ({users.length} users loaded)
                   </CardDescription>
                 </div>
-                <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
-                  <DialogTrigger asChild>
-                    <Button className="flex items-center gap-2">
-                      <UserPlus className="h-4 w-4" />
-                      Create User
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New User</DialogTitle>
-                      <DialogDescription>
-                        Create a new user account and assign their initial role
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={newUser.email}
-                          onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
-                          placeholder="user@example.com"
-                        />
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => Promise.all([loadUsers(), loadAuditLogs()])}
+                    disabled={loading}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                  <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
+                    <DialogTrigger asChild>
+                      <Button className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4" />
+                        Create User
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Create New User</DialogTitle>
+                        <DialogDescription>
+                          Create a new user account and assign their initial role
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="email">Email Address</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={newUser.email}
+                            onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                            placeholder="user@example.com"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="full_name">Full Name</Label>
+                          <Input
+                            id="full_name"
+                            value={newUser.full_name}
+                            onChange={(e) => setNewUser(prev => ({ ...prev, full_name: e.target.value }))}
+                            placeholder="John Doe"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="password">Password</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            value={newUser.password}
+                            onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+                            placeholder="Secure password"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="role">Initial Role</Label>
+                          <Select 
+                            value={newUser.role} 
+                            onValueChange={(value: AppRole) => setNewUser(prev => ({ ...prev, role: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="regular_user">Regular User</SelectItem>
+                              <SelectItem value="power_user">Power User</SelectItem>
+                              <SelectItem value="auditor">Auditor</SelectItem>
+                              <SelectItem value="admin">Administrator</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button variant="outline" onClick={() => setShowCreateUser(false)}>
+                            Cancel
+                          </Button>
+                          <Button onClick={handleCreateUser} disabled={loading}>
+                            {loading ? 'Creating...' : 'Create User'}
+                          </Button>
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="full_name">Full Name</Label>
-                        <Input
-                          id="full_name"
-                          value={newUser.full_name}
-                          onChange={(e) => setNewUser(prev => ({ ...prev, full_name: e.target.value }))}
-                          placeholder="John Doe"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                          id="password"
-                          type="password"
-                          value={newUser.password}
-                          onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
-                          placeholder="Secure password"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="role">Initial Role</Label>
-                        <Select 
-                          value={newUser.role} 
-                          onValueChange={(value: AppRole) => setNewUser(prev => ({ ...prev, role: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="regular_user">Regular User</SelectItem>
-                            <SelectItem value="power_user">Power User</SelectItem>
-                            <SelectItem value="auditor">Auditor</SelectItem>
-                            <SelectItem value="admin">Administrator</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="outline" onClick={() => setShowCreateUser(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={handleCreateUser} disabled={loading}>
-                          {loading ? 'Creating...' : 'Create User'}
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -483,6 +592,7 @@ const UserManagementTab = () => {
               <CardTitle className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
                 User Management Audit Log
+                <Badge variant="outline">{auditLogs.length} entries</Badge>
               </CardTitle>
               <CardDescription>
                 Complete audit trail of all user management actions
@@ -503,7 +613,7 @@ const UserManagementTab = () => {
                     <TableRow key={log.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{log.action}</Badge>
+                          <Badge variant="outline">{log.action_type}</Badge>
                         </div>
                       </TableCell>
                       <TableCell>{log.target_user_email}</TableCell>

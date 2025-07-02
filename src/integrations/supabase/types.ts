@@ -1108,6 +1108,39 @@ export type Database = {
           },
         ]
       }
+      user_management_audit: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          performed_by: string | null
+          target_user_email: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          performed_by?: string | null
+          target_user_email?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          performed_by?: string | null
+          target_user_email?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
