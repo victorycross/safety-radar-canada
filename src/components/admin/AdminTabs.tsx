@@ -6,6 +6,7 @@ import DataManagementTab from './DataManagementTab';
 import SystemHealthTab from './SystemHealthTab';
 import SettingsDocumentationTab from './SettingsDocumentationTab';
 import SecurityRiskRegisterTab from './SecurityRiskRegisterTab';
+import ArchiveManagementTab from './ArchiveManagementTab';
 
 interface AdminTabsProps {
   activeTab: string;
@@ -15,11 +16,12 @@ interface AdminTabsProps {
 const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="grid w-full grid-cols-6">
         <TabsTrigger value="operations">Operations</TabsTrigger>
         <TabsTrigger value="data-management">Data Management</TabsTrigger>
         <TabsTrigger value="system-health">System Health</TabsTrigger>
         <TabsTrigger value="security-risks">Security Risks</TabsTrigger>
+        <TabsTrigger value="archive-management">Archive Management</TabsTrigger>
         <TabsTrigger value="settings">Settings</TabsTrigger>
       </TabsList>
       
@@ -37,6 +39,10 @@ const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
       
       <TabsContent value="security-risks" className="space-y-4">
         <SecurityRiskRegisterTab />
+      </TabsContent>
+      
+      <TabsContent value="archive-management" className="space-y-4">
+        <ArchiveManagementTab />
       </TabsContent>
       
       <TabsContent value="settings" className="space-y-4">

@@ -22,7 +22,12 @@ const AdminPage = () => {
     };
     
     if (tabParam) {
-      setActiveTab(tabMapping[tabParam] || tabParam);
+      const mappedTab = tabMapping[tabParam] || tabParam;
+      // Validate the tab exists
+      const validTabs = ['operations', 'data-management', 'system-health', 'security-risks', 'archive-management', 'settings'];
+      if (validTabs.includes(mappedTab)) {
+        setActiveTab(mappedTab);
+      }
     }
   }, []);
 

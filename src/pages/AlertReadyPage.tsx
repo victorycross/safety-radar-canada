@@ -1,14 +1,12 @@
-
 import React, { useState } from 'react';
 import AlertsList from '@/components/alert-ready/AlertsList';
 import CriticalAlertsSummary from '@/components/alert-ready/CriticalAlertsSummary';
 import UnifiedAlertControls from '@/components/alert-ready/UnifiedAlertControls';
-import UnifiedBulkArchive from '@/components/alert-ready/UnifiedBulkArchive';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Filter, X, Archive } from 'lucide-react';
+import { AlertTriangle, Filter, X, Settings } from 'lucide-react';
 import { useAllAlertSources } from '@/hooks/useAllAlertSources';
 import { useAlertManagement } from '@/hooks/useAlertManagement';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
@@ -17,10 +15,13 @@ import { Badge } from '@/components/ui/badge';
 import { useSearchParams } from 'react-router-dom';
 import LocationContext from '@/components/alert-ready/LocationContext';
 import AlertLocationMap from '@/components/alert-ready/AlertLocationMap';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { Link } from 'react-router-dom';
 
 const AlertReadyPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const { isPowerUserOrAdmin } = useAuth();
   
   const { alerts: allAlerts, loading: allLoading, error: allError, fetchAlerts: fetchAllAlerts } = useAllAlertSources();
   const { refreshData } = useSupabaseDataContext();
@@ -69,11 +70,6 @@ const AlertReadyPage = () => {
   );
 
   const handleRefreshIncidents = () => {
-    refreshData();
-  };
-
-  const handleBulkArchiveRefresh = () => {
-    fetchAllAlerts();
     refreshData();
   };
 
@@ -134,6 +130,16 @@ const AlertReadyPage = () => {
               <SelectItem value="Everbridge">Everbridge</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Admin Link for Archive Management */}
+          {isPowerUserOrAdmin() && (
+            <Link to="/admin?tab=archive-management">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Archive Management
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -145,12 +151,8 @@ const AlertReadyPage = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="alerts" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="alerts">Active Alerts</TabsTrigger>
-          <TabsTrigger value="bulk-archive" className="flex items-center gap-2">
-            <Archive className="h-4 w-4" />
-            Bulk Archive
-          </TabsTrigger>
           <TabsTrigger value="location">Location View</TabsTrigger>
           <TabsTrigger value="controls">System Controls</TabsTrigger>
         </TabsList>
@@ -171,10 +173,6 @@ const AlertReadyPage = () => {
             activeView="all"
             onAlertClick={openAlertDetail}
           />
-        </TabsContent>
-
-        <TabsContent value="bulk-archive">
-          <UnifiedBulkArchive onRefresh={handleBulkArchiveRefresh} />
         </TabsContent>
 
         <TabsContent value="location" className="space-y-4">
