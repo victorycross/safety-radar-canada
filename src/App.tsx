@@ -27,14 +27,15 @@ import NotFound from "./pages/NotFound";
 import { EnhancedSessionManager } from '@/components/security/EnhancedSessionManager';
 import { applySecurityHeaders } from '@/utils/securityHeaders';
 import { useEffect } from 'react';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const queryClient = new QueryClient();
 
 function App() {
-  // Apply security headers on app load
-  useEffect(() => {
-    applySecurityHeaders(document.documentElement);
-  }, []);
+  // Temporarily disable security headers to test if they're causing issues
+  // useEffect(() => {
+  //   applySecurityHeaders(document.documentElement);
+  // }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -44,31 +45,35 @@ function App() {
         <BrowserRouter>
           <SecurityProvider>
             <AuthProvider>
-              <EnhancedSessionManager>
-                <div className="min-h-screen bg-gray-50">
-                  <Routes>
-                    <Route path="/auth" element={<AuthPage />} />
-                    <Route path="/" element={<MainLayout />}>
-                      <Route index element={<Index />} />
-                      <Route path="home" element={<HomePage />} />
-                      <Route path="alert-ready" element={<AlertReadyPage />} />
-                      <Route path="location-status" element={<LocationStatusPage />} />
-                      <Route path="analytics" element={<AnalyticsPage />} />
-                      <Route path="incidents" element={<IncidentsPage />} />
-                      <Route path="report" element={<ReportPage />} />
-                      <Route path="report-incident" element={<ReportIncidentPage />} />
-                      <Route path="admin" element={<AdminPage />} />
-                      <Route path="admin/operations" element={<AdminOperationsPage />} />
-                      <Route path="admin/data-management" element={<AdminDataManagementPage />} />
-                      <Route path="admin/system-health" element={<AdminSystemHealthPage />} />
-                      <Route path="admin/archive-management" element={<AdminArchiveManagementPage />} />
-                      <Route path="admin/users" element={<AdminUserManagementPage />} />
-                      <Route path="admin/settings" element={<AdminSettingsPage />} />
-                    </Route>
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </div>
-              </EnhancedSessionManager>
+              <SupabaseDataProvider>
+                <EnhancedSessionManager>
+                  <ErrorBoundary>
+                    <div className="min-h-screen bg-gray-50">
+                      <Routes>
+                        <Route path="/auth" element={<AuthPage />} />
+                        <Route path="/" element={<MainLayout />}>
+                          <Route index element={<Index />} />
+                          <Route path="home" element={<HomePage />} />
+                          <Route path="alert-ready" element={<AlertReadyPage />} />
+                          <Route path="location-status" element={<LocationStatusPage />} />
+                          <Route path="analytics" element={<AnalyticsPage />} />
+                          <Route path="incidents" element={<IncidentsPage />} />
+                          <Route path="report" element={<ReportPage />} />
+                          <Route path="report-incident" element={<ReportIncidentPage />} />
+                          <Route path="admin" element={<AdminPage />} />
+                          <Route path="admin/operations" element={<AdminOperationsPage />} />
+                          <Route path="admin/data-management" element={<AdminDataManagementPage />} />
+                          <Route path="admin/system-health" element={<AdminSystemHealthPage />} />
+                          <Route path="admin/archive-management" element={<AdminArchiveManagementPage />} />
+                          <Route path="admin/users" element={<AdminUserManagementPage />} />
+                          <Route path="admin/settings" element={<AdminSettingsPage />} />
+                        </Route>
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </div>
+                  </ErrorBoundary>
+                </EnhancedSessionManager>
+              </SupabaseDataProvider>
             </AuthProvider>
           </SecurityProvider>
         </BrowserRouter>
