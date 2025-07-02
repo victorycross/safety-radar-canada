@@ -59,7 +59,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const roleNames = {
       admin: 'Administrator',
       power_user: 'Power User',
-      regular_user: 'Regular User'
+      regular_user: 'Regular User',
+      auditor: 'Auditor'
     };
 
     return (
@@ -86,7 +87,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const roleNames = {
       admin: 'Administrator',
       power_user: 'Power User',
-      regular_user: 'Regular User'
+      regular_user: 'Regular User',
+      auditor: 'Auditor'
     };
 
     return (

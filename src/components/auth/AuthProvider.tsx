@@ -9,7 +9,7 @@ import { getBrowserInfo, detectChromeIssues } from '@/utils/browserUtils';
 import { SecurityService } from '@/services/securityService';
 import { PasswordService } from '@/services/passwordService';
 
-export type AppRole = 'admin' | 'power_user' | 'regular_user';
+export type AppRole = 'admin' | 'power_user' | 'regular_user' | 'auditor';
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +23,8 @@ interface AuthContextType {
   hasRole: (role: AppRole) => boolean;
   isAdmin: () => boolean;
   isPowerUserOrAdmin: () => boolean;
+  isAuditor: () => boolean;
+  isAuditorOrAdmin: () => boolean;
   refreshSession: () => Promise<void>;
   checkPermission: (permission: string) => boolean;
 }
@@ -70,12 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Role-based scoring
       if (roles.includes('admin')) score += 30;
       else if (roles.includes('power_user')) score += 20;
+      else if (roles.includes('auditor')) score += 15;
       else if (roles.includes('regular_user')) score += 10;
-      
-      // Additional factors could be added here
-      // - 2FA enabled
-      // - Recent activity
-      // - Strong password (if available)
     }
     
     return Math.min(score, 100);
@@ -257,60 +255,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Disable public sign-up - this should only be called by admins through the admin interface
   const signUp = async (email: string, password: string, fullName?: string) => {
-    try {
-      logger.debug('AuthProvider: Attempting sign up');
-      logger.chrome('Chrome sign up attempt', { email });
-      
-      // Enhanced input validation
-      if (!email || !password) {
-        return { error: new Error('Email and password are required') };
-      }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return { error: new Error('Invalid email format') };
-      }
-
-      // Enhanced password validation
-      const passwordStrength = PasswordService.validatePassword(password);
-      if (!passwordStrength.isValid) {
-        return { 
-          error: new Error(`Password requirements not met: ${passwordStrength.feedback.join(', ')}`) 
-        };
-      }
-      
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email: SecurityService.sanitizeUserInput(email),
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName || email
-          }
-        }
-      });
-      
-      if (!error) {
-        logger.chrome('Chrome sign up successful');
-        await logSecurityEvent({
-          action: SecurityEvents.LOGIN_SUCCESS,
-          new_values: { 
-            email, 
-            type: 'signup',
-            passwordStrength: passwordStrength.score
-          }
-        });
-      }
-      
-      return { error };
-    } catch (error: any) {
-      logger.error('AuthProvider: Sign up error:', error);
-      return { error };
-    }
+    // Return error for public sign-up attempts
+    return { 
+      error: new Error('Public registration is disabled. Contact your administrator for account creation.') 
+    };
   };
 
   const signOut = async () => {
@@ -353,13 +303,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return hasRole('admin') || hasRole('power_user');
   };
 
+  const isAuditor = (): boolean => {
+    return hasRole('auditor');
+  };
+
+  const isAuditorOrAdmin = (): boolean => {
+    return hasRole('admin') || hasRole('auditor');
+  };
+
   const checkPermission = (permission: string): boolean => {
     if (!user) return false;
     
-    // Simple permission system based on roles
+    // Enhanced permission system based on roles
     const rolePermissions: Record<string, string[]> = {
       'admin': ['*'], // Admin has all permissions
-      'power_user': ['read', 'write', 'manage_incidents', 'export_data'],
+      'power_user': ['read', 'write', 'manage_incidents', 'export_data', 'manage_cities'],
+      'auditor': ['read', 'view_audit_logs', 'export_audit_data'],
       'regular_user': ['read']
     };
 
@@ -381,6 +340,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasRole,
     isAdmin,
     isPowerUserOrAdmin,
+    isAuditor,
+    isAuditorOrAdmin,
     refreshSession,
     checkPermission
   };
@@ -390,7 +351,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading, 
     rolesCount: userRoles.length,
     securityScore,
-    isChrome
+    isChrome,
+    roles: userRoles
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
