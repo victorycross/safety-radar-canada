@@ -7,6 +7,7 @@ import SystemHealthTab from './SystemHealthTab';
 import SettingsDocumentationTab from './SettingsDocumentationTab';
 import SecurityRiskRegisterTab from './SecurityRiskRegisterTab';
 import ArchiveManagementTab from './ArchiveManagementTab';
+import UserManagementTab from './UserManagementTab';
 
 interface AdminTabsProps {
   activeTab: string;
@@ -16,13 +17,14 @@ interface AdminTabsProps {
 const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-6">
+      <TabsList className="grid w-full grid-cols-7">
         <TabsTrigger value="operations">Operations</TabsTrigger>
         <TabsTrigger value="data-management">Data Management</TabsTrigger>
         <TabsTrigger value="system-health">System Health</TabsTrigger>
         <TabsTrigger value="security-risks">Security Risks</TabsTrigger>
         <TabsTrigger value="archive-management">Archive Management</TabsTrigger>
-        <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsTrigger value="user-management">User Management</TabsTrigger>
+        <TabsTrigger value="documentation">Documentation</TabsTrigger>
       </TabsList>
       
       <TabsContent value="operations" className="space-y-4">
@@ -45,7 +47,11 @@ const AdminTabs = ({ activeTab, onTabChange }: AdminTabsProps) => {
         <ArchiveManagementTab />
       </TabsContent>
       
-      <TabsContent value="settings" className="space-y-4">
+      <TabsContent value="user-management" className="space-y-4">
+        <UserManagementTab />
+      </TabsContent>
+      
+      <TabsContent value="documentation" className="space-y-4">
         <SettingsDocumentationTab />
       </TabsContent>
     </Tabs>

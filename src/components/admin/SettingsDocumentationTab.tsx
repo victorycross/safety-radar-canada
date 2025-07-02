@@ -5,12 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Settings, 
-  Users, 
-  Shield, 
   Bell,
   Database,
   Key,
-  FileText,
   Activity,
   GitBranch
 } from 'lucide-react';
@@ -26,14 +23,13 @@ const SettingsDocumentationTab = () => {
       <div>
         <h2 className="text-2xl font-bold">Settings & Documentation</h2>
         <p className="text-muted-foreground">
-          System configuration, user management, security monitoring, and comprehensive documentation resources
+          System configuration, security monitoring, and comprehensive documentation resources
         </p>
       </div>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="system">System Settings</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="security">Security Monitor</TabsTrigger>
           <TabsTrigger value="schema">Schema Health</TabsTrigger>
           <TabsTrigger value="docs">Documentation</TabsTrigger>
@@ -99,45 +95,6 @@ const SettingsDocumentationTab = () => {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="users" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                User Management
-              </CardTitle>
-              <CardDescription>Manage user accounts, roles, and permissions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Users className="h-6 w-6" />
-                  <div className="text-center">
-                    <div className="font-medium">User Accounts</div>
-                    <div className="text-xs opacity-75">Manage user profiles</div>
-                  </div>
-                </Button>
-
-                <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Shield className="h-6 w-6" />
-                  <div className="text-center">
-                    <div className="font-medium">Roles & Permissions</div>
-                    <div className="text-xs opacity-75">Configure access levels</div>
-                  </div>
-                </Button>
-
-                <Button variant="outline" className="h-20 flex-col gap-2">
-                  <Key className="h-6 w-6" />
-                  <div className="text-center">
-                    <div className="font-medium">Authentication</div>
-                    <div className="text-xs opacity-75">Login & security settings</div>
-                  </div>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
         
         <TabsContent value="security" className="space-y-4">

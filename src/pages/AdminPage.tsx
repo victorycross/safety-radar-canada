@@ -6,7 +6,7 @@ import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
 const AdminPage = () => {
   const [activeTab, setActiveTab] = useState('operations');
 
-  // Handle URL query parameters for tab navigation with new tab names
+  // Handle URL query parameters for tab navigation with updated tab names
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tabParam = urlParams.get('tab');
@@ -17,14 +17,15 @@ const AdminPage = () => {
       'data-sources': 'data-management',
       'operations': 'data-management',
       'monitoring': 'system-health',
-      'documentation': 'settings',
-      'overview': 'operations'
+      'settings': 'documentation',
+      'overview': 'operations',
+      'users': 'user-management'
     };
     
     if (tabParam) {
       const mappedTab = tabMapping[tabParam] || tabParam;
       // Validate the tab exists
-      const validTabs = ['operations', 'data-management', 'system-health', 'security-risks', 'archive-management', 'settings'];
+      const validTabs = ['operations', 'data-management', 'system-health', 'security-risks', 'archive-management', 'user-management', 'documentation'];
       if (validTabs.includes(mappedTab)) {
         setActiveTab(mappedTab);
       }
@@ -47,7 +48,7 @@ const AdminPage = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            Comprehensive administration hub for operations, data management, and system oversight
+            Comprehensive administration hub for operations, data management, user management, and system oversight
           </p>
         </div>
         <AdminTabs activeTab={activeTab} onTabChange={handleTabChange} />
