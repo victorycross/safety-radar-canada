@@ -55,8 +55,8 @@ const SecureRoleManager: React.FC = () => {
           throw new Error('User not found. Please ensure the user has signed up.');
         }
 
-        // Insert the role
-        const { error: roleError } = await supabase
+        // Insert the role - cast to any to work around type issues
+        const { error: roleError } = await (supabase as any)
           .from('user_roles')
           .insert({
             user_id: profileData.id,
@@ -119,8 +119,8 @@ const SecureRoleManager: React.FC = () => {
         throw new Error('User not found');
       }
 
-      // Remove the role
-      const { error } = await supabase
+      // Remove the role - cast to any to work around type issues
+      const { error } = await (supabase as any)
         .from('user_roles')
         .delete()
         .eq('user_id', profileData.id)
@@ -194,6 +194,7 @@ const SecureRoleManager: React.FC = () => {
             <SelectContent>
               <SelectItem value="regular_user">Regular User</SelectItem>
               <SelectItem value="power_user">Power User</SelectItem>
+              <SelectItem value="auditor">Auditor</SelectItem>
               <SelectItem value="admin">Administrator</SelectItem>
             </SelectContent>
           </Select>

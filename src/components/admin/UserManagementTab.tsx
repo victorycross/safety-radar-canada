@@ -86,8 +86,8 @@ const UserManagementTab = () => {
 
       if (profilesError) throw profilesError;
 
-      // Get all user roles
-      const { data: userRoles, error: rolesError } = await supabase
+      // Get all user roles - cast to any to work around type issues
+      const { data: userRoles, error: rolesError } = await (supabase as any)
         .from('user_roles')
         .select('user_id, role');
 
@@ -99,7 +99,7 @@ const UserManagementTab = () => {
         email: profile.email || '',
         full_name: profile.full_name,
         created_at: profile.created_at,
-        roles: userRoles?.filter(ur => ur.user_id === profile.id).map(ur => ur.role) || [],
+        roles: userRoles?.filter((ur: any) => ur.user_id === profile.id).map((ur: any) => ur.role) || [],
         last_sign_in_at: undefined // Would need to get from auth.users if accessible
       })) || [];
 
@@ -118,7 +118,8 @@ const UserManagementTab = () => {
 
   const loadAuditLogs = async () => {
     try {
-      const { data, error } = await supabase
+      // Use raw query to access the new table
+      const { data, error } = await (supabase as any)
         .from('user_management_audit')
         .select('*')
         .order('created_at', { ascending: false })
@@ -158,8 +159,8 @@ const UserManagementTab = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Assign role
-        const { error: roleError } = await supabase
+        // Assign role - cast to any to work around type issues
+        const { error: roleError } = await (supabase as any)
           .from('user_roles')
           .insert({
             user_id: authData.user.id,
@@ -168,8 +169,8 @@ const UserManagementTab = () => {
 
         if (roleError) throw roleError;
 
-        // Log the action
-        await supabase.rpc('log_user_management_action', {
+        // Log the action using direct query
+        await (supabase as any).rpc('log_user_management_action', {
           action_type: 'user_created',
           target_user_id: authData.user.id,
           target_user_email: newUser.email,
@@ -204,9 +205,9 @@ const UserManagementTab = () => {
       const user = users.find(u => u.id === userId);
       const oldRole = user?.roles[0]; // Assuming single role for now
 
-      // Update role
+      // Update role - cast to any to work around type issues
       if (oldRole) {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase as any)
           .from('user_roles')
           .update({ role: newRole })
           .eq('user_id', userId)
@@ -214,7 +215,7 @@ const UserManagementTab = () => {
 
         if (updateError) throw updateError;
       } else {
-        const { error: insertError } = await supabase
+        const { error: insertError } = await (supabase as any)
           .from('user_roles')
           .insert({
             user_id: userId,
@@ -249,6 +250,10 @@ const UserManagementTab = () => {
     const matchesRole = selectedRole === 'all' || user.roles.includes(selectedRole as AppRole);
     return matchesSearch && matchesRole;
   });
+
+  const handleRoleFilterChange = (value: string) => {
+    setSelectedRole(value as AppRole | 'all');
+  };
 
   if (!isAdmin()) {
     return (
@@ -388,7 +393,7 @@ const UserManagementTab = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <Select value={selectedRole} onValueChange={handleRoleFilterChange}>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Filter by role" />
                   </SelectTrigger>
