@@ -30,9 +30,21 @@ import { RSSFeed, APISource, SystemIntegration, CommunicationTemplate, useDataMa
 
 const InputsManagementTab = () => {
   const navigate = useNavigate();
-  const { fetchRSSFeeds, updateRSSFeed, loading } = useDataManagement();
+  const { 
+    fetchRSSFeeds, 
+    updateRSSFeed, 
+    fetchAPISources, 
+    updateAPISource, 
+    fetchSystemIntegrations, 
+    updateSystemIntegration, 
+    loading 
+  } = useDataManagement();
   const [rssFeeds, setRssFeeds] = useState<RSSFeed[]>([]);
+  const [apiSources, setApiSources] = useState<APISource[]>([]);
+  const [systemIntegrations, setSystemIntegrations] = useState<SystemIntegration[]>([]);
   const [feedsLoading, setFeedsLoading] = useState(true);
+  const [apiSourcesLoading, setApiSourcesLoading] = useState(true);
+  const [systemIntegrationsLoading, setSystemIntegrationsLoading] = useState(true);
   const [rssModalOpen, setRssModalOpen] = useState(false);
   const [apiModalOpen, setApiModalOpen] = useState(false);
   const [feedListModalOpen, setFeedListModalOpen] = useState(false);
@@ -47,9 +59,10 @@ const InputsManagementTab = () => {
   const [selectedSystemIntegration, setSelectedSystemIntegration] = useState<SystemIntegration | null>(null);
   const [selectedCommunicationTemplate, setSelectedCommunicationTemplate] = useState<CommunicationTemplate | null>(null);
 
-  // Load RSS feeds on component mount
+  // Load all data on component mount
   useEffect(() => {
-    const loadRSSFeeds = async () => {
+    const loadAllData = async () => {
+      // Load RSS feeds
       setFeedsLoading(true);
       try {
         const feeds = await fetchRSSFeeds();
@@ -59,15 +72,43 @@ const InputsManagementTab = () => {
       } finally {
         setFeedsLoading(false);
       }
+
+      // Load API sources
+      setApiSourcesLoading(true);
+      try {
+        const sources = await fetchAPISources();
+        setApiSources(sources);
+      } catch (error) {
+        console.error('Failed to load API sources:', error);
+      } finally {
+        setApiSourcesLoading(false);
+      }
+
+      // Load system integrations
+      setSystemIntegrationsLoading(true);
+      try {
+        const integrations = await fetchSystemIntegrations();
+        setSystemIntegrations(integrations);
+      } catch (error) {
+        console.error('Failed to load system integrations:', error);
+      } finally {
+        setSystemIntegrationsLoading(false);
+      }
     };
 
-    loadRSSFeeds();
+    loadAllData();
   }, []);
 
-  // Refresh feeds when modals close
-  const refreshFeeds = async () => {
-    const feeds = await fetchRSSFeeds();
+  // Refresh all data when modals close
+  const refreshAllData = async () => {
+    const [feeds, sources, integrations] = await Promise.all([
+      fetchRSSFeeds(),
+      fetchAPISources(),
+      fetchSystemIntegrations()
+    ]);
     setRssFeeds(feeds);
+    setApiSources(sources);
+    setSystemIntegrations(integrations);
   };
 
   const handleOpenRSSModal = (mode: 'create' | 'edit' = 'create', feed?: RSSFeed) => {
@@ -116,7 +157,7 @@ const InputsManagementTab = () => {
     setSelectedAPISource(null);
     setSelectedSystemIntegration(null);
     setSelectedCommunicationTemplate(null);
-    refreshFeeds(); // Refresh feeds when operation is successful
+    refreshAllData(); // Refresh all data when operation is successful
   };
 
   const handleModalClose = () => {
@@ -142,9 +183,27 @@ const InputsManagementTab = () => {
   const toggleFeedStatus = async (feed: RSSFeed) => {
     try {
       await updateRSSFeed(feed.id, { ...feed, is_active: !feed.is_active });
-      refreshFeeds();
+      refreshAllData();
     } catch (error) {
       console.error('Failed to toggle feed status:', error);
+    }
+  };
+
+  const toggleAPISourceStatus = async (source: APISource) => {
+    try {
+      await updateAPISource(source.id, { ...source, is_active: !source.is_active });
+      refreshAllData();
+    } catch (error) {
+      console.error('Failed to toggle API source status:', error);
+    }
+  };
+
+  const toggleSystemIntegrationStatus = async (integration: SystemIntegration) => {
+    try {
+      await updateSystemIntegration(integration.id, { ...integration, is_active: !integration.is_active });
+      refreshAllData();
+    } catch (error) {
+      console.error('Failed to toggle system integration status:', error);
     }
   };
 
@@ -358,22 +417,55 @@ const InputsManagementTab = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Government Alerts API</span>
-                  <Badge variant="default">Connected</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Immigration Canada</span>
-                  <Badge variant="default">Connected</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Travel Advisory API</span>
-                  <Badge variant="destructive">Error</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Emergency Services</span>
-                  <Badge variant="default">Connected</Badge>
-                </div>
+                {apiSourcesLoading ? (
+                  // Loading skeletons
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-6 w-16" />
+                    </div>
+                  ))
+                ) : apiSources.length === 0 ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No API sources configured</p>
+                    <p className="text-sm">Add your first API source to get started</p>
+                  </div>
+                ) : (
+                  apiSources.map((source) => (
+                    <div key={source.id} className="flex items-center justify-between p-2 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{source.name}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {source.type || 'API'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          API Source
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleAPISourceStatus(source)}
+                          disabled={loading}
+                        >
+                          {source.is_active ? (
+                            <Power className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <PowerOff className="h-4 w-4 text-gray-400" />
+                          )}
+                        </Button>
+                        <Badge variant={source.is_active ? "default" : "secondary"}>
+                          {source.is_active ? "Connected" : "Disconnected"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
               <div className="space-y-2">
                 <Button className="w-full" onClick={() => handleOpenAPIModal('create')}>
@@ -384,6 +476,11 @@ const InputsManagementTab = () => {
                   <Settings className="h-4 w-4 mr-2" />
                   Configure APIs
                 </Button>
+                {apiSources.length > 0 && (
+                  <div className="text-center text-sm text-muted-foreground pt-2">
+                    {apiSources.length} source{apiSources.length !== 1 ? 's' : ''} configured
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -404,18 +501,57 @@ const InputsManagementTab = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">HR Management System</span>
-                <Badge variant="secondary">Configured</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Travel Booking Platform</span>
-                <Badge variant="secondary">Configured</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Internal Database</span>
-                <Badge variant="default">Active</Badge>
-              </div>
+              {systemIntegrationsLoading ? (
+                // Loading skeletons
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-6 w-16" />
+                  </div>
+                ))
+              ) : systemIntegrations.length === 0 ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No system integrations configured</p>
+                  <p className="text-sm">Add your first integration to get started</p>
+                </div>
+              ) : (
+                systemIntegrations.map((integration) => (
+                  <div key={integration.id} className="flex items-center justify-between p-2 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{integration.name}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {integration.type || 'Integration'}
+                        </Badge>
+                      </div>
+                      {integration.last_sync && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          Last synced: {new Date(integration.last_sync).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleSystemIntegrationStatus(integration)}
+                        disabled={loading}
+                      >
+                        {integration.is_active ? (
+                          <Power className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <PowerOff className="h-4 w-4 text-gray-400" />
+                        )}
+                      </Button>
+                      <Badge variant={integration.is_active ? "default" : "secondary"}>
+                        {integration.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
             <div className="space-y-2">
               <Button className="w-full" onClick={() => handleOpenSystemIntegrationModal('create')}>
@@ -426,6 +562,11 @@ const InputsManagementTab = () => {
                 <Settings className="h-4 w-4 mr-2" />
                 Manage Connections
               </Button>
+              {systemIntegrations.length > 0 && (
+                <div className="text-center text-sm text-muted-foreground pt-2">
+                  {systemIntegrations.length} integration{systemIntegrations.length !== 1 ? 's' : ''} configured
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -458,7 +599,7 @@ const InputsManagementTab = () => {
         isOpen={feedListModalOpen}
         onClose={() => {
           setFeedListModalOpen(false);
-          refreshFeeds(); // Refresh feeds when closing manage modal
+          refreshAllData(); // Refresh all data when closing manage modal
         }}
         onEditFeed={handleEditFeed}
       />
