@@ -41,10 +41,7 @@ const ArchiveHistoryViewer = () => {
     try {
       let query = supabase
         .from('alert_archive_log')
-        .select(`
-          *,
-          profiles!inner(email)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -56,16 +53,29 @@ const ArchiveHistoryViewer = () => {
         query = query.eq('action', actionFilter);
       }
 
-      const { data, error } = await query;
+      const { data: logData, error: logError } = await query;
 
-      if (error) {
-        console.error('Error fetching archive log:', error);
-        throw error;
+      if (logError) {
+        console.error('Error fetching archive log:', logError);
+        throw logError;
       }
 
-      const enrichedData = (data || []).map(entry => ({
+      // Fetch user profiles separately
+      const userIds = [...new Set(logData?.map(entry => entry.performed_by) || [])];
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Continue without profiles data instead of throwing
+      }
+
+      // Combine the data
+      const enrichedData = (logData || []).map(entry => ({
         ...entry,
-        user_email: entry.profiles?.email || 'Unknown User'
+        user_email: profiles?.find(profile => profile.id === entry.performed_by)?.email || 'Unknown User'
       }));
 
       setArchiveLog(enrichedData);
