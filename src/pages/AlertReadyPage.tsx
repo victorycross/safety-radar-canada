@@ -22,7 +22,7 @@ import { Link } from 'react-router-dom';
 const AlertReadyPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const { isPowerUserOrAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   
   const { alerts: allAlerts, loading: allLoading, error: allError, fetchAlerts: fetchAllAlerts } = useAllAlertSources();
   const { refreshData } = useSupabaseDataContext();
@@ -135,8 +135,8 @@ const AlertReadyPage = () => {
             </SelectContent>
           </Select>
 
-          {/* Admin Link for Archive Management */}
-          {isPowerUserOrAdmin() && (
+          {/* Admin Link for Archive Management - Only for admins */}
+          {isAdmin() && (
             <Link to="/admin?tab=archive-management">
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
@@ -155,10 +155,13 @@ const AlertReadyPage = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="alerts" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${isAdmin() ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value="alerts">Active Alerts</TabsTrigger>
           <TabsTrigger value="location">Location View</TabsTrigger>
-          <TabsTrigger value="controls">System Controls</TabsTrigger>
+          {/* System Controls tab - Only visible to admins */}
+          {isAdmin() && (
+            <TabsTrigger value="controls">System Controls</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="alerts" className="space-y-4">
@@ -194,13 +197,16 @@ const AlertReadyPage = () => {
           />
         </TabsContent>
 
-        <TabsContent value="controls">
-          {/* Unified Alert Integration Controls */}
-          <UnifiedAlertControls
-            alerts={allAlerts}
-            onRefreshIncidents={handleRefreshIncidents}
-          />
-        </TabsContent>
+        {/* System Controls tab - Only rendered for admins */}
+        {isAdmin() && (
+          <TabsContent value="controls">
+            {/* Unified Alert Integration Controls */}
+            <UnifiedAlertControls
+              alerts={allAlerts}
+              onRefreshIncidents={handleRefreshIncidents}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       <AlertDetailModal

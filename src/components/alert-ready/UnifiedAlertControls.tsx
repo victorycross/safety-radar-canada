@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeftRight, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 import { useUnifiedAlerts } from '@/hooks/useUnifiedAlerts';
 import { UniversalAlert } from '@/types/alerts';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface UnifiedAlertControlsProps {
   alerts: UniversalAlert[];
@@ -23,6 +24,7 @@ const UnifiedAlertControls: React.FC<UnifiedAlertControlsProps> = ({
     processAlertsToIncidents, 
     toggleIntegration 
   } = useUnifiedAlerts();
+  const { isAdmin } = useAuth();
 
   const handleProcessAlerts = async () => {
     const processedIds = await processAlertsToIncidents(alerts);
@@ -49,15 +51,22 @@ const UnifiedAlertControls: React.FC<UnifiedAlertControlsProps> = ({
             <Badge variant={status.color as any}>{status.text}</Badge>
           </div>
           <div className="flex items-center space-x-2">
+            {/* Only allow admins to toggle integration */}
             <Switch
               checked={integrationEnabled}
-              onCheckedChange={toggleIntegration}
+              onCheckedChange={isAdmin() ? toggleIntegration : undefined}
+              disabled={!isAdmin()}
             />
             <Settings className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
         <CardDescription>
           Automatically convert external alerts into internal incidents for unified monitoring
+          {!isAdmin() && (
+            <span className="block text-sm text-orange-600 mt-1">
+              Administrator privileges required to modify settings
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -81,14 +90,17 @@ const UnifiedAlertControls: React.FC<UnifiedAlertControlsProps> = ({
             <span className="text-sm text-muted-foreground">
               {alerts.length} alert{alerts.length !== 1 ? 's' : ''} available
             </span>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleProcessAlerts}
-              disabled={!integrationEnabled || isProcessing || alerts.length === 0}
-            >
-              {isProcessing ? 'Processing...' : 'Process Now'}
-            </Button>
+            {/* Only show Process Now button to admins */}
+            {isAdmin() && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleProcessAlerts}
+                disabled={!integrationEnabled || isProcessing || alerts.length === 0}
+              >
+                {isProcessing ? 'Processing...' : 'Process Now'}
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
