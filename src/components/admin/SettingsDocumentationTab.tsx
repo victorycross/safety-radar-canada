@@ -9,11 +9,19 @@ import {
   Database,
   Key,
   Activity,
-  GitBranch
+  GitBranch,
+  FileText,
+  Book
 } from 'lucide-react';
-import DocumentationTab from './DocumentationTab';
 import SchemaHealthMonitor from './SchemaHealthMonitor';
 import SecurityDashboard from '../security/SecurityDashboard';
+import RequirementsTab from './RequirementsTab';
+import TechnicalTab from './TechnicalTab';
+import DatabaseSchemaDocumentation from './DatabaseSchemaDocumentation';
+import TemplateDownloader from './TemplateDownloader';
+import AIIntegrationTab from './AIIntegrationTab';
+import AIOnboardingGuide from './AIOnboardingGuide';
+import AISchemaDocumentation from './AISchemaDocumentation';
 
 const SettingsDocumentationTab = () => {
   const [activeSubTab, setActiveSubTab] = useState('system');
@@ -23,16 +31,22 @@ const SettingsDocumentationTab = () => {
       <div>
         <h2 className="text-2xl font-bold">Settings & Documentation</h2>
         <p className="text-muted-foreground">
-          System configuration, security monitoring, and comprehensive documentation resources
+          System configuration, security monitoring, schema health, and comprehensive documentation resources
         </p>
       </div>
 
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-10">
           <TabsTrigger value="system">System Settings</TabsTrigger>
           <TabsTrigger value="security">Security Monitor</TabsTrigger>
           <TabsTrigger value="schema">Schema Health</TabsTrigger>
-          <TabsTrigger value="docs">Documentation</TabsTrigger>
+          <TabsTrigger value="requirements">Requirements</TabsTrigger>
+          <TabsTrigger value="technical">Technical Docs</TabsTrigger>
+          <TabsTrigger value="database">Database Schema</TabsTrigger>
+          <TabsTrigger value="ai-integration">AI Integration</TabsTrigger>
+          <TabsTrigger value="ai-onboarding">AI Onboarding</TabsTrigger>
+          <TabsTrigger value="ai-schema">AI Schema</TabsTrigger>
+          <TabsTrigger value="templates">Data Templates</TabsTrigger>
         </TabsList>
         
         <TabsContent value="system" className="space-y-4">
@@ -105,8 +119,32 @@ const SettingsDocumentationTab = () => {
           <SchemaHealthMonitor />
         </TabsContent>
         
-        <TabsContent value="docs" className="space-y-4">
-          <DocumentationTab />
+        <TabsContent value="requirements" className="space-y-4">
+          <RequirementsTab />
+        </TabsContent>
+        
+        <TabsContent value="technical" className="space-y-4">
+          <TechnicalTab />
+        </TabsContent>
+
+        <TabsContent value="database" className="space-y-4">
+          <DatabaseSchemaDocumentation />
+        </TabsContent>
+
+        <TabsContent value="ai-integration" className="space-y-4">
+          <AIIntegrationTab />
+        </TabsContent>
+
+        <TabsContent value="ai-onboarding" className="space-y-4">
+          <AIOnboardingGuide />
+        </TabsContent>
+
+        <TabsContent value="ai-schema" className="space-y-4">
+          <AISchemaDocumentation />
+        </TabsContent>
+
+        <TabsContent value="templates" className="space-y-4">
+          <TemplateDownloader />
         </TabsContent>
       </Tabs>
     </div>
