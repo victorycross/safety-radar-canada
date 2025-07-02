@@ -21,12 +21,6 @@ const DataManagementTab = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Data Management</h2>
-        <p className="text-muted-foreground">
-          Complete data lifecycle management: from input sources through processing to output distribution
-        </p>
-      </div>
 
       {/* Process Flow Overview */}
       <Card>
