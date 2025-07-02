@@ -222,7 +222,7 @@ const EmployeeCountValidator: React.FC<EmployeeCountValidatorProps> = ({
                 className={requireReason && !reason.trim() ? 'border-red-500' : ''}
               />
               {requireReason && !reason.trim() && (
-                <p className="text-sm text-red-600">A reason is required for critical changes (>50%)</p>
+                <p className="text-sm text-red-600">A reason is required for critical changes ({'>'}50%)</p>
               )}
             </div>
           )}
