@@ -12,13 +12,23 @@ import {
   Users,
   MapPin,
   Settings,
-  TrendingUp
+  TrendingUp,
+  Database,
+  Archive,
+  MonitorSpeaker,
+  Cog,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 const Sidebar = () => {
   const location = useLocation();
   const { user, isAdmin, isPowerUserOrAdmin, hasRole } = useAuth();
+  const [adminExpanded, setAdminExpanded] = useState(
+    location.pathname.startsWith('/admin')
+  );
 
   // Dashboard & Monitoring section - for all authenticated users
   const dashboardSection = [
@@ -39,9 +49,14 @@ const Sidebar = () => {
     { name: 'Report Incident', href: '/report-incident', icon: FileText },
   ];
 
-  // Admin section - for administrators only
-  const adminSection = isAdmin() ? [
-    { name: 'Admin', href: '/admin', icon: Shield },
+  // Admin subsections - for administrators only
+  const adminSubsections = isAdmin() ? [
+    { name: 'Operations', href: '/admin/operations', icon: Cog },
+    { name: 'Data Management', href: '/admin/data-management', icon: Database },
+    { name: 'System Health', href: '/admin/system-health', icon: MonitorSpeaker },
+    { name: 'Archive Management', href: '/admin/archive-management', icon: Archive },
+    { name: 'User Management', href: '/admin/users', icon: Users },
+    { name: 'Settings & Documentation', href: '/admin/settings', icon: Settings },
   ] : [];
 
   if (!user) {
@@ -88,6 +103,63 @@ const Sidebar = () => {
     );
   };
 
+  const renderAdminSection = () => {
+    if (!isAdmin() || adminSubsections.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mb-6">
+        <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          Administration
+        </h3>
+        <div>
+          <button
+            onClick={() => setAdminExpanded(!adminExpanded)}
+            className={cn(
+              'flex items-center w-full px-3 py-2 text-sm font-medium rounded-md transition-colors',
+              'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+            )}
+          >
+            <Shield className="mr-3 h-5 w-5 flex-shrink-0" />
+            <span className="flex-1 text-left">Administration</span>
+            {adminExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </button>
+          
+          {adminExpanded && (
+            <ul className="ml-8 mt-1 space-y-1">
+              {adminSubsections.map((item) => {
+                const isActive = location.pathname === item.href;
+                const Icon = item.icon;
+                
+                return (
+                  <li key={item.name}>
+                    <Link
+                      to={item.href}
+                      className={cn(
+                        'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                        isActive
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      )}
+                    >
+                      <Icon className="mr-3 h-4 w-4 flex-shrink-0" />
+                      {item.name}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-64 bg-white border-r border-gray-200 h-full">
       <div className="p-6">
@@ -104,7 +176,7 @@ const Sidebar = () => {
         {renderNavigationSection('Dashboard & Monitoring', dashboardSection)}
         {renderNavigationSection('Analytics & Reporting', analyticsSection)}
         {renderNavigationSection('Input & Reporting', inputSection)}
-        {renderNavigationSection('Administration', adminSection)}
+        {renderAdminSection()}
       </nav>
     </div>
   );

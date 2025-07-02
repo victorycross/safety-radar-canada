@@ -1,44 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
-import AdminTabs from '@/components/admin/AdminTabs';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState('operations');
+  const navigate = useNavigate();
 
-  // Handle URL query parameters for tab navigation with updated tab names
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tabParam = urlParams.get('tab');
-    
-    // Map old tab names to new simplified structure
-    const tabMapping: Record<string, string> = {
-      'command-center': 'operations',
-      'data-sources': 'data-management',
-      'operations': 'data-management',
-      'monitoring': 'system-health',
-      'settings': 'documentation',
-      'overview': 'operations',
-      'users': 'user-management',
-      'security-risks': 'operations' // Redirect old security-risks tab to operations
-    };
-    
-    if (tabParam) {
-      const mappedTab = tabMapping[tabParam] || tabParam;
-      // Validate the tab exists (removed security-risks from valid tabs)
-      const validTabs = ['operations', 'data-management', 'system-health', 'archive-management', 'user-management', 'documentation'];
-      if (validTabs.includes(mappedTab)) {
-        setActiveTab(mappedTab);
-      }
-    }
-  }, []);
-
-  // Update URL when tab changes
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    const newUrl = `${window.location.pathname}?tab=${tab}`;
-    window.history.replaceState({}, '', newUrl);
-  };
+    // Redirect to operations page by default
+    navigate('/admin/operations', { replace: true });
+  }, [navigate]);
 
   return (
     <RoleProtectedRoute 
@@ -46,13 +17,12 @@ const AdminPage = () => {
       fallbackMessage="Access to the Admin Dashboard requires Administrator or Power User privileges."
     >
       <div className="container mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
-            Comprehensive administration hub for operations, data management, user management, and system oversight
-          </p>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Redirecting to Operations...</h2>
+            <p className="text-muted-foreground">Please wait while we redirect you to the admin operations page.</p>
+          </div>
         </div>
-        <AdminTabs activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
     </RoleProtectedRoute>
   );
