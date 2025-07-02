@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -34,19 +33,21 @@ export const useAlertArchiveManagement = () => {
     try {
       console.log('Fetching alerts...');
       
-      // Fetch from multiple alert tables
-      const [securityAlerts, weatherAlerts, incidents, hubIncidents] = await Promise.all([
+      // Fetch from multiple alert tables including immigration_travel_announcements
+      const [securityAlerts, weatherAlerts, incidents, hubIncidents, immigrationAnnouncements] = await Promise.all([
         supabase.from('security_alerts_ingest').select('*'),
         supabase.from('weather_alerts_ingest').select('*'),
         supabase.from('incidents').select('*'),
-        supabase.from('hub_incidents').select('*')
+        supabase.from('hub_incidents').select('*'),
+        supabase.from('immigration_travel_announcements').select('*')
       ]);
 
       console.log('Fetch results:', {
         security: securityAlerts.data?.length || 0,
         weather: weatherAlerts.data?.length || 0,
         incidents: incidents.data?.length || 0,
-        hubIncidents: hubIncidents.data?.length || 0
+        hubIncidents: hubIncidents.data?.length || 0,
+        immigration: immigrationAnnouncements.data?.length || 0
       });
 
       // Check for errors in fetch operations
@@ -54,6 +55,7 @@ export const useAlertArchiveManagement = () => {
       if (weatherAlerts.error) console.error('Weather alerts error:', weatherAlerts.error);
       if (incidents.error) console.error('Incidents error:', incidents.error);
       if (hubIncidents.error) console.error('Hub incidents error:', hubIncidents.error);
+      if (immigrationAnnouncements.error) console.error('Immigration announcements error:', immigrationAnnouncements.error);
 
       // Transform and combine alerts
       const allAlerts: Alert[] = [];
@@ -151,6 +153,29 @@ export const useAlertArchiveManagement = () => {
         });
       }
 
+      // Process immigration travel announcements
+      if (immigrationAnnouncements.data) {
+        immigrationAnnouncements.data.forEach(announcement => {
+          const transformedAlert: Alert = {
+            id: announcement.id,
+            title: announcement.title,
+            description: announcement.summary,
+            source: 'immigration',
+            created_at: announcement.created_at,
+            archived_at: announcement.archived_at,
+            archived_by: announcement.archived_by,
+            archive_reason: announcement.archive_reason,
+            table_name: 'immigration_travel_announcements'
+          };
+          
+          if (announcement.archived_at) {
+            allArchivedAlerts.push(transformedAlert);
+          } else {
+            allAlerts.push(transformedAlert);
+          }
+        });
+      }
+
       // Sort by created_at descending
       allAlerts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       allArchivedAlerts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -221,7 +246,6 @@ export const useAlertArchiveManagement = () => {
 
         console.log(`Archive result for ${tableName}:`, data);
         
-        // Type assertion for the response data - convert through unknown first
         const response = data as unknown as BulkOperationResponse;
         results.push(response);
 
@@ -287,7 +311,6 @@ export const useAlertArchiveManagement = () => {
 
         console.log(`Unarchive result for ${tableName}:`, data);
         
-        // Type assertion for the response data - convert through unknown first
         const response = data as unknown as BulkOperationResponse;
         results.push(response);
 
@@ -366,6 +389,8 @@ export const useAlertArchiveManagement = () => {
           deleteResult = await supabase.from('incidents').delete().in('id', ids);
         } else if (tableName === 'hub_incidents') {
           deleteResult = await supabase.from('hub_incidents').delete().in('id', ids);
+        } else if (tableName === 'immigration_travel_announcements') {
+          deleteResult = await supabase.from('immigration_travel_announcements').delete().in('id', ids);
         }
 
         if (deleteResult?.error) {

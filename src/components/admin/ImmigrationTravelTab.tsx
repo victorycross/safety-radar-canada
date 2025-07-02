@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import ImmigrationBulkArchive from './immigration-travel/ImmigrationBulkArchive';
 import { 
   FileText, 
   Calendar, 
@@ -16,7 +17,8 @@ import {
   Users,
   Plane,
   Building,
-  Globe
+  Globe,
+  ArchiveX
 } from 'lucide-react';
 
 interface ImmigrationTravelAnnouncement {
@@ -155,175 +157,194 @@ const ImmigrationTravelTab = () => {
         <p className="text-muted-foreground">Monitor government announcements related to immigration, citizenship, refugees, and travel</p>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-              <FileText className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Immigration</p>
-                <p className="text-2xl font-bold">{stats.immigration}</p>
-              </div>
-              <Users className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Citizenship</p>
-                <p className="text-2xl font-bold">{stats.citizenship}</p>
-              </div>
-              <Building className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Refugee</p>
-                <p className="text-2xl font-bold">{stats.refugee}</p>
-              </div>
-              <Globe className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Travel</p>
-                <p className="text-2xl font-bold">{stats.travel}</p>
-              </div>
-              <Plane className="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs defaultValue="announcements" className="w-full">
+        <TabsList>
+          <TabsTrigger value="announcements" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Announcements
+          </TabsTrigger>
+          <TabsTrigger value="bulk-archive" className="flex items-center gap-2">
+            <ArchiveX className="h-4 w-4" />
+            Bulk Archive
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <Input
-          placeholder="Search announcements..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="news releases">News Releases</SelectItem>
-            <SelectItem value="statements">Statements</SelectItem>
-            <SelectItem value="media advisories">Media Advisories</SelectItem>
-            <SelectItem value="backgrounders">Backgrounders</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="immigration">Immigration</SelectItem>
-            <SelectItem value="citizenship">Citizenship</SelectItem>
-            <SelectItem value="refugee">Refugee</SelectItem>
-            <SelectItem value="travel">Travel</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Button onClick={fetchAnnouncements} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
+        <TabsContent value="announcements" className="space-y-6">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total</p>
+                    <p className="text-2xl font-bold">{stats.total}</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Immigration</p>
+                    <p className="text-2xl font-bold">{stats.immigration}</p>
+                  </div>
+                  <Users className="h-8 w-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Citizenship</p>
+                    <p className="text-2xl font-bold">{stats.citizenship}</p>
+                  </div>
+                  <Building className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Refugee</p>
+                    <p className="text-2xl font-bold">{stats.refugee}</p>
+                  </div>
+                  <Globe className="h-8 w-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Travel</p>
+                    <p className="text-2xl font-bold">{stats.travel}</p>
+                  </div>
+                  <Plane className="h-8 w-8 text-orange-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Announcements List */}
-      <div className="space-y-4">
-        {announcements.map((announcement) => (
-          <Card key={announcement.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    {getTypeIcon(announcement.announcement_type)}
-                    <CardTitle className="text-lg">{announcement.title}</CardTitle>
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Input
+              placeholder="Search announcements..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
+            />
+            
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="news releases">News Releases</SelectItem>
+                <SelectItem value="statements">Statements</SelectItem>
+                <SelectItem value="media advisories">Media Advisories</SelectItem>
+                <SelectItem value="backgrounders">Backgrounders</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="immigration">Immigration</SelectItem>
+                <SelectItem value="citizenship">Citizenship</SelectItem>
+                <SelectItem value="refugee">Refugee</SelectItem>
+                <SelectItem value="travel">Travel</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button onClick={fetchAnnouncements} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+
+          {/* Announcements List */}
+          <div className="space-y-4">
+            {announcements.map((announcement) => (
+              <Card key={announcement.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {getTypeIcon(announcement.announcement_type)}
+                        <CardTitle className="text-lg">{announcement.title}</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(announcement.pub_date).toLocaleDateString()}
+                        <span>•</span>
+                        <span>{announcement.source}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{announcement.category}</Badge>
+                      <Badge className={getTypeBadgeColor(announcement.announcement_type)}>
+                        {announcement.announcement_type}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {new Date(announcement.pub_date).toLocaleDateString()}
-                    <span>•</span>
-                    <span>{announcement.source}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{announcement.category}</Badge>
-                  <Badge className={getTypeBadgeColor(announcement.announcement_type)}>
-                    {announcement.announcement_type}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                {announcement.summary}
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {announcement.link && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={announcement.link} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        View Full Announcement
-                      </a>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {announcement.summary}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {announcement.link && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={announcement.link} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            View Full Announcement
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleArchive(announcement.id)}
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      Archive
                     </Button>
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleArchive(announcement.id)}
-                >
-                  <Archive className="h-4 w-4 mr-2" />
-                  Archive
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-      {announcements.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              No immigration and travel announcements found matching your criteria.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+          {announcements.length === 0 && (
+            <Card>
+              <CardContent className="text-center py-8">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  No immigration and travel announcements found matching your criteria.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="bulk-archive">
+          <ImmigrationBulkArchive onRefresh={fetchAnnouncements} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
