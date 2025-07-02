@@ -1,11 +1,14 @@
+
 import React, { useState } from 'react';
 import AlertsList from '@/components/alert-ready/AlertsList';
 import CriticalAlertsSummary from '@/components/alert-ready/CriticalAlertsSummary';
 import UnifiedAlertControls from '@/components/alert-ready/UnifiedAlertControls';
+import UnifiedBulkArchive from '@/components/alert-ready/UnifiedBulkArchive';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, Filter, X } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertTriangle, Filter, X, Archive } from 'lucide-react';
 import { useAllAlertSources } from '@/hooks/useAllAlertSources';
 import { useAlertManagement } from '@/hooks/useAlertManagement';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
@@ -66,6 +69,11 @@ const AlertReadyPage = () => {
   );
 
   const handleRefreshIncidents = () => {
+    refreshData();
+  };
+
+  const handleBulkArchiveRefresh = () => {
+    fetchAllAlerts();
     refreshData();
   };
 
@@ -135,43 +143,63 @@ const AlertReadyPage = () => {
         loading={allLoading} 
       />
 
-      {/* Location Context and Mapping */}
-      <LocationContext
-        alerts={allAlerts}
-        onLocationFilter={handleLocationFilter}
-        selectedLocation={selectedLocation}
-      />
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="alerts" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="alerts">Active Alerts</TabsTrigger>
+          <TabsTrigger value="bulk-archive" className="flex items-center gap-2">
+            <Archive className="h-4 w-4" />
+            Bulk Archive
+          </TabsTrigger>
+          <TabsTrigger value="location">Location View</TabsTrigger>
+          <TabsTrigger value="controls">System Controls</TabsTrigger>
+        </TabsList>
 
-      <AlertLocationMap
-        alerts={allAlerts}
-        onLocationClick={handleLocationFilter}
-        selectedLocation={selectedLocation}
-      />
+        <TabsContent value="alerts" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold">All Alerts</h2>
+            {filteredAlerts.length > 0 && (
+              <Badge variant="secondary">{filteredAlerts.length} alerts</Badge>
+            )}
+          </div>
+          
+          <AlertsList 
+            alerts={filteredAlerts}
+            loading={allLoading}
+            error={allError}
+            fetchAlerts={fetchAllAlerts}
+            activeView="all"
+            onAlertClick={openAlertDetail}
+          />
+        </TabsContent>
 
-      {/* Unified Alert Integration Controls */}
-      <UnifiedAlertControls
-        alerts={allAlerts}
-        onRefreshIncidents={handleRefreshIncidents}
-      />
+        <TabsContent value="bulk-archive">
+          <UnifiedBulkArchive onRefresh={handleBulkArchiveRefresh} />
+        </TabsContent>
 
-      {/* Unified Alerts List */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">All Alerts</h2>
-          {filteredAlerts.length > 0 && (
-            <Badge variant="secondary">{filteredAlerts.length} alerts</Badge>
-          )}
-        </div>
-        
-        <AlertsList 
-          alerts={filteredAlerts}
-          loading={allLoading}
-          error={allError}
-          fetchAlerts={fetchAllAlerts}
-          activeView="all"
-          onAlertClick={openAlertDetail}
-        />
-      </div>
+        <TabsContent value="location" className="space-y-4">
+          {/* Location Context and Mapping */}
+          <LocationContext
+            alerts={allAlerts}
+            onLocationFilter={handleLocationFilter}
+            selectedLocation={selectedLocation}
+          />
+
+          <AlertLocationMap
+            alerts={allAlerts}
+            onLocationClick={handleLocationFilter}
+            selectedLocation={selectedLocation}
+          />
+        </TabsContent>
+
+        <TabsContent value="controls">
+          {/* Unified Alert Integration Controls */}
+          <UnifiedAlertControls
+            alerts={allAlerts}
+            onRefreshIncidents={handleRefreshIncidents}
+          />
+        </TabsContent>
+      </Tabs>
 
       <AlertDetailModal
         alert={selectedAlert}
