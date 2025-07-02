@@ -1,5 +1,4 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { logSecurityEvent, SecurityEvents } from '@/utils/securityAudit';
 
 export interface SecurityConfig {
@@ -27,16 +26,13 @@ export class SecurityConfigService {
 
   static async getConfig(): Promise<SecurityConfig> {
     try {
-      const { data, error } = await supabase
-        .from('security_config')
-        .select('*')
-        .single();
-
-      if (error || !data) {
-        return this.defaultConfig;
+      // For now, try to get from localStorage until we have the database table
+      const stored = localStorage.getItem('security_config');
+      if (stored) {
+        const parsedConfig = JSON.parse(stored);
+        return { ...this.defaultConfig, ...parsedConfig };
       }
-
-      return { ...this.defaultConfig, ...data.config };
+      return this.defaultConfig;
     } catch (error) {
       console.error('Failed to load security config:', error);
       return this.defaultConfig;
@@ -48,15 +44,8 @@ export class SecurityConfigService {
       const currentConfig = await this.getConfig();
       const newConfig = { ...currentConfig, ...config };
 
-      const { error } = await supabase
-        .from('security_config')
-        .upsert({
-          id: 'main',
-          config: newConfig,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
+      // Store in localStorage for now
+      localStorage.setItem('security_config', JSON.stringify(newConfig));
 
       await logSecurityEvent({
         action: SecurityEvents.CONFIG_CHANGE,

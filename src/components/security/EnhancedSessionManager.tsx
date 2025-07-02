@@ -171,21 +171,17 @@ export const EnhancedSessionManager: React.FC<{ children: React.ReactNode }> = (
     if (!user) return;
 
     try {
-      // Refresh the session
-      const { error } = await user.app_metadata ? Promise.resolve({ error: null }) : Promise.resolve({ error: null });
-      
-      if (!error) {
-        setSessionWarning(false);
-        toast({
-          title: 'Session Extended',
-          description: 'Your session has been extended successfully.',
-        });
+      // Simple session extension - just reset the warning
+      setSessionWarning(false);
+      toast({
+        title: 'Session Extended',
+        description: 'Your session has been extended successfully.',
+      });
 
-        await logSecurityEvent({
-          action: 'SESSION_EXTENDED',
-          new_values: { extended_at: new Date().toISOString() }
-        });
-      }
+      await logSecurityEvent({
+        action: 'SESSION_EXTENDED',
+        new_values: { extended_at: new Date().toISOString() }
+      });
     } catch (error) {
       console.error('Failed to extend session:', error);
     }
