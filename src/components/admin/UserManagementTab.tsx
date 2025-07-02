@@ -145,7 +145,7 @@ const UserManagementTab = () => {
 
     setLoading(true);
     try {
-      // Create user via Supabase Auth Admin API (would need service role key)
+      // Create user via Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newUser.email,
         password: newUser.password,
@@ -159,23 +159,26 @@ const UserManagementTab = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Assign role - cast to any to work around type issues
-        const { error: roleError } = await (supabase as any)
-          .from('user_roles')
-          .insert({
-            user_id: authData.user.id,
-            role: newUser.role
-          });
+        // Wait a moment for the trigger to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        if (roleError) throw roleError;
+        // If the desired role is different from the default 'regular_user', update it
+        if (newUser.role !== 'regular_user') {
+          const { error: roleUpdateError } = await (supabase as any)
+            .from('user_roles')
+            .update({ role: newUser.role })
+            .eq('user_id', authData.user.id)
+            .eq('role', 'regular_user');
 
-        // Log the action using direct query
-        await (supabase as any).rpc('log_user_management_action', {
-          action_type: 'user_created',
-          target_user_id: authData.user.id,
-          target_user_email: newUser.email,
-          new_values: { role: newUser.role, full_name: newUser.full_name }
-        });
+          if (roleUpdateError) {
+            console.error('Role update error:', roleUpdateError);
+            toast({
+              title: 'Warning',
+              description: `User created successfully but role update failed. You can manually update the role later.`,
+              variant: 'destructive'
+            });
+          }
+        }
 
         toast({
           title: 'User Created',
