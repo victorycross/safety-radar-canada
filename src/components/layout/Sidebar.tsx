@@ -18,7 +18,10 @@ import {
   MonitorSpeaker,
   Cog,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  PieChart,
+  Target,
+  Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -37,17 +40,20 @@ const Sidebar = () => {
     { name: 'Location Status', href: '/location-status', icon: MapPin },
   ];
 
-  // Analytics & Reporting section - for admins, power users, and auditors
+  // Analytics & Strategic Reporting section - for admins, power users, and auditors
   const analyticsSection = (isAdmin() || isPowerUserOrAdmin() || hasRole('auditor')) ? [
-    { name: 'Analytics & Reporting', href: '/analytics', icon: BarChart3 },
-    { name: 'Incident Reports', href: '/incidents', icon: Activity },
-    { name: 'Executive Reports', href: '/report', icon: TrendingUp },
+    { name: 'Analytics Dashboard', href: '/analytics-dashboard', icon: BarChart3 },
+    { name: 'Risk Management', href: '/risk-management', icon: Target },
+    { name: 'Executive Reports', href: '/executive-reports', icon: TrendingUp },
+    { name: 'Reporting Tools', href: '/reporting-tools', icon: Download },
   ] : [];
 
-  // Input & Reporting section - simplified without data management
-  const inputSection = [
+  // Incident Management section - for all authenticated users
+  const incidentSection = [
+    { name: 'Incident Reports', href: '/incidents', icon: Activity },
     { name: 'Report Incident', href: '/report-incident', icon: FileText },
   ];
+
 
   // Admin subsections - for administrators only
   const adminSubsections = isAdmin() ? [
@@ -174,8 +180,8 @@ const Sidebar = () => {
       
       <nav className="px-3 pb-6">
         {renderNavigationSection('Dashboard & Monitoring', dashboardSection)}
-        {renderNavigationSection('Analytics & Reporting', analyticsSection)}
-        {renderNavigationSection('Input & Reporting', inputSection)}
+        {renderNavigationSection('Analytics & Strategic Reporting', analyticsSection)}
+        {renderNavigationSection('Incident Management', incidentSection)}
         {renderAdminSection()}
       </nav>
     </div>

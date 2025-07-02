@@ -11,9 +11,11 @@ import Index from "./pages/Index";
 import HomePage from "./pages/HomePage";
 import AlertReadyPage from "./pages/AlertReadyPage";
 import LocationStatusPage from "./pages/LocationStatusPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
+import RiskManagementPage from "./pages/RiskManagementPage";
+import ExecutiveReportsPage from "./pages/ExecutiveReportsPage";
+import ReportingToolsPage from "./pages/ReportingToolsPage";
 import IncidentsPage from "./pages/IncidentsPage";
-import ReportPage from "./pages/ReportPage";
 import ReportIncidentPage from "./pages/ReportIncidentPage";
 import AdminPage from "./pages/AdminPage";
 import AdminOperationsPage from "./pages/AdminOperationsPage";
@@ -56,9 +58,11 @@ function App() {
                           <Route path="home" element={<HomePage />} />
                           <Route path="alert-ready" element={<AlertReadyPage />} />
                           <Route path="location-status" element={<LocationStatusPage />} />
-                          <Route path="analytics" element={<AnalyticsPage />} />
+                          <Route path="analytics-dashboard" element={<AnalyticsDashboardPage />} />
+                          <Route path="risk-management" element={<RiskManagementPage />} />
+                          <Route path="executive-reports" element={<ExecutiveReportsPage />} />
+                          <Route path="reporting-tools" element={<ReportingToolsPage />} />
                           <Route path="incidents" element={<IncidentsPage />} />
-                          <Route path="report" element={<ReportPage />} />
                           <Route path="report-incident" element={<ReportIncidentPage />} />
                           <Route path="admin" element={<AdminPage />} />
                           <Route path="admin/operations" element={<AdminOperationsPage />} />
