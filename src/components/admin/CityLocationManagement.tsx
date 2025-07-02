@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Users, Plane, Home, AlertTriangle, CheckCircle, History, Clock } from 'lucide-react';
+import { MapPin, Users, Plane, Home, AlertTriangle, CheckCircle, History, Clock, Shield } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { 
   fetchCities, 
   fetchEmployeeLocations, 
@@ -27,6 +27,9 @@ interface CityLocationManagementProps {
 
 const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataUpdated }) => {
   const { provinces, refreshData } = useSupabaseDataContext();
+  const { checkPermission } = useEnhancedAuth();
+  const isAdmin = checkPermission('*') || checkPermission('admin');
+  
   const [cities, setCities] = useState<City[]>([]);
   const [employeeLocations, setEmployeeLocations] = useState<EmployeeLocation[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<string>('');
@@ -88,7 +91,7 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
     }
   }, [existingLocation]);
 
-  const checkForLargeChanges = (newHomeBase: number, newCurrent: number, newTravelAway: number) => {
+  const checkForValidation = (newHomeBase: number, newCurrent: number, newTravelAway: number) => {
     if (!existingLocation) return false;
     
     const currentTotal = existingLocation.homeBaseCount + existingLocation.currentLocationCount + existingLocation.travelAwayCount;
@@ -99,13 +102,11 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
     const totalChange = Math.abs(newTotal - currentTotal);
     const percentageChange = (totalChange / currentTotal) * 100;
     
-    const homeBaseChange = Math.abs(newHomeBase - existingLocation.homeBaseCount);
-    const homeBasePercentage = existingLocation.homeBaseCount > 0 ? (homeBaseChange / existingLocation.homeBaseCount) * 100 : 0;
-    
-    return percentageChange > 25 || (homeBasePercentage > 25 && newHomeBase < existingLocation.homeBaseCount);
+    // Simplified two-tier system: 25% for warnings, no automatic blocks
+    return percentageChange >= 25;
   };
 
-  const handleUpdateLocation = async (reason?: string) => {
+  const handleUpdateLocation = async (reason?: string, adminOverride?: boolean) => {
     if (!selectedCity) {
       toast({
         title: 'Validation Error',
@@ -115,8 +116,8 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
       return;
     }
 
-    // Check for large changes
-    if (checkForLargeChanges(homeBaseCount, currentLocationCount, travelAwayCount)) {
+    // Check if validation is needed (25%+ change)
+    if (checkForValidation(homeBaseCount, currentLocationCount, travelAwayCount) && !adminOverride) {
       setPendingUpdate({
         cityId: selectedCity,
         homeBase: homeBaseCount,
@@ -127,25 +128,39 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
       return;
     }
 
-    await performUpdate(selectedCity, homeBaseCount, currentLocationCount, travelAwayCount, reason);
+    await performUpdate(selectedCity, homeBaseCount, currentLocationCount, travelAwayCount, reason, adminOverride);
   };
 
-  const performUpdate = async (cityId: string, homeBase: number, current: number, travelAway: number, reason?: string) => {
+  const performUpdate = async (
+    cityId: string, 
+    homeBase: number, 
+    current: number, 
+    travelAway: number, 
+    reason?: string, 
+    adminOverride?: boolean
+  ) => {
     setLoading(true);
     try {
-      const updateReason = reason ? `Manual update: ${reason}` : 'Manual update via admin interface';
+      let updateReason = 'Manual update via admin interface';
+      
+      if (adminOverride) {
+        updateReason = `Admin override: ${reason || 'No reason provided'}`;
+      } else if (reason) {
+        updateReason = `Manual update: ${reason}`;
+      }
       
       await updateEmployeeLocation(
         cityId,
         homeBase,
         current,
         travelAway,
-        'admin'
+        adminOverride ? 'admin_override' : 'admin'
       );
 
+      const changeType = adminOverride ? 'with admin override' : 'normally';
       toast({
         title: 'Location Updated',
-        description: `Employee counts for ${selectedCityData?.name} have been updated. Province totals will sync automatically.`,
+        description: `Employee counts for ${selectedCityData?.name} have been updated ${changeType}. Province totals will sync automatically.`,
       });
 
       await loadData();
@@ -168,9 +183,16 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
     }
   };
 
-  const handleValidatorConfirm = async (reason?: string) => {
+  const handleValidatorConfirm = async (reason?: string, adminOverride?: boolean) => {
     if (pendingUpdate) {
-      await performUpdate(pendingUpdate.cityId, pendingUpdate.homeBase, pendingUpdate.current, pendingUpdate.travelAway, reason);
+      await performUpdate(
+        pendingUpdate.cityId, 
+        pendingUpdate.homeBase, 
+        pendingUpdate.current, 
+        pendingUpdate.travelAway, 
+        reason,
+        adminOverride
+      );
       setPendingUpdate(null);
     }
     setShowValidator(false);
@@ -202,6 +224,45 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
     return location.homeBaseCount + location.currentLocationCount + location.travelAwayCount;
   };
 
+  const getChangeWarningLevel = (location: EmployeeLocation) => {
+    const currentTotal = location.homeBaseCount + location.currentLocationCount + location.travelAwayCount;
+    const newTotal = homeBaseCount + currentLocationCount + travelAwayCount;
+    
+    if (currentTotal === 0 || selectedCity !== location.cityId) return 'none';
+    
+    const percentageChange = Math.abs((newTotal - currentTotal) / currentTotal * 100);
+    
+    if (percentageChange >= 50) return 'critical';
+    if (percentageChange >= 25) return 'warning';
+    return 'normal';
+  };
+
+  const renderValidationIndicator = () => {
+    if (!existingLocation) return null;
+    
+    const warningLevel = getChangeWarningLevel(existingLocation);
+    const totalChange = (homeBaseCount + currentLocationCount + travelAwayCount) - 
+                       (existingLocation.homeBaseCount + existingLocation.currentLocationCount + existingLocation.travelAwayCount);
+    
+    if (warningLevel === 'none' || warningLevel === 'normal') return null;
+    
+    return (
+      <div className={`text-xs mt-1 flex items-center gap-1 ${
+        warningLevel === 'critical' ? 'text-red-600' : 'text-yellow-600'
+      }`}>
+        <AlertTriangle className="h-3 w-3" />
+        {warningLevel === 'critical' ? 'Critical change' : 'Large change'} detected 
+        ({totalChange > 0 ? '+' : ''}{totalChange} total)
+        {isAdmin && (
+          <div className="flex items-center gap-1 ml-2">
+            <Shield className="h-3 w-3 text-blue-600" />
+            <span className="text-blue-600">Override available</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Primary Source Indicator */}
@@ -210,6 +271,12 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
           <CardTitle className="flex items-center gap-2 text-green-800">
             <CheckCircle className="h-5 w-5" />
             Primary Employee Data Management
+            {isAdmin && (
+              <Badge variant="secondary" className="ml-2">
+                <Shield className="h-3 w-3 mr-1" />
+                Admin Access
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="text-green-700">
@@ -217,6 +284,9 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
             <p><strong>Authoritative Source:</strong> All province totals are calculated from this city-level data</p>
             <p><strong>Real-time Sync:</strong> Province dashboard updates automatically when you make changes here</p>
             <p><strong>Change Tracking:</strong> All modifications are logged with timestamps and user information</p>
+            {isAdmin && (
+              <p><strong>Admin Features:</strong> Override validation warnings for urgent updates</p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -228,7 +298,7 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
             City-Level Employee Management
           </CardTitle>
           <CardDescription>
-            Manage employee distribution at the city level with travel status tracking and change validation
+            Manage employee distribution at the city level with tiered validation and admin override capabilities
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -363,12 +433,7 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
                 <div className="text-xs text-blue-600 mt-1">
                   Note: Home Base count contributes to province totals on the dashboard
                 </div>
-                {existingLocation && checkForLargeChanges(homeBaseCount, currentLocationCount, travelAwayCount) && (
-                  <div className="text-xs text-yellow-600 mt-1 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    Large change detected - confirmation will be required
-                  </div>
-                )}
+                {renderValidationIndicator()}
               </div>
 
               <Button 
@@ -455,7 +520,7 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
         onRevert={handleHistoryRevert}
       />
 
-      {/* Employee Count Validator */}
+      {/* Employee Count Validator with Admin Support */}
       {showValidator && pendingUpdate && selectedCityData && existingLocation && (
         <EmployeeCountValidator
           cityName={selectedCityData.name}
@@ -472,6 +537,7 @@ const CityLocationManagement: React.FC<CityLocationManagementProps> = ({ onDataU
           onConfirm={handleValidatorConfirm}
           onCancel={handleValidatorCancel}
           isOpen={showValidator}
+          isAdmin={isAdmin}
         />
       )}
     </div>
