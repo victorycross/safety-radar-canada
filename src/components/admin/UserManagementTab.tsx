@@ -210,14 +210,15 @@ const UserManagementTab = () => {
       console.log('Loading users with comprehensive approach...');
       
       // Get all auth users first
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authUsersResponse, error: authError } = await supabase.auth.admin.listUsers();
       if (authError) {
         console.error('Error fetching auth users:', authError);
         // Fallback to profiles-only approach
         return loadUsersFromProfiles();
       }
 
-      console.log(`Found ${authUsers?.length || 0} auth users`);
+      const authUsers = authUsersResponse?.users || [];
+      console.log(`Found ${authUsers.length} auth users`);
 
       // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -232,7 +233,7 @@ const UserManagementTab = () => {
       if (rolesError) throw rolesError;
 
       // Create a comprehensive user list
-      const usersWithRoles = (authUsers || []).map(authUser => {
+      const usersWithRoles = authUsers.map(authUser => {
         const profile = profiles?.find(p => p.id === authUser.id);
         const roles = userRoles?.filter((ur: any) => ur.user_id === authUser.id).map((ur: any) => ur.role) || [];
         
