@@ -251,14 +251,42 @@ export const normalizeAlert = (alert: any, sourceType: string): UniversalAlert =
     return 'Location not specified';
   };
 
-  const extractSource = (sourceType: string): UniversalAlert['source'] => {
-    if (sourceType.includes('alert-ready') || sourceType.includes('national')) return 'Alert Ready';
-    if (sourceType.includes('bc') || sourceType.includes('british')) return 'BC Emergency';
-    if (sourceType.includes('everbridge')) return 'Everbridge';
-    if (sourceType.includes('security') || sourceType.includes('cyber')) return 'Other';
-    if (sourceType.includes('weather') || sourceType.includes('geocmet')) return 'Other';
+  // Map source type to normalized source name for consistency with database sources
+  const getSourceName = (rawSource: string, sourceType: string): UniversalAlert['source'] => {
+    // Prioritize raw source if it exists and is meaningful
+    if (rawSource && rawSource.trim() && rawSource !== 'undefined') {
+      const source = rawSource.trim();
+      
+      // Map known sources to consistent names that match database entries
+      const sourceMap: Record<string, UniversalAlert['source']> = {
+        'CSE': 'Canadian Centre for Cyber Security',
+        'CISA': 'US CISA Cybersecurity Advisories',
+        'Immigration, Refugees and Citizenship Canada': 'Immigration Canada RSS',
+        'Environment and Climate Change Canada': 'Environment Canada Weather',
+        'Public Safety Canada': 'Public Safety Canada RSS'
+      };
+      
+      return sourceMap[source] || 'Other';
+    }
     
-    return 'Other';
+    // Fallback to source type mapping that matches database source names
+    switch (sourceType?.toLowerCase()) {
+      case 'rss':
+      case 'security-rss':
+        return 'Canadian Centre for Cyber Security';
+      case 'weather':
+      case 'weather-geocmet':
+        return 'Environment Canada Weather';
+      case 'immigration-travel-atom':
+      case 'government-announcements':
+        return 'Immigration Canada RSS';
+      default:
+        return 'Other';
+    }
+  };
+
+  const extractSource = (sourceType: string, rawSource?: string): UniversalAlert['source'] => {
+    return getSourceName(rawSource || '', sourceType);
   };
 
   const extractCoordinates = (alert: any) => {
@@ -315,7 +343,7 @@ export const normalizeAlert = (alert: any, sourceType: string): UniversalAlert =
     url: alert.url || alert.link || alert.guid,
     instructions: alert.instructions || alert.action,
     author: alert.author || alert.source || sourceType,
-    source: extractSource(sourceType),
+    source: extractSource(sourceType, alert.source),
     coordinates: extractCoordinates(alert)
   };
 

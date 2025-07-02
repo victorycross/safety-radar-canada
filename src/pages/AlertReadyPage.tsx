@@ -22,7 +22,7 @@ import { Link } from 'react-router-dom';
 const AlertReadyPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   
   const { 
     alerts: allAlerts, 
@@ -136,22 +136,26 @@ const AlertReadyPage = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Sources</SelectItem>
-              <SelectItem value="Alert Ready">Alert Ready</SelectItem>
-              <SelectItem value="BC Emergency">BC Emergency</SelectItem>
-              <SelectItem value="Everbridge">Everbridge</SelectItem>
+              {sources.map((source) => (
+                <SelectItem key={source.id} value={source.name}>
+                  {source.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
-          {/* Manual Ingestion Trigger - For debugging */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={triggerManualIngestion}
-            className="flex items-center gap-2"
-          >
-            <Database className="h-4 w-4" />
-            Trigger Ingestion
-          </Button>
+          {/* Manual Ingestion Trigger - Only for admins and power users */}
+          {(isAdmin() || user?.app_metadata?.role === 'power_user') && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={triggerManualIngestion}
+              className="flex items-center gap-2"
+            >
+              <Database className="h-4 w-4" />
+              Trigger Ingestion
+            </Button>
+          )}
 
           {/* Admin Link for Archive Management - Only for admins */}
           {isAdmin() && (

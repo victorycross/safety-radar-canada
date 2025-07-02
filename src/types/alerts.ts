@@ -16,7 +16,7 @@ export interface UniversalAlert {
   url?: string;
   instructions?: string;
   author?: string;
-  source: 'Alert Ready' | 'BC Emergency' | 'Everbridge' | 'Other';
+  source: 'Alert Ready' | 'BC Emergency' | 'Everbridge' | 'Canadian Centre for Cyber Security' | 'Environment Canada Weather' | 'Immigration Canada RSS' | 'US CISA Cybersecurity Advisories' | 'Public Safety Canada RSS' | 'Other';
   coordinates?: {
     latitude: number;
     longitude: number;

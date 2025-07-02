@@ -181,6 +181,13 @@ export const useAlertSourcesFetch = () => {
   const triggerIngestion = async () => {
     try {
       logger.info('Triggering manual ingestion...');
+      
+      // Check if user has permission (this will be validated on the server side too)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Authentication required');
+      }
+
       const { data, error } = await supabase.functions.invoke('master-ingestion-orchestrator');
       
       if (error) throw error;
@@ -196,7 +203,7 @@ export const useAlertSourcesFetch = () => {
       logger.error('Error triggering ingestion:', err);
       toast({
         title: 'Error',
-        description: 'Failed to trigger data ingestion',
+        description: err instanceof Error ? err.message : 'Failed to trigger data ingestion',
         variant: 'destructive'
       });
       throw err;
