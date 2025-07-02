@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Archive, CheckSquare, RotateCcw } from 'lucide-react';
+import { Archive, CheckSquare, RotateCcw, Trash2 } from 'lucide-react';
 
 interface ImmigrationTravelAnnouncement {
   id: string;
@@ -85,6 +86,64 @@ const ImmigrationBulkArchive: React.FC<ImmigrationBulkArchiveProps> = ({ onRefre
         ? prev.filter(selectedId => selectedId !== id)
         : [...prev, id]
     );
+  };
+
+  const handleClearAllOutstanding = async () => {
+    if (announcements.length === 0) {
+      toast({
+        title: 'No Outstanding Alerts',
+        description: 'There are no outstanding announcements to clear',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!archiveReason.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please provide a reason for clearing all outstanding alerts',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const allActiveIds = announcements.map(a => a.id);
+      
+      const { data, error } = await supabase.rpc('bulk_archive_alerts', {
+        alert_table_name: 'immigration_travel_announcements',
+        alert_ids: allActiveIds,
+        archive_reason: archiveReason.trim()
+      });
+
+      if (error) throw error;
+
+      const result = data as { success: boolean; updated_count: number; error?: string };
+
+      if (result.success) {
+        toast({
+          title: 'Clear All Successful',
+          description: `Successfully cleared ${result.updated_count} outstanding immigration announcements`,
+        });
+        
+        setSelectedIds([]);
+        setArchiveReason('');
+        await fetchAnnouncements();
+        onRefresh();
+      } else {
+        throw new Error(result.error || 'Unknown error occurred');
+      }
+    } catch (error) {
+      console.error('Error clearing all announcements:', error);
+      toast({
+        title: 'Clear All Failed',
+        description: error instanceof Error ? error.message : 'Failed to clear all announcements',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBulkArchive = async () => {
@@ -238,34 +297,65 @@ const ImmigrationBulkArchive: React.FC<ImmigrationBulkArchiveProps> = ({ onRefre
           </div>
 
           {activeTab === 'active' ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  disabled={selectedIds.length === 0 || !archiveReason.trim() || loading}
-                  className="flex items-center gap-2"
-                >
-                  <Archive className="h-4 w-4" />
-                  Archive ({selectedIds.length})
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirm Bulk Archive</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to archive {selectedIds.length} immigration announcements? 
-                    This action can be undone later.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleBulkArchive} disabled={loading}>
-                    {loading ? 'Archiving...' : 'Archive'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={selectedIds.length === 0 || !archiveReason.trim() || loading}
+                    className="flex items-center gap-2"
+                  >
+                    <Archive className="h-4 w-4" />
+                    Archive ({selectedIds.length})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirm Bulk Archive</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to archive {selectedIds.length} immigration announcements? 
+                      This action can be undone later.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleBulkArchive} disabled={loading}>
+                      {loading ? 'Archiving...' : 'Archive'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={announcements.length === 0 || !archiveReason.trim() || loading}
+                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Clear All Outstanding ({announcements.length})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Clear All Outstanding Alerts</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to clear ALL {announcements.length} outstanding immigration announcements? 
+                      This will archive all active announcements at once. This action can be undone later.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleClearAllOutstanding} disabled={loading}>
+                      {loading ? 'Clearing...' : 'Clear All Outstanding'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                  </AlertDialogContent>
+              </AlertDialog>
+            </div>
           ) : (
             <AlertDialog>
               <AlertDialogTrigger asChild>
