@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,15 @@ interface DataIssue {
   user_id: string;
   user_email: string;
   description: string;
+}
+
+// Type for Supabase auth user
+interface AuthUser {
+  id: string;
+  email?: string;
+  created_at: string;
+  last_sign_in_at?: string;
+  user_metadata?: any;
 }
 
 const UserManagementTab = () => {
@@ -112,8 +122,10 @@ const UserManagementTab = () => {
       console.log('Starting data repair for missing profiles...');
       
       // Get all auth users
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authUsersResponse, error: authError } = await supabase.auth.admin.listUsers();
       if (authError) throw authError;
+
+      const authUsers: AuthUser[] = authUsersResponse?.users || [];
 
       // Get existing profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -122,7 +134,7 @@ const UserManagementTab = () => {
       if (profilesError) throw profilesError;
 
       const existingProfileIds = new Set(profiles?.map(p => p.id) || []);
-      const missingProfiles = authUsers?.filter(user => !existingProfileIds.has(user.id)) || [];
+      const missingProfiles = authUsers.filter(user => !existingProfileIds.has(user.id));
 
       console.log(`Found ${missingProfiles.length} users without profiles`);
 
@@ -130,8 +142,8 @@ const UserManagementTab = () => {
       if (missingProfiles.length > 0) {
         const profileInserts = missingProfiles.map(user => ({
           id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || user.email
+          email: user.email || '',
+          full_name: user.user_metadata?.full_name || user.email || ''
         }));
 
         const { error: insertError } = await supabase
@@ -217,7 +229,7 @@ const UserManagementTab = () => {
         return loadUsersFromProfiles();
       }
 
-      const authUsers = authUsersResponse?.users || [];
+      const authUsers: AuthUser[] = authUsersResponse?.users || [];
       console.log(`Found ${authUsers.length} auth users`);
 
       // Get all profiles
