@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { UniversalAlert } from '@/types/alerts';
 import { normalizeAlert } from '@/utils/sourceNormalizers';
 import { logger } from '@/utils/logger';
+import { useToast } from '@/hooks/use-toast';
 
 interface AlertSource {
   id: string;
@@ -15,6 +16,7 @@ interface AlertSource {
 
 export const useAlertSourcesFetch = () => {
   const [sources, setSources] = useState<AlertSource[]>([]);
+  const { toast } = useToast();
 
   const fetchSources = async () => {
     try {
@@ -46,6 +48,10 @@ export const useAlertSourcesFetch = () => {
         case 'weather':
         case 'weather-geocmet':
           return await fetchWeatherAlerts(source);
+
+        case 'immigration-travel-atom':
+        case 'government-announcements':
+          return await fetchImmigrationTravelAlerts(source);
 
         default:
           logger.info(`No specific handler for source type: ${source.source_type}`);
@@ -134,9 +140,73 @@ export const useAlertSourcesFetch = () => {
     });
   };
 
+  const fetchImmigrationTravelAlerts = async (source: AlertSource): Promise<UniversalAlert[]> => {
+    const { data: immigrationData, error: immigrationError } = await supabase
+      .from('immigration_travel_announcements')
+      .select('*')
+      .is('archived_at', null)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    
+    if (immigrationError) {
+      logger.error('Immigration/Travel data fetch error:', immigrationError);
+      throw immigrationError;
+    }
+    
+    logger.info(`Fetched ${immigrationData?.length || 0} non-archived immigration/travel alerts`);
+    
+    return (immigrationData || []).map(alert => {
+      const normalized = normalizeAlert({
+        id: alert.id,
+        title: alert.title,
+        description: alert.content || alert.summary,
+        link: alert.link,
+        pubDate: alert.pub_date,
+        category: alert.category || alert.announcement_type,
+        source: alert.source,
+        location: alert.location,
+        raw_data: alert.raw_data
+      }, source.source_type);
+      
+      logger.debug('Normalized immigration/travel alert:', {
+        id: normalized.id,
+        title: normalized.title,
+        source: normalized.source
+      });
+      
+      return normalized;
+    });
+  };
+
+  const triggerIngestion = async () => {
+    try {
+      logger.info('Triggering manual ingestion...');
+      const { data, error } = await supabase.functions.invoke('master-ingestion-orchestrator');
+      
+      if (error) throw error;
+      
+      logger.info('Ingestion triggered successfully:', data);
+      toast({
+        title: 'Ingestion Started',
+        description: `Processing ${data?.processed_sources || 0} sources`
+      });
+      
+      return data;
+    } catch (err) {
+      logger.error('Error triggering ingestion:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to trigger data ingestion',
+        variant: 'destructive'
+      });
+      throw err;
+    }
+  };
+
   return {
     sources,
     fetchSources,
-    fetchAlertsFromSource
+    fetchAlertsFromSource,
+    triggerIngestion
   };
 };

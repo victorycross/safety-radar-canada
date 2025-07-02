@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Filter, X, Settings } from 'lucide-react';
+import { AlertTriangle, Filter, X, Settings, RefreshCw, Database } from 'lucide-react';
 import { useAllAlertSources } from '@/hooks/useAllAlertSources';
 import { useAlertManagement } from '@/hooks/useAlertManagement';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
@@ -24,7 +24,14 @@ const AlertReadyPage = () => {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const { isAdmin } = useAuth();
   
-  const { alerts: allAlerts, loading: allLoading, error: allError, fetchAlerts: fetchAllAlerts } = useAllAlertSources();
+  const { 
+    alerts: allAlerts, 
+    loading: allLoading, 
+    error: allError, 
+    fetchAlerts: fetchAllAlerts,
+    triggerIngestion: triggerManualIngestion,
+    sources 
+  } = useAllAlertSources();
   const { refreshData } = useSupabaseDataContext();
 
   const {
@@ -135,6 +142,17 @@ const AlertReadyPage = () => {
             </SelectContent>
           </Select>
 
+          {/* Manual Ingestion Trigger - For debugging */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={triggerManualIngestion}
+            className="flex items-center gap-2"
+          >
+            <Database className="h-4 w-4" />
+            Trigger Ingestion
+          </Button>
+
           {/* Admin Link for Archive Management - Only for admins */}
           {isAdmin() && (
             <Link to="/admin?tab=archive-management">
@@ -166,7 +184,10 @@ const AlertReadyPage = () => {
 
         <TabsContent value="alerts" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold">All Alerts</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-semibold">All Alerts</h2>
+              <Badge variant="secondary">{sources.length} sources</Badge>
+            </div>
             {filteredAlerts.length > 0 && (
               <Badge variant="secondary">{filteredAlerts.length} alerts</Badge>
             )}
