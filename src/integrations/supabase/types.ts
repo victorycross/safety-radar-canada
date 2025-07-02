@@ -173,31 +173,52 @@ export type Database = {
       analysis_rules: {
         Row: {
           analysis_type: string
+          average_processing_time_ms: number | null
           created_at: string | null
           created_by: string | null
+          dependencies: string[] | null
+          execution_count: number | null
           id: string
           is_active: boolean | null
+          last_executed_at: string | null
+          performance_metrics: Json | null
           rule_config: Json
+          rule_template: string | null
+          rule_version: number | null
           threshold_values: Json | null
           updated_at: string | null
         }
         Insert: {
           analysis_type: string
+          average_processing_time_ms?: number | null
           created_at?: string | null
           created_by?: string | null
+          dependencies?: string[] | null
+          execution_count?: number | null
           id?: string
           is_active?: boolean | null
+          last_executed_at?: string | null
+          performance_metrics?: Json | null
           rule_config: Json
+          rule_template?: string | null
+          rule_version?: number | null
           threshold_values?: Json | null
           updated_at?: string | null
         }
         Update: {
           analysis_type?: string
+          average_processing_time_ms?: number | null
           created_at?: string | null
           created_by?: string | null
+          dependencies?: string[] | null
+          execution_count?: number | null
           id?: string
           is_active?: boolean | null
+          last_executed_at?: string | null
+          performance_metrics?: Json | null
           rule_config?: Json
+          rule_template?: string | null
+          rule_version?: number | null
           threshold_values?: Json | null
           updated_at?: string | null
         }
@@ -1438,6 +1459,16 @@ export type Database = {
           name: string
           config_data: Json
           priority: number
+        }[]
+      }
+      get_analysis_rules_by_template: {
+        Args: { template_name: string }
+        Returns: {
+          id: string
+          analysis_type: string
+          rule_config: Json
+          threshold_values: Json
+          performance_metrics: Json
         }[]
       }
       has_role: {
