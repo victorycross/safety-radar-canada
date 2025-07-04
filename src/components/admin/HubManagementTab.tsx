@@ -13,6 +13,7 @@ import HubMetricsCards from './hub-management/HubMetricsCards';
 import HubOverviewCard from './hub-management/HubOverviewCard';
 import RecentHubIncidentsCard from './hub-management/RecentHubIncidentsCard';
 import HubNotificationTab from './hub-management/HubNotificationTab';
+import HubDataConsistencyValidator from './HubDataConsistencyValidator';
 
 const HubManagementTab = () => {
   const { hubs, incidents, loading, metrics, refreshData } = useHubData();
@@ -60,12 +61,13 @@ const HubManagementTab = () => {
       <HubMetricsCards metrics={hubMetrics} />
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Hub Overview</TabsTrigger>
           <TabsTrigger value="employees">Employee Management</TabsTrigger>
           <TabsTrigger value="bulk-operations">Bulk Operations</TabsTrigger>
           <TabsTrigger value="bulk-actions">Bulk Actions</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="validation">Data Validation</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -107,6 +109,10 @@ const HubManagementTab = () => {
             hubs={hubs}
             onSettingsUpdate={handleNotificationUpdate}
           />
+        </TabsContent>
+
+        <TabsContent value="validation" className="space-y-4">
+          <HubDataConsistencyValidator />
         </TabsContent>
       </Tabs>
     </div>

@@ -66,7 +66,7 @@ const UnifiedEmployeeManagement = () => {
       {/* Data Consistency Validators */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <DataConsistencyValidator onDataFixed={handleDataFixed} />
-        <HubDataConsistencyValidator onDataFixed={handleDataFixed} />
+        <HubDataConsistencyValidator />
       </div>
 
       {/* Data Architecture Info Card */}

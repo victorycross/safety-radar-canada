@@ -31,7 +31,7 @@ export interface HubEmployeeUpdate {
   changeReason: string;
 }
 
-// Fetch all hub employee locations
+// Fetch all hub employee locations with deduplication
 export const fetchHubEmployeeLocations = async (): Promise<HubEmployeeLocation[]> => {
   const { data, error } = await supabase
     .from('hub_employee_locations')
@@ -46,7 +46,15 @@ export const fetchHubEmployeeLocations = async (): Promise<HubEmployeeLocation[]
     throw error;
   }
 
-  return data || [];
+  // Ensure we only have one record per hub (should be enforced by DB constraint now)
+  const uniqueLocations = new Map();
+  (data || []).forEach(location => {
+    if (!uniqueLocations.has(location.hub_id)) {
+      uniqueLocations.set(location.hub_id, location);
+    }
+  });
+
+  return Array.from(uniqueLocations.values());
 };
 
 // Update hub employee location
@@ -84,7 +92,7 @@ export const recalculateHubTotals = async (): Promise<void> => {
   }
 };
 
-// Validate data consistency between hub and location totals
+// Validate data consistency using the new database function
 export const validateHubDataConsistency = async (): Promise<{
   isConsistent: boolean;
   discrepancies: Array<{
@@ -96,41 +104,22 @@ export const validateHubDataConsistency = async (): Promise<{
   }>;
 }> => {
   try {
-    // Get hub totals
-    const { data: hubs, error: hubsError } = await supabase
-      .from('international_hubs')
-      .select('id, name, employee_count');
+    const { data, error } = await supabase.rpc('validate_all_hub_data_consistency');
     
-    if (hubsError) throw hubsError;
-    
-    // Get location totals grouped by hub
-    const { data: locationTotals, error: locationError } = await supabase
-      .from('hub_employee_locations')
-      .select('hub_id, home_base_count');
-    
-    if (locationError) throw locationError;
-    
-    // Calculate totals by hub
-    const locationTotalsByHub = locationTotals?.reduce((acc, location) => {
-      acc[location.hub_id] = (acc[location.hub_id] || 0) + location.home_base_count;
-      return acc;
-    }, {} as Record<string, number>) || {};
+    if (error) throw error;
     
     const discrepancies = [];
     let isConsistent = true;
     
-    for (const hub of hubs || []) {
-      const locationTotal = locationTotalsByHub[hub.id] || 0;
-      const difference = Math.abs(hub.employee_count - locationTotal);
-      
-      if (difference > 0) {
+    for (const record of data || []) {
+      if (record.consistency_status !== 'consistent') {
         isConsistent = false;
         discrepancies.push({
-          hubId: hub.id,
-          hubName: hub.name,
-          hubTotal: hub.employee_count,
-          locationTotal,
-          difference
+          hubId: '', // We don't have hub ID in the response, but we have the name
+          hubName: record.hub_name,
+          hubTotal: record.hub_total,
+          locationTotal: record.location_total,
+          difference: Math.abs(record.hub_total - record.location_total)
         });
       }
     }

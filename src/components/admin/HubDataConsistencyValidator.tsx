@@ -1,151 +1,150 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { validateHubDataConsistency, recalculateHubTotals } from '@/services/hubEmployeeService';
 
-interface HubDataConsistencyValidatorProps {
-  onDataFixed?: () => void;
+interface ConsistencyResult {
+  hubName: string;
+  hubTotal: number;
+  locationTotal: number;
+  difference: number;
 }
 
-const HubDataConsistencyValidator: React.FC<HubDataConsistencyValidatorProps> = ({ onDataFixed }) => {
-  const [isValidating, setIsValidating] = useState(false);
-  const [isFixing, setIsFixing] = useState(false);
-  const [validation, setValidation] = useState<{
+const HubDataConsistencyValidator = () => {
+  const [loading, setLoading] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
     isConsistent: boolean;
-    discrepancies: Array<{
-      hubId: string;
-      hubName: string;
-      hubTotal: number;
-      locationTotal: number;
-      difference: number;
-    }>;
+    discrepancies: ConsistencyResult[];
   } | null>(null);
+  const [fixing, setFixing] = useState(false);
 
-  const handleValidate = async () => {
-    setIsValidating(true);
+  const runValidation = async () => {
+    setLoading(true);
     try {
       const result = await validateHubDataConsistency();
-      setValidation(result);
+      setValidationResult(result);
       
       if (result.isConsistent) {
         toast({
-          title: "Hub Data Consistent",
-          description: "Hub totals match location-level data",
+          title: 'Validation Complete',
+          description: 'All hub data is consistent!',
         });
       } else {
         toast({
-          title: "Hub Data Inconsistencies Found",
-          description: `Found ${result.discrepancies.length} hubs with mismatched totals`,
-          variant: "destructive"
+          title: 'Inconsistencies Found',
+          description: `Found ${result.discrepancies.length} hub(s) with data inconsistencies`,
+          variant: 'default'
         });
       }
     } catch (error) {
       console.error('Error validating hub data:', error);
       toast({
-        title: "Validation Failed",
-        description: "Failed to validate hub data consistency",
-        variant: "destructive"
+        title: 'Validation Failed',
+        description: 'Failed to validate hub data consistency',
+        variant: 'destructive'
       });
     } finally {
-      setIsValidating(false);
+      setLoading(false);
     }
   };
 
-  const handleFixDiscrepancies = async () => {
-    setIsFixing(true);
+  const fixInconsistencies = async () => {
+    setFixing(true);
     try {
       await recalculateHubTotals();
-      
       toast({
-        title: "Hub Data Synchronized",
-        description: "Hub totals have been recalculated from location data",
+        title: 'Data Fixed',
+        description: 'Hub totals have been recalculated and synchronized',
       });
       
-      // Re-validate to confirm fix
-      await handleValidate();
-      
-      // Notify parent component to refresh
-      if (onDataFixed) {
-        onDataFixed();
-      }
+      // Re-run validation to confirm fix
+      await runValidation();
     } catch (error) {
-      console.error('Error fixing hub discrepancies:', error);
+      console.error('Error fixing inconsistencies:', error);
       toast({
-        title: "Sync Failed",
-        description: "Failed to synchronize hub totals",
-        variant: "destructive"
+        title: 'Fix Failed',
+        description: 'Failed to fix data inconsistencies',
+        variant: 'destructive'
       });
     } finally {
-      setIsFixing(false);
+      setFixing(false);
     }
   };
 
   return (
-    <Card className="border-blue-200 bg-blue-50">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-blue-800">
-          {validation?.isConsistent ? (
-            <CheckCircle className="h-5 w-5 text-green-600" />
-          ) : validation ? (
-            <AlertTriangle className="h-5 w-5 text-orange-600" />
-          ) : (
-            <RefreshCw className="h-5 w-5" />
-          )}
-          Hub Data Consistency Check
+        <CardTitle className="flex items-center gap-2">
+          <CheckCircle className="h-5 w-5" />
+          Hub Data Consistency Validator
         </CardTitle>
-        <CardDescription className="text-blue-700">
-          Validate that hub totals match location-level employee data
+        <CardDescription>
+          Validate and fix data consistency between hub totals and location records
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
-          <Button 
-            onClick={handleValidate}
-            disabled={isValidating}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${isValidating ? 'animate-spin' : ''}`} />
-            {isValidating ? 'Validating...' : 'Check Consistency'}
+          <Button onClick={runValidation} disabled={loading}>
+            {loading ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Validating...
+              </>
+            ) : (
+              'Run Validation'
+            )}
           </Button>
           
-          {validation && !validation.isConsistent && (
-            <Button 
-              onClick={handleFixDiscrepancies}
-              disabled={isFixing}
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${isFixing ? 'animate-spin' : ''}`} />
-              {isFixing ? 'Syncing...' : 'Fix Discrepancies'}
+          {validationResult && !validationResult.isConsistent && (
+            <Button onClick={fixInconsistencies} disabled={fixing} variant="outline">
+              {fixing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Fixing...
+                </>
+              ) : (
+                'Fix Inconsistencies'
+              )}
             </Button>
           )}
         </div>
 
-        {validation && (
-          <div className="space-y-3">
+        {validationResult && (
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Badge variant={validation.isConsistent ? "default" : "destructive"}>
-                {validation.isConsistent ? "Consistent" : `${validation.discrepancies.length} Issues`}
-              </Badge>
+              {validationResult.isConsistent ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span className="text-green-700 font-medium">All data is consistent</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
+                  <span className="text-amber-700 font-medium">
+                    Found {validationResult.discrepancies.length} inconsistencies
+                  </span>
+                </>
+              )}
             </div>
 
-            {!validation.isConsistent && validation.discrepancies.length > 0 && (
+            {validationResult.discrepancies.length > 0 && (
               <div className="space-y-2">
-                <h4 className="font-medium text-sm text-blue-800">Hub Data Discrepancies:</h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {validation.discrepancies.map((discrepancy) => (
-                    <div key={discrepancy.hubId} className="text-xs bg-white p-2 rounded border">
-                      <div className="font-medium">{discrepancy.hubName}</div>
-                      <div className="text-muted-foreground">
-                        Hub: {discrepancy.hubTotal} | Location Total: {discrepancy.locationTotal} 
-                        <span className="text-red-600 ml-1">(Diff: {discrepancy.difference})</span>
+                <h4 className="font-medium">Inconsistent Hubs:</h4>
+                <div className="space-y-2">
+                  {validationResult.discrepancies.map((discrepancy, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <div>
+                        <div className="font-medium">{discrepancy.hubName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Hub Total: {discrepancy.hubTotal} | Location Total: {discrepancy.locationTotal}
+                        </div>
                       </div>
+                      <Badge variant="secondary">
+                        Diff: {discrepancy.difference}
+                      </Badge>
                     </div>
                   ))}
                 </div>

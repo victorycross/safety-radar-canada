@@ -583,7 +583,7 @@ export type Database = {
           {
             foreignKeyName: "hub_employee_locations_hub_id_fkey"
             columns: ["hub_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "international_hubs"
             referencedColumns: ["id"]
           },
@@ -1658,6 +1658,16 @@ export type Database = {
           performance_metrics: Json
         }[]
       }
+      get_hub_employee_summary: {
+        Args: { hub_uuid: string }
+        Returns: {
+          hub_id: string
+          total_home_base: number
+          total_current_location: number
+          total_travel_away: number
+          hub_total: number
+        }[]
+      }
       has_role: {
         Args: {
           _user_id: string
@@ -1692,6 +1702,16 @@ export type Database = {
       sync_all_province_alert_levels: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      validate_all_hub_data_consistency: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          hub_name: string
+          hub_total: number
+          location_total: number
+          has_location_record: boolean
+          consistency_status: string
+        }[]
       }
       validate_hub_data_consistency: {
         Args: Record<PropertyKey, never>
