@@ -65,19 +65,41 @@ export const updateHubEmployeeLocation = async (
   travelAwayCount: number,
   updatedBy: string
 ): Promise<void> => {
-  const { error } = await supabase
-    .from('hub_employee_locations')
-    .upsert({
-      hub_id: hubId,
-      home_base_count: homeBaseCount,
-      current_location_count: currentLocationCount,
-      travel_away_count: travelAwayCount,
-      updated_by: updatedBy,
-      updated_at: new Date().toISOString()
-    });
+  try {
+    // Pre-validate that the hub exists
+    const { data: hubExists, error: hubError } = await supabase
+      .from('international_hubs')
+      .select('id')
+      .eq('id', hubId)
+      .single();
 
-  if (error) {
-    console.error('Error updating hub employee location:', error);
+    if (hubError || !hubExists) {
+      throw new Error(`Hub with ID ${hubId} not found`);
+    }
+
+    const { error } = await supabase
+      .from('hub_employee_locations')
+      .upsert({
+        hub_id: hubId,
+        home_base_count: homeBaseCount,
+        current_location_count: currentLocationCount,
+        travel_away_count: travelAwayCount,
+        updated_by: updatedBy,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'hub_id'
+      });
+
+    if (error) {
+      console.error('Error updating hub employee location:', error);
+      // Provide more user-friendly error messages
+      if (error.code === '23505') {
+        throw new Error('Unable to update hub employee location due to a data conflict. Please try again.');
+      }
+      throw new Error(`Failed to update hub employee location: ${error.message}`);
+    }
+  } catch (error: any) {
+    console.error('Hub employee location update failed:', error);
     throw error;
   }
 };
