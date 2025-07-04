@@ -55,9 +55,10 @@ const Sidebar = () => {
   ];
 
 
-  // Admin subsections - for administrators only
+  // Admin subsections - for administrators and power users
   const adminSubsections = isAdmin() ? [
     { name: 'Operations', href: '/admin/operations', icon: Cog },
+    { name: 'Security Team', href: '/admin/security', icon: Shield, requiresPowerUser: true },
     { name: 'Data Management', href: '/admin/data-management', icon: Database },
     { name: 'System Health', href: '/admin/system-health', icon: MonitorSpeaker },
     { name: 'Archive Management', href: '/admin/archive-management', icon: Archive },
@@ -138,6 +139,11 @@ const Sidebar = () => {
           {adminExpanded && (
             <ul className="ml-8 mt-1 space-y-1">
               {adminSubsections.map((item) => {
+                // Hide Security Team from regular admins if they're not power users
+                if (item.requiresPowerUser && !isPowerUserOrAdmin()) {
+                  return null;
+                }
+                
                 const isActive = location.pathname === item.href;
                 const Icon = item.icon;
                 

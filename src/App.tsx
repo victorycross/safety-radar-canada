@@ -24,6 +24,7 @@ import AdminSystemHealthPage from "./pages/AdminSystemHealthPage";
 import AdminArchiveManagementPage from "./pages/AdminArchiveManagementPage";
 import AdminUserManagementPage from "./pages/AdminUserManagementPage";
 import AdminSettingsPage from "./pages/AdminSettingsPage";
+import AdminSecurityPage from "./pages/AdminSecurityPage";
 import ProvinceDetailPage from "./pages/ProvinceDetailPage";
 import HubDetailPage from "./pages/HubDetailPage";
 import HubsPage from "./pages/HubsPage";
@@ -69,6 +70,7 @@ function App() {
                           <Route path="report-incident" element={<ReportIncidentPage />} />
                           <Route path="admin" element={<AdminPage />} />
                           <Route path="admin/operations" element={<AdminOperationsPage />} />
+                          <Route path="admin/security" element={<AdminSecurityPage />} />
                           <Route path="admin/data-management" element={<AdminDataManagementPage />} />
                           <Route path="admin/system-health" element={<AdminSystemHealthPage />} />
                           <Route path="admin/archive-management" element={<AdminArchiveManagementPage />} />
