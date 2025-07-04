@@ -10,15 +10,19 @@ import { Button } from '../ui/button';
 import { Circle, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// This should be replaced with your Mapbox public token
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94LWdoLXRlc3QiLCJhIjoiY2w4MjZrc3RmMGJudDN2bGc1YzJlZDFzYiJ9.PKUUoJk1xIIRUoBLl8xgsA';
+// Default public Mapbox token for development - replace with your own token
+const DEFAULT_MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94LWdoLXRlc3QiLCJhIjoiY2w4MjZrc3RmMGJudDN2bGc1YzJlZDFzYiJ9.PKUUoJk1xIIRUoBLl8xgsA';
 
 const GlobeMap = () => {
   const { provinces } = useSecurity();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapInitialized, setMapInitialized] = useState(false);
-  const [mapboxToken, setMapboxToken] = useState(MAPBOX_TOKEN);
+  const [mapboxToken, setMapboxToken] = useState(() => {
+    // Try to get token from localStorage first, then fall back to default
+    const savedToken = localStorage.getItem('mapbox_token');
+    return savedToken || DEFAULT_MAPBOX_TOKEN;
+  });
 
   const getAlertLevelBadge = (alertLevel: AlertLevel) => {
     switch (alertLevel) {
@@ -168,6 +172,8 @@ const GlobeMap = () => {
             />
             <Button 
               onClick={() => {
+                // Save token to localStorage for persistence
+                localStorage.setItem('mapbox_token', mapboxToken);
                 if (map.current) map.current.remove();
                 map.current = null;
                 setMapInitialized(false);

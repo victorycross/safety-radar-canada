@@ -23,14 +23,17 @@ export const securityHeaders = {
         "'self'",
         "data:",
         "blob:",
-        "https:",
-        "*.supabase.co"
+        "https://*.supabase.co",
+        "https://*.tiles.mapbox.com",
+        "https://api.mapbox.com"
       ],
       connectSrc: [
         "'self'",
         "https://*.supabase.co",
         "https://api.openai.com",
         "https://api.stripe.com",
+        "https://api.mapbox.com",
+        "https://*.tiles.mapbox.com",
         "wss://*.supabase.co"
       ],
       frameSrc: ["'none'"],

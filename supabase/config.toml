@@ -9,3 +9,12 @@ verify_jwt = false
 
 [functions.fetch-everbridge-alerts]
 verify_jwt = false
+
+[functions.master-ingestion-orchestrator]
+verify_jwt = true
+
+[functions.process-alert-queue]
+verify_jwt = true
+
+[functions.setup-cron-jobs]
+verify_jwt = true
