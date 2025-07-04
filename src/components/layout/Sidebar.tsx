@@ -36,6 +36,7 @@ const Sidebar = () => {
   // Dashboard & Monitoring section - for all authenticated users
   const dashboardSection = [
     { name: 'Dashboard', href: '/', icon: Home },
+    { name: 'Public Safety Alerts', href: '/public-safety-alerts', icon: Shield },
     { name: 'Alert Ready', href: '/alert-ready', icon: AlertTriangle },
     { name: 'Location Status', href: '/location-status', icon: MapPin },
   ];

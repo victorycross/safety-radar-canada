@@ -10,6 +10,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import Index from "./pages/Index";
 import HomePage from "./pages/HomePage";
 import AlertReadyPage from "./pages/AlertReadyPage";
+import PublicSafetyAlertsPage from "./pages/PublicSafetyAlertsPage";
 import LocationStatusPage from "./pages/LocationStatusPage";
 import AnalyticsDashboardPage from "./pages/AnalyticsDashboardPage";
 import RiskManagementPage from "./pages/RiskManagementPage";
@@ -60,6 +61,7 @@ function App() {
                         <Route path="/" element={<MainLayout />}>
                           <Route index element={<Index />} />
                           <Route path="home" element={<HomePage />} />
+                          <Route path="public-safety-alerts" element={<PublicSafetyAlertsPage />} />
                           <Route path="alert-ready" element={<AlertReadyPage />} />
                           <Route path="location-status" element={<LocationStatusPage />} />
                           <Route path="analytics-dashboard" element={<AnalyticsDashboardPage />} />

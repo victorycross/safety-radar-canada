@@ -2,10 +2,9 @@
 import React from 'react';
 import { DashboardMetrics } from '@/types/dashboard';
 import { Province, InternationalHub } from '@/types/dashboard';
-import CriticalAlertsHero from './CriticalAlertsHero';
+import AlertsSummaryCard from './AlertsSummaryCard';
 import { Card, CardContent } from '@/components/ui/card';
 import SimpleGlobeMap from '@/components/map/SimpleGlobeMap';
-import RecentAlerts from './RecentAlerts';
 import EmployeeDistributionChart from './EmployeeDistributionChart';
 import EnhancedMetricsWidget from './EnhancedMetricsWidget';
 import DataStatusIndicator from './DataStatusIndicator';
@@ -78,13 +77,11 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
           healthySourcesCount={healthySourcesCount}
         />
 
-        {/* Critical Alerts Hero Section */}
-        <CriticalAlertsHero
+        {/* Alerts Summary Card */}
+        <AlertsSummaryCard
           alertProvinces={alertProvinces}
-          visibleAlertProvinces={visibleAlertProvinces}
           alertHubs={alertHubs}
           loading={loading}
-          onViewLocationAlerts={handleViewLocationAlerts}
         />
 
         {/* Main Dashboard Grid */}
@@ -116,9 +113,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
 
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
-            {/* Recent Alerts Widget */}
-            <RecentAlerts />
-
             {/* Quick Actions Card */}
             <Card>
               <CardContent className="pt-6">
@@ -127,12 +121,18 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                   <p className="text-sm text-muted-foreground mb-4">
                     Access key features and tools
                   </p>
-                  <div className="space-y-2">
+                   <div className="space-y-2">
+                    <button
+                      onClick={() => navigate('/public-safety-alerts')}
+                      className="w-full text-left p-3 rounded-md hover:bg-gray-100 transition-colors text-sm"
+                    >
+                      🌦️ Public Safety Alerts
+                    </button>
                     <button
                       onClick={() => navigate('/alert-ready')}
                       className="w-full text-left p-3 rounded-md hover:bg-gray-100 transition-colors text-sm"
                     >
-                      📢 View All Alerts
+                      📢 View Alert Feed
                     </button>
                     <button
                       onClick={() => navigate('/admin')}
@@ -146,7 +146,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                     >
                       📝 Report Incident
                     </button>
-                  </div>
+                   </div>
                 </div>
               </CardContent>
             </Card>
