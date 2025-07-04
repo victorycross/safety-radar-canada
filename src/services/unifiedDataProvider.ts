@@ -65,6 +65,14 @@ class UnifiedDataProvider {
         alerts = databaseAlerts;
       }
       
+      // Create proper freshness info based on actual data source used
+      const actualFreshness: DataFreshnessInfo = {
+        lastUpdated: source === 'external_api' ? new Date() : databaseFreshness.lastUpdated,
+        stalenessMinutes: source === 'external_api' ? 0 : databaseFreshness.stalenessMinutes,
+        isStale: source === 'external_api' ? false : databaseFreshness.isStale,
+        source
+      };
+      
       // Classify all alerts
       const classifiedAlerts = alertClassificationService.classifyAlerts(alerts);
       
@@ -74,12 +82,7 @@ class UnifiedDataProvider {
       // Build unified data structure
       const unifiedData: UnifiedAlertData = {
         alerts: activeAlerts,
-        freshness: {
-          lastUpdated: databaseFreshness.lastUpdated,
-          stalenessMinutes: databaseFreshness.stalenessMinutes,
-          isStale: databaseFreshness.isStale,
-          source
-        },
+        freshness: actualFreshness,
         sources: this.extractUniqueSources(activeAlerts),
         statistics: this.calculateStatistics(activeAlerts)
       };

@@ -82,10 +82,27 @@ export const normalizeAlert = (alert: any, sourceType: string): UniversalAlert =
   };
 
   const extractId = (alert: any): string => {
-    return alert.id || 
-           alert.guid || 
-           alert.link ||
-           `${sourceType}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const rawId = alert.id || alert.guid || alert.link;
+    
+    if (rawId) {
+      // Create a unique ID by combining raw ID with a content hash to prevent duplicates
+      const contentHash = Math.abs(hashCode(alert.title + alert.description + (alert.published || ''))).toString(36).substring(0, 6);
+      return `${rawId}-${contentHash}`;
+    }
+    
+    return `${sourceType}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  };
+
+  // Simple hash function to generate consistent hashes from content
+  const hashCode = (str: string): number => {
+    let hash = 0;
+    if (str.length === 0) return hash;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash;
   };
 
   const extractPublished = (alert: any): string => {

@@ -150,16 +150,16 @@ const RecentAlerts: React.FC<RecentAlertsProps> = ({ onAlertClick }) => {
               <DataFreshnessIndicator 
                 lastUpdated={freshness.lastUpdated}
                 isProcessing={loading}
-                hasErrors={freshness.isStale}
+                hasErrors={freshness.source === 'database' && freshness.isStale}
               />
             )}
           </CardTitle>
           <CardDescription>Recent alerts - click to view details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {alerts.map((alert) => (
+          {alerts.map((alert, index) => (
             <div 
-              key={alert.id} 
+              key={`${alert.id}-${index}`} 
               className={`border-l-4 pl-3 py-2 space-y-2 cursor-pointer hover:bg-gray-50 transition-colors rounded-r-md ${
                 alert.classification.isRoutine ? 'border-blue-400' : 'border-red-500'
               }`}
