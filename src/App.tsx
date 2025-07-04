@@ -24,6 +24,9 @@ import AdminSystemHealthPage from "./pages/AdminSystemHealthPage";
 import AdminArchiveManagementPage from "./pages/AdminArchiveManagementPage";
 import AdminUserManagementPage from "./pages/AdminUserManagementPage";
 import AdminSettingsPage from "./pages/AdminSettingsPage";
+import ProvinceDetailPage from "./pages/ProvinceDetailPage";
+import HubDetailPage from "./pages/HubDetailPage";
+import HubsPage from "./pages/HubsPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { EnhancedSessionManager } from '@/components/security/EnhancedSessionManager';
@@ -71,6 +74,9 @@ function App() {
                           <Route path="admin/archive-management" element={<AdminArchiveManagementPage />} />
                           <Route path="admin/users" element={<AdminUserManagementPage />} />
                           <Route path="admin/settings" element={<AdminSettingsPage />} />
+                          <Route path="province/:id" element={<ProvinceDetailPage />} />
+                          <Route path="hub/:hubId" element={<HubDetailPage />} />
+                          <Route path="hubs" element={<HubsPage />} />
                         </Route>
                         <Route path="*" element={<NotFound />} />
                       </Routes>
