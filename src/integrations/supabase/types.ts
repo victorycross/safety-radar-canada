@@ -1284,6 +1284,74 @@ export type Database = {
           },
         ]
       }
+      staff_incident_reports: {
+        Row: {
+          alert_level: string
+          anonymous: boolean | null
+          contact_info: string
+          created_at: string
+          description: string
+          id: string
+          province_id: string
+          raw_form_data: Json | null
+          review_notes: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          submission_timestamp: string
+          submitted_by: string | null
+          title: string
+          tracking_number: string
+          updated_at: string
+        }
+        Insert: {
+          alert_level?: string
+          anonymous?: boolean | null
+          contact_info: string
+          created_at?: string
+          description: string
+          id?: string
+          province_id: string
+          raw_form_data?: Json | null
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submission_timestamp?: string
+          submitted_by?: string | null
+          title: string
+          tracking_number: string
+          updated_at?: string
+        }
+        Update: {
+          alert_level?: string
+          anonymous?: boolean | null
+          contact_info?: string
+          created_at?: string
+          description?: string
+          id?: string
+          province_id?: string
+          raw_form_data?: Json | null
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submission_timestamp?: string
+          submitted_by?: string | null
+          title?: string
+          tracking_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_incident_reports_province_id_fkey"
+            columns: ["province_id"]
+            isOneToOne: false
+            referencedRelation: "provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       travel_bookings: {
         Row: {
           arrival_location: string | null
@@ -1621,6 +1689,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_staff_incident_report: {
+        Args: {
+          report_id: string
+          reviewer_id: string
+          review_notes_text?: string
+        }
+        Returns: string
+      }
       bulk_archive_alerts: {
         Args: {
           alert_table_name: string
@@ -1638,6 +1714,10 @@ export type Database = {
           user_id?: string
         }
         Returns: Json
+      }
+      generate_tracking_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_active_processing_rules: {
         Args: { rule_category: string }
@@ -1694,6 +1774,14 @@ export type Database = {
       recalculate_all_province_totals: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      reject_staff_incident_report: {
+        Args: {
+          report_id: string
+          reviewer_id: string
+          review_notes_text: string
+        }
+        Returns: boolean
       }
       sync_all_hub_incident_counts: {
         Args: Record<PropertyKey, never>

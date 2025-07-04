@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useSupabaseDataContext } from '@/context/SupabaseDataProvider';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Send, Upload, MapPin, AlertCircle } from 'lucide-react';
+import { Save, Send, Upload, MapPin, AlertCircle, CheckCircle } from 'lucide-react';
+import { submitStaffIncidentReport, type StaffIncidentSubmission } from '@/services/staffIncidentService';
 
 interface EnhancedIncidentFormProps {
   formData: Record<string, any>;
@@ -33,6 +34,8 @@ const EnhancedIncidentForm: React.FC<EnhancedIncidentFormProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState<string>('');
   
   const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
@@ -93,38 +96,50 @@ const EnhancedIncidentForm: React.FC<EnhancedIncidentFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      const submissionData = {
+      const submissionData: StaffIncidentSubmission = {
         title: formData.title,
         description: formData.description,
         provinceId: formData.provinceId,
         alertLevel: formData.alertLevel || AlertLevel.WARNING,
-        source: IncidentSource.MANUAL,
-        verificationStatus: VerificationStatus.UNVERIFIED,
         contactInfo: formData.contactInfo,
         anonymous: formData.anonymous || false,
-        timestamp: new Date().toISOString()
+        submittedBy: formData.anonymous ? undefined : 'Staff Member'
       };
 
-      await reportIncident(submissionData);
-      onSubmit(submissionData);
+      const result = await submitStaffIncidentReport(submissionData);
       
-      toast({
-        title: "Report Submitted",
-        description: "Your incident report has been submitted successfully. Reference ID: " + Date.now(),
-      });
+      if (result.success && result.trackingNumber) {
+        setTrackingNumber(result.trackingNumber);
+        setIsSubmitted(true);
+        onSubmit(submissionData);
+        
+        toast({
+          title: "Report Submitted for Review",
+          description: `Your incident report has been submitted for security team review. Tracking number: ${result.trackingNumber}`,
+        });
 
-      // Reset form
-      onFormDataChange({});
-      setCurrentStep(1);
-    } catch (error) {
+        // Clear form data
+        onFormDataChange({});
+      } else {
+        throw new Error(result.error || 'Submission failed');
+      }
+    } catch (error: any) {
       toast({
         title: "Submission Failed",
-        description: "There was an error submitting your report. Please try again.",
+        description: error.message || "There was an error submitting your report. Please try again.",
         variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleStartNewReport = () => {
+    setIsSubmitted(false);
+    setTrackingNumber('');
+    setCurrentStep(1);
+    setErrors({});
+    onFormDataChange({});
   };
 
   const renderStep = () => {
@@ -304,6 +319,65 @@ const EnhancedIncidentForm: React.FC<EnhancedIncidentFormProps> = ({
         return null;
     }
   };
+
+  // Show success screen when submitted
+  if (isSubmitted) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="h-6 w-6 text-green-600" />
+            Report Submitted Successfully
+          </CardTitle>
+          <CardDescription>
+            Your incident report has been received and is under review
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          <div className="p-6 bg-green-50 border border-green-200 rounded-lg">
+            <div className="text-center space-y-3">
+              <CheckCircle className="h-12 w-12 text-green-600 mx-auto" />
+              <h3 className="text-lg font-semibold text-green-800">Report Submitted for Review</h3>
+              <p className="text-green-700">
+                Your incident report has been successfully submitted to our security team for review.
+              </p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">Tracking Information</h4>
+            <div className="space-y-2 text-sm">
+              <div>
+                <span className="font-medium">Tracking Number:</span>
+                <Badge variant="outline" className="ml-2 font-mono">{trackingNumber}</Badge>
+              </div>
+              <p className="text-blue-700">
+                Save this tracking number to check the status of your report. You will be contacted 
+                via the provided contact information once the review is complete.
+              </p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <h4 className="font-semibold text-gray-800 mb-2">What happens next?</h4>
+            <ul className="text-sm text-gray-700 space-y-1">
+              <li>• Our security team will review your report within 24-48 hours</li>
+              <li>• You will be contacted if additional information is needed</li>
+              <li>• Once approved, the incident will be added to our operational dashboard</li>
+              <li>• You will receive a final notification with the outcome</li>
+            </ul>
+          </div>
+        </CardContent>
+        
+        <CardFooter>
+          <Button onClick={handleStartNewReport} className="w-full">
+            Submit Another Report
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full">
