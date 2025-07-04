@@ -7,6 +7,7 @@ import { useHubManagementUtils } from '@/hooks/useHubManagementUtils';
 import { InternationalHub } from '@/types/dashboard';
 import BulkHubOperations from './BulkHubOperations';
 import HubBulkActions from './HubBulkActions';
+import HubEmployeeManagement from './HubEmployeeManagement';
 import HubManagementHeader from './hub-management/HubManagementHeader';
 import HubMetricsCards from './hub-management/HubMetricsCards';
 import HubOverviewCard from './hub-management/HubOverviewCard';
@@ -59,8 +60,9 @@ const HubManagementTab = () => {
       <HubMetricsCards metrics={hubMetrics} />
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Hub Overview</TabsTrigger>
+          <TabsTrigger value="employees">Employee Management</TabsTrigger>
           <TabsTrigger value="bulk-operations">Bulk Operations</TabsTrigger>
           <TabsTrigger value="bulk-actions">Bulk Actions</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
@@ -81,6 +83,10 @@ const HubManagementTab = () => {
             getAlertLevelColor={getAlertLevelColor}
             getAlertLevelText={getAlertLevelText}
           />
+        </TabsContent>
+
+        <TabsContent value="employees" className="space-y-4">
+          <HubEmployeeManagement onDataUpdated={refreshData} />
         </TabsContent>
 
         <TabsContent value="bulk-operations" className="space-y-4">

@@ -109,7 +109,8 @@ const HubEmployeeManagement: React.FC<HubEmployeeManagementProps> = ({ onDataUpd
   };
 
   const getTotalEmployees = (location: HubEmployeeLocation) => {
-    return location.home_base_count + location.current_location_count + location.travel_away_count;
+    // Only count home_base_count for hub totals - other counts are status indicators
+    return location.home_base_count;
   };
 
   return (
@@ -227,13 +228,13 @@ const HubEmployeeManagement: React.FC<HubEmployeeManagementProps> = ({ onDataUpd
 
               <div className="mt-4 p-3 bg-background rounded border">
                 <div className="text-sm text-muted-foreground">
-                  Total Employees: <strong>{homeBaseCount + currentLocationCount + travelAwayCount}</strong>
+                  Hub Total (Dashboard): <strong>{homeBaseCount}</strong>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  Home Base: {homeBaseCount} | Current: {currentLocationCount} | Away: {travelAwayCount}
+                  Home Base: {homeBaseCount} | Current Visitors: {currentLocationCount} | Traveling Away: {travelAwayCount}
                 </div>
                 <div className="text-xs text-blue-600 mt-1">
-                  Note: Home Base count contributes to hub totals on the dashboard
+                  Note: Only Home Base count contributes to hub totals on the dashboard
                 </div>
               </div>
 

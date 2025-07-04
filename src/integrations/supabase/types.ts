@@ -902,6 +902,68 @@ export type Database = {
           },
         ]
       }
+      location_transitions: {
+        Row: {
+          actual_time: string | null
+          created_at: string
+          employee_id: string
+          from_location_id: string
+          from_location_type: string
+          id: string
+          initiated_by: string | null
+          notes: string | null
+          scheduled_time: string | null
+          to_location_id: string
+          to_location_type: string
+          transition_status: string | null
+          transition_type: string
+          travel_record_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_time?: string | null
+          created_at?: string
+          employee_id: string
+          from_location_id: string
+          from_location_type: string
+          id?: string
+          initiated_by?: string | null
+          notes?: string | null
+          scheduled_time?: string | null
+          to_location_id: string
+          to_location_type: string
+          transition_status?: string | null
+          transition_type: string
+          travel_record_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_time?: string | null
+          created_at?: string
+          employee_id?: string
+          from_location_id?: string
+          from_location_type?: string
+          id?: string
+          initiated_by?: string | null
+          notes?: string | null
+          scheduled_time?: string | null
+          to_location_id?: string
+          to_location_type?: string
+          transition_status?: string | null
+          transition_type?: string
+          travel_record_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_transitions_travel_record_id_fkey"
+            columns: ["travel_record_id"]
+            isOneToOne: false
+            referencedRelation: "travel_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       national_security_risks: {
         Row: {
           assigned_lead: string | null
@@ -1222,6 +1284,68 @@ export type Database = {
           },
         ]
       }
+      travel_bookings: {
+        Row: {
+          arrival_location: string | null
+          arrival_time: string | null
+          booking_details: Json | null
+          booking_platform: string
+          booking_status: string | null
+          booking_type: string
+          cost_amount: number | null
+          cost_currency: string | null
+          created_at: string
+          departure_location: string | null
+          departure_time: string | null
+          external_booking_ref: string | null
+          id: string
+          travel_record_id: string
+          updated_at: string
+        }
+        Insert: {
+          arrival_location?: string | null
+          arrival_time?: string | null
+          booking_details?: Json | null
+          booking_platform: string
+          booking_status?: string | null
+          booking_type: string
+          cost_amount?: number | null
+          cost_currency?: string | null
+          created_at?: string
+          departure_location?: string | null
+          departure_time?: string | null
+          external_booking_ref?: string | null
+          id?: string
+          travel_record_id: string
+          updated_at?: string
+        }
+        Update: {
+          arrival_location?: string | null
+          arrival_time?: string | null
+          booking_details?: Json | null
+          booking_platform?: string
+          booking_status?: string | null
+          booking_type?: string
+          cost_amount?: number | null
+          cost_currency?: string | null
+          created_at?: string
+          departure_location?: string | null
+          departure_time?: string | null
+          external_booking_ref?: string | null
+          id?: string
+          travel_record_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "travel_bookings_travel_record_id_fkey"
+            columns: ["travel_record_id"]
+            isOneToOne: false
+            referencedRelation: "travel_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       travel_integration_config: {
         Row: {
           api_endpoint: string | null
@@ -1264,8 +1388,54 @@ export type Database = {
         }
         Relationships: []
       }
+      travel_policies: {
+        Row: {
+          applicable_locations: string[] | null
+          applicable_roles: string[] | null
+          created_at: string
+          created_by: string | null
+          enforcement_level: string | null
+          id: string
+          is_active: boolean
+          policy_name: string
+          policy_rules: Json
+          policy_type: string
+          updated_at: string
+        }
+        Insert: {
+          applicable_locations?: string[] | null
+          applicable_roles?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          enforcement_level?: string | null
+          id?: string
+          is_active?: boolean
+          policy_name: string
+          policy_rules: Json
+          policy_type: string
+          updated_at?: string
+        }
+        Update: {
+          applicable_locations?: string[] | null
+          applicable_roles?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          enforcement_level?: string | null
+          id?: string
+          is_active?: boolean
+          policy_name?: string
+          policy_rules?: Json
+          policy_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       travel_records: {
         Row: {
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          compliance_notes: string | null
           created_at: string
           current_city_id: string | null
           departure_date: string | null
@@ -1274,12 +1444,19 @@ export type Database = {
           external_booking_id: string | null
           home_city_id: string
           id: string
+          last_location_update: string | null
+          location_status: string | null
           return_date: string | null
+          risk_level: string | null
           travel_platform: string | null
           travel_status: string
           updated_at: string
         }
         Insert: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          compliance_notes?: string | null
           created_at?: string
           current_city_id?: string | null
           departure_date?: string | null
@@ -1288,12 +1465,19 @@ export type Database = {
           external_booking_id?: string | null
           home_city_id: string
           id?: string
+          last_location_update?: string | null
+          location_status?: string | null
           return_date?: string | null
+          risk_level?: string | null
           travel_platform?: string | null
           travel_status?: string
           updated_at?: string
         }
         Update: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          compliance_notes?: string | null
           created_at?: string
           current_city_id?: string | null
           departure_date?: string | null
@@ -1302,7 +1486,10 @@ export type Database = {
           external_booking_id?: string | null
           home_city_id?: string
           id?: string
+          last_location_update?: string | null
+          location_status?: string | null
           return_date?: string | null
+          risk_level?: string | null
           travel_platform?: string | null
           travel_status?: string
           updated_at?: string
@@ -1512,6 +1699,18 @@ export type Database = {
           hub_name: string
           issue_description: string
           severity: string
+        }[]
+      }
+      validate_travel_compliance: {
+        Args: {
+          employee_id: string
+          destination_city_id: string
+          travel_start_date: string
+        }
+        Returns: {
+          is_compliant: boolean
+          policy_violations: Json
+          recommendations: Json
         }[]
       }
       verify_rls_coverage: {
