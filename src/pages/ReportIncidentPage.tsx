@@ -74,35 +74,33 @@ const ReportIncidentPage = () => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Incident Form */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Incident Report Form
-              </CardTitle>
-              <CardDescription>
-                Provide detailed information about the incident
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EnhancedIncidentForm
-                formData={formData}
-                onFormDataChange={handleFormDataChange}
-                onSaveDraft={handleSaveDraft}
-                onSubmit={handleSubmit}
-              />
-            </CardContent>
-          </Card>
-        </div>
+      <div className="space-y-6">
+        {/* Reporting Guidelines */}
+        <ReportGuidelines />
 
-        {/* Sidebar with Guidelines and Contacts */}
-        <div className="space-y-6">
-          <ReportGuidelines />
-          <EmergencyContacts />
-        </div>
+        {/* Main Incident Form */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Incident Report Form
+            </CardTitle>
+            <CardDescription>
+              Provide detailed information about the incident
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <EnhancedIncidentForm
+              formData={formData}
+              onFormDataChange={handleFormDataChange}
+              onSaveDraft={handleSaveDraft}
+              onSubmit={handleSubmit}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Emergency Contacts */}
+        <EmergencyContacts />
       </div>
     </div>
   );
