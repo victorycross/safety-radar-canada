@@ -29,6 +29,7 @@ import {
 import { useDataProcessingConfig } from '@/hooks/useDataProcessingConfig';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import ClassificationRuleManager from '../classification/ClassificationRuleManager';
 
 interface AnalysisRule {
   id: string;
@@ -470,108 +471,7 @@ const ProcessingManagementTab = () => {
         </TabsContent>
 
         <TabsContent value="classification" className="space-y-6">
-          {/* Classification Rules Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Classification Rules
-              </CardTitle>
-              <CardDescription>
-                Severity levels, categories, and personnel impact classification
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 border rounded-lg">
-                    <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                    <div className="font-medium">Critical Alerts</div>
-                    <div className="text-sm text-muted-foreground">Extreme/Severe severity classification</div>
-                    <Badge variant="destructive" className="mt-2">
-                      {activeSeverityRules.filter(rule => 
-                        rule.classification_value === 'Extreme' || rule.classification_value === 'Severe'
-                      ).length} Rules
-                    </Badge>
-                  </div>
-                  
-                  <div className="text-center p-4 border rounded-lg">
-                    <Shield className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                    <div className="font-medium">Security Matters</div>
-                    <div className="text-sm text-muted-foreground">Cybersecurity and safety classification</div>
-                    <Badge variant="secondary" className="mt-2">
-                      {activeCategoryRules.filter(rule => 
-                        rule.classification_value.toLowerCase().includes('security') ||
-                        rule.classification_value.toLowerCase().includes('cyber')
-                      ).length} Rules
-                    </Badge>
-                  </div>
-                  
-                  <div className="text-center p-4 border rounded-lg">
-                    <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                    <div className="font-medium">Routine Updates</div>
-                    <div className="text-sm text-muted-foreground">Minor/Info severity classification</div>
-                    <Badge variant="outline" className="mt-2">
-                      {activeSeverityRules.filter(rule => 
-                        rule.classification_value === 'Minor' || rule.classification_value === 'Info'
-                      ).length} Rules
-                    </Badge>
-                  </div>
-                </div>
-                
-                <div className="flex justify-center gap-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Settings className="h-4 w-4 mr-2" />
-                        Configure Classifications
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Classification Rules Configuration</DialogTitle>
-                        <DialogDescription>
-                          Manage severity and category classification rules
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        {classificationRules.map((rule) => (
-                          <div key={rule.id} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <div>
-                                <h4 className="font-medium">{rule.rule_type.toUpperCase()}: {rule.classification_value}</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Pattern: {rule.condition_pattern} | Confidence: {rule.confidence_score}
-                                </p>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  checked={rule.is_active}
-                                  onCheckedChange={(checked) => updateRuleStatus('classification', rule.id, checked)}
-                                />
-                                <Button variant="outline" size="sm">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            {rule.source_types && (
-                              <div className="text-sm">
-                                <span className="font-medium">Applies to:</span> {rule.source_types.join(', ')}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New Rule
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ClassificationRuleManager onRuleUpdate={() => window.location.reload()} />
         </TabsContent>
 
         <TabsContent value="quality" className="space-y-6">
