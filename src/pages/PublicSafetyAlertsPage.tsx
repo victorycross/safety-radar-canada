@@ -114,31 +114,27 @@ const PublicSafetyAlertsPage = () => {
         </div>
 
         {/* Main Alert Display */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Critical Alerts */}
-          <div className="lg:col-span-2">
-            <CriticalAlertsHero
-              alertProvinces={alertProvinces}
-              visibleAlertProvinces={visibleAlertProvinces}
-              alertHubs={alertHubs || []}
-              loading={loading}
-            />
-          </div>
+        <div className="space-y-6">
+          {/* Critical Alerts */}
+          <CriticalAlertsHero
+            alertProvinces={alertProvinces}
+            visibleAlertProvinces={visibleAlertProvinces}
+            alertHubs={alertHubs || []}
+            loading={loading}
+          />
 
-          {/* Right Column - Recent Alerts Feed */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Alert Feed</CardTitle>
-                <CardDescription>
-                  Latest weather and public safety alerts
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RecentAlerts />
-              </CardContent>
-            </Card>
-          </div>
+          {/* Recent Alerts Feed */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Alert Feed</CardTitle>
+              <CardDescription>
+                Latest weather and public safety alerts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RecentAlerts />
+            </CardContent>
+          </Card>
         </div>
 
         {/* Additional Alert Information */}
