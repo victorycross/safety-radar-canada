@@ -65,9 +65,8 @@ const Sidebar = () => {
     { name: 'Settings & Documentation', href: '/admin/settings', icon: Settings },
   ] : [];
 
-  if (!user) {
-    return null;
-  }
+  // Always render sidebar - show minimal version for unauthenticated users
+  const showMinimalSidebar = !user;
 
   const renderNavigationSection = (title: string, items: typeof dashboardSection) => {
     // Don't render empty sections
@@ -179,10 +178,31 @@ const Sidebar = () => {
       </div>
       
       <nav className="px-3 pb-6">
-        {renderNavigationSection('Dashboard & Monitoring', dashboardSection)}
-        {renderNavigationSection('Analytics & Strategic Reporting', analyticsSection)}
-        {renderNavigationSection('Incident Management', incidentSection)}
-        {renderAdminSection()}
+        {showMinimalSidebar ? (
+          <div className="mb-6">
+            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              Welcome
+            </h3>
+            <ul className="space-y-1">
+              <li>
+                <Link
+                  to="/auth"
+                  className="flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <Shield className="mr-3 h-5 w-5 flex-shrink-0" />
+                  Sign In
+                </Link>
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <>
+            {renderNavigationSection('Dashboard & Monitoring', dashboardSection)}
+            {renderNavigationSection('Analytics & Strategic Reporting', analyticsSection)}
+            {renderNavigationSection('Incident Management', incidentSection)}
+            {renderAdminSection()}
+          </>
+        )}
       </nav>
     </div>
   );
